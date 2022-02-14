@@ -1,0 +1,124 @@
+{
+  "manifestVersion": "3.2",
+  "proxies": [
+    {
+      "address": "0x55544B6A8a3B4FaA22BB5303F3Ebb15ED0344d3F",
+      "txHash": "0x2cb5c9e9f4c850d1545c749152f0ddd548d983ee37c8e29993cf98d3167c5f2c",
+      "kind": "uups"
+    }
+  ],
+  "impls": {
+    "367e1b514eef6d0efed1442c88269ee14dce64ee7b5dee63d04344a922215c74": {
+      "address": "0xe5E192dc8b743fa23421074154D6fe5044595338",
+      "txHash": "0xf2574f476942229c90907270470b11a29c84b9ed0849a1ea496af69d14c4655c",
+      "layout": {
+        "storage": [
+          {
+            "contract": "Initializable",
+            "label": "_initialized",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:39"
+          },
+          {
+            "contract": "Initializable",
+            "label": "_initializing",
+            "type": "t_bool",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:44"
+          },
+          {
+            "contract": "ERC1967UpgradeUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol:215"
+          },
+          {
+            "contract": "UUPSUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol:81"
+          },
+          {
+            "contract": "ContextUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)50_storage",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:31"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "_owner",
+            "type": "t_address",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "contract": "OwnableUpgradeable",
+            "label": "__gap",
+            "type": "t_array(t_uint256)49_storage",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:82"
+          },
+          {
+            "contract": "ForwardCreator",
+            "label": "atArtistId",
+            "type": "t_struct(Counter)2238_storage",
+            "src": "contracts/ForwardCreator.sol:24"
+          },
+          {
+            "contract": "ForwardCreator",
+            "label": "admin",
+            "type": "t_address",
+            "src": "contracts/ForwardCreator.sol:26"
+          },
+          {
+            "contract": "ForwardCreator",
+            "label": "beaconAddress",
+            "type": "t_address",
+            "src": "contracts/ForwardCreator.sol:27"
+          },
+          {
+            "contract": "ForwardCreator",
+            "label": "artistContracts",
+            "type": "t_array(t_address)dyn_storage",
+            "src": "contracts/ForwardCreator.sol:29"
+          },
+          {
+            "contract": "ForwardCreator",
+            "label": "baseURI",
+            "type": "t_string_storage",
+            "src": "contracts/ForwardCreator.sol:30"
+          }
+        ],
+        "types": {
+          "t_struct(Counter)2238_storage": {
+            "label": "struct CountersUpgradeable.Counter",
+            "members": [
+              {
+                "label": "_value",
+                "type": "t_uint256"
+              }
+            ]
+          },
+          "t_uint256": {
+            "label": "uint256"
+          },
+          "t_address": {
+            "label": "address"
+          },
+          "t_array(t_address)dyn_storage": {
+            "label": "address[]"
+          },
+          "t_string_storage": {
+            "label": "string"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]"
+          },
+          "t_bool": {
+            "label": "bool"
+          }
+        }
+      }
+    }
+  }
+}
