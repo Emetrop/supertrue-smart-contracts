@@ -40,10 +40,14 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     uint256 private _royaltyBPS;
     address payable private _fundingRecipient;
 
+    // Settings
+    uint256 private _amountMin = 1;
+    uint256 private _amountMax = 20;
+
     // Contract version
     uint256 public constant version = 1;
 
-    // Artist
+    // Artist Data
     Artist public artist;
 
     // ============ Modifiers ============
@@ -156,8 +160,8 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     }
 
     function mint(uint256 amount, address to) public payable whenNotPaused {
-        require(amount > 0, "Amount too small");
-        require(amount <= 20, "Amount too big");
+        require(amount >= _amountMin, "Amount too small");
+        require(amount <= _amountMax, "Amount too big");
         require(msg.value >= getCurrentPrice() * amount, "Not enough ETH sent");
 
         for (uint256 i = 0; i < amount; i++) {
@@ -170,12 +174,8 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
         payable(owner()).transfer(address(this).balance);
     }
 
-    function onERC721Received(
-        address,
-        address,
-        uint256,
-        bytes calldata
-    ) external pure override returns (bytes4) {
+    // ? What happens with these tokens after they are received? Can they be extracted?
+    function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
         return IERC721ReceiverUpgradeable.onERC721Received.selector;
     }
 
