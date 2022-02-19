@@ -12,6 +12,10 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
+/**
+ * SuperTrue Forward NFT
+ * Version 0.1.2
+ */
 contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Upgradeable, IERC721ReceiverUpgradeable {
     using AddressUpgradeable for address;
     using StringsUpgradeable for uint256;
@@ -43,6 +47,9 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     // Settings
     uint256 private _amountMin = 1;
     uint256 private _amountMax = 20;
+    uint256 private _priceBase = 0.002 ether;
+    uint256 private _priceCurrent = 0.002 ether;
+    uint256 private _priceInterval = 0.0001 ether;
 
     // Contract version
     uint256 public constant version = 1;
@@ -88,14 +95,26 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
         _tokenIds.increment();
     }
 
+    /**
+     * Get the Current Token Price
+     */
+    function getCurrentPrice() public view returns (uint256) {
+        return _priceBase + (totalSupply() * _priceInterval);
+    }
+
+    /**
+     * @dev Set Artist's Details
+     */
     function setArtist(string memory _name, string memory _instagram) public onlyOwnerOrAdmin {
         artist.name = _name;
         artist.instagram = _instagram;
     }
 
+    /**
+     * @dev Set Royalties Requested
+     */
     function setRoyalties(uint256 royaltyBPS, address payable fundingRecipient) public onlyOwner {
         require(royaltyBPS >= 0 && royaltyBPS <= 10_000, "Wrong royaltyBPS value");
-
         _royaltyBPS = royaltyBPS;
         _fundingRecipient = fundingRecipient;
     }
@@ -138,38 +157,44 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
         _uri = baseURI;
     }
 
-    function getCurrentPrice() public view returns (uint256) {
-        return 0.002 ether + (totalSupply() * 0.0001 ether);
-    }
-
     function totalSupply() public view returns (uint256) {
         return _tokenIds.current() - 1;
     }
 
+   /**
+     * @dev Mint Free NFTs
+     */
     function reserve() public onlyOwnerOrAdmin {
-        require(_msgSender() == owner(), "Only admin or owner");
-
+        // require(_msgSender() == owner(), "Only admin or owner");     //Already Checked By Modifier
         _mint(address(this), _tokenIds.current());
         _tokenIds.increment();
     }
 
+    /**
+     * @dev Transfer Free Minted NFTs
+     */
     function transferReserved(address to, uint256 tokenId) public onlyOwnerOrAdmin {
-        require(_msgSender() == owner() || _admins[_msgSender()], "Only admin or owner");
-
+        // require(_msgSender() == owner() || _admins[_msgSender()], "Only admin or owner");      //Already Checked By Modifier
         _safeTransfer(address(this), to, tokenId, "");
     }
 
+    /**
+     * @dev Buy New Token(s)
+     */
     function mint(uint256 amount, address to) public payable whenNotPaused {
         require(amount >= _amountMin, "Amount too small");
         require(amount <= _amountMax, "Amount too big");
         require(msg.value >= getCurrentPrice() * amount, "Not enough ETH sent");
-
+        //Mint    
         for (uint256 i = 0; i < amount; i++) {
             _safeMint(to, _tokenIds.current());
             _tokenIds.increment();
         }
     }
 
+    /**
+     * Send All Funds From Contract to Owner
+     */
     function withdraw() public onlyOwnerOrAdmin {
         payable(owner()).transfer(address(this).balance);
     }
