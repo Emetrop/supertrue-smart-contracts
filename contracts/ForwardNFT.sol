@@ -27,6 +27,7 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
         uint256 id;
         string name;
         string instagram;
+        address account;
     }
 
     // ============ Storage ============
@@ -56,6 +57,9 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
 
     // Artist Data
     Artist public artist;
+
+    // Treasury
+    // address _treasury;
 
     // ============ Modifiers ============
 
@@ -90,9 +94,6 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
         artist.id = artistId_;
         artist.name = artistName_;
         artist.instagram = artistInstagram_;
-
-        // to start with 1
-        _tokenIds.increment();
     }
 
     /**
@@ -166,8 +167,8 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
      */
     function reserve() public onlyOwnerOrAdmin {
         // require(_msgSender() == owner(), "Only admin or owner");     //Already Checked By Modifier
-        _mint(address(this), _tokenIds.current());
         _tokenIds.increment();
+        _mint(address(this), _tokenIds.current());
     }
 
     /**
@@ -187,8 +188,8 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
         require(msg.value >= getCurrentPrice() * amount, "Not enough ETH sent");
         //Mint    
         for (uint256 i = 0; i < amount; i++) {
+            _tokenIds.increment();  //We just put this first so that we's start with 1
             _safeMint(to, _tokenIds.current());
-            _tokenIds.increment();
         }
     }
 
@@ -200,7 +201,8 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     }
 
     // ? What happens with these tokens after they are received? Can they be extracted?
-    function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
+    // function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external pure override returns (bytes4) {
         return IERC721ReceiverUpgradeable.onERC721Received.selector;
     }
 
