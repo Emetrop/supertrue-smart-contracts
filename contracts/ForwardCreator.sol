@@ -25,7 +25,8 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     address public admin;
     address public beaconAddress;
     // registry of created contracts
-    address[] public artistContracts;
+    // address[] public artistContracts;
+    mapping(uint256 => address) private artistContracts;
     string public baseURI;
 
     // ============ Events ============
@@ -54,7 +55,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     }
 
     function setBaseURI(string memory baseURI_) public {
-        require(owner() == _msgSender() || admin == _msgSender(), 'invalid authorization');
+        require(owner() == _msgSender() || admin == _msgSender(), 'UNAUTHORIZED');
         baseURI = baseURI_;
     }
 
@@ -89,7 +90,8 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         );
 
         // add to registry
-        artistContracts.push(address(proxy));
+        // artistContracts.push(address(proxy));    //Array
+        artistContracts[id] = proxy;    //Mapping
 
         emit CreatedArtist(atArtistId.current(), name, symbol, address(proxy));
 
@@ -101,7 +103,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     /// Sets the admin for authorizing artist deployment
     /// @param _newAdmin address of new admin
     function setAdmin(address _newAdmin) external {
-        require(owner() == _msgSender() || admin == _msgSender(), 'invalid authorization');
+        require(owner() == _msgSender() || admin == _msgSender(), 'UNAUTHORIZED');
         admin = _newAdmin;
     }
 
