@@ -13,6 +13,13 @@ import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
 /**
+ * @dev ERC20 Intreface for transfer
+ */
+interface IERC20 {
+    function transfer(address _to, uint256 _amount) external returns (bool);
+}
+
+/**
  * SuperTrue Forward NFT
  * Version 0.1.2
  */
@@ -195,16 +202,31 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
 
     /**
      * Send All Funds From Contract to Owner
+     * todo: Split to two addresses
      */
     function withdraw() public onlyOwnerOrAdmin {
         payable(owner()).transfer(address(this).balance);
     }
 
-    // ? What happens with these tokens after they are received? Can they be extracted?
+    /**
+     * Send All Funds From Contract to Owner
+     * todo: Split to two addresses
+     */
+    function withdrawToken(address _tokenContract, uint256 _amount) external onlyOwnerOrAdmin {
+        // transfer the token from address of this contract
+        IERC20(_tokenContract).transfer(owner(), _amount);
+    }
+
+    
+
     // function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external pure override returns (bytes4) {
         return IERC721ReceiverUpgradeable.onERC721Received.selector;
+
+        // ? What happens with these tokens after they are received? Can they be extracted?
+
     }
+
 
     /**
      * @dev Called with the sale price to determine how much royalty is owed and to whom.
