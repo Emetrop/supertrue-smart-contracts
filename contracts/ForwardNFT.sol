@@ -214,11 +214,13 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
      * @return royaltyAmount - the royalty payment amount for `salePrice`
      */
     function royaltyInfo(uint256, uint256 salePrice) public view override returns (address receiver, uint256 royaltyAmount) {
-        if (_fundingRecipient == address(0x0)) {
-            return (_fundingRecipient, 0);
-        }
+        // if (_fundingRecipient == address(0x0)) {
+        //     return (_fundingRecipient, 0);
+        // }
+        // return (_fundingRecipient, (salePrice * _royaltyBPS) / 10_000);
 
-        return (_fundingRecipient, (salePrice * _royaltyBPS) / 10_000);
+        //Using the contract to hold royalties
+        return (address(this), (salePrice * _royaltyBPS) / 10_000);
     }
 
     // https://docs.opensea.io/docs/contract-level-metadata
