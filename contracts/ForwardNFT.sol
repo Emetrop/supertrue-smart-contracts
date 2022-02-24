@@ -21,7 +21,7 @@ interface IERC20 {
 
 /**
  * SuperTrue Forward NFT
- * Version 0.1.2
+ * Version 0.2.2
  */
 contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Upgradeable, IERC721ReceiverUpgradeable {
     using AddressUpgradeable for address;
@@ -50,17 +50,18 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
 
     // 3rd party royalties Request
     uint256 private _royaltyBPS;
+    uint16 internal constant BPS_MAX = 10000;
     // address payable private _fundingRecipient;   //Using Self
 
     // Artist Data
     Artist public artist;
     uint256 public _artistPending;
+    uint256 public _artistPendingERC20;
+    mapping(address => uint256) private _artistPendingERC20;
 
     // Treasury
-    uint16 internal constant BPS_MAX = 10000;
     uint256 private _treasuryFee;
     address _treasury;
-
     
     // Settings
     uint256 private _amountMin = 1;
@@ -96,12 +97,12 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     ) public initializer {
         __ERC721Pausable_init();
         __ERC721_init_unchained(name_, symbol_);
-
+        //Set Owner
         _transferOwnership(owner_);
-
+        //Set URI
         _uri = uri_;
-        _royaltyBPS = 10_000;
-        _fundingRecipient = payable(owner_);
+        _royaltyBPS = 1_000;    //Request for 10% royalties on seconday sales       //TODO: Test these weird numbers...
+        // _fundingRecipient = payable(owner_);
 
         artist.id = artistId_;
         artist.name = artistName_;
@@ -135,10 +136,11 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     /**
      * @dev Set Royalties Requested
      */
-    function setRoyalties(uint256 royaltyBPS, address payable fundingRecipient) public onlyOwner {
+    // function setRoyalties(uint256 royaltyBPS, address payable fundingRecipient) public onlyOwner {
+    function setRoyalties(uint256 royaltyBPS) public onlyOwner {
         require(royaltyBPS >= 0 && royaltyBPS <= 10_000, "Wrong royaltyBPS value");
         _royaltyBPS = royaltyBPS;
-        _fundingRecipient = fundingRecipient;
+        // _fundingRecipient = fundingRecipient;
     }
 
     /**
@@ -216,14 +218,24 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     }
 
     /**
-     * @dev Handle Payments in Native Currency
+     * @dev Fetch Treasury Data
+     * TODO: Centralize Treasury Settings for all Artist Contracts
+     */
+    function _getTreasuryData() internal view returns (address, uint16) {
+        return (_treasury, _treasuryFee);
+    }
+
+    /**
+     * @dev Handle Payments Logic -  Native Currency
      */
     function _handlePaymentNative(uint256 amount) private {
+        //Fetch Treasury Data
+        (address treasury, uint16 treasuryFee) = _getTreasuryData();
         //Split
-        uint256 treasuryAmount = (amount * _treasuryFee) / BPS_MAX;
+        uint256 treasuryAmount = (amount * treasuryFee) / BPS_MAX;
         uint256 adjustedAmount = amount - treasuryAmount;
         //Send to Treasury
-        payable(_treasury).transfer(treasuryAmount);
+        payable(treasury).transfer(treasuryAmount);
         if(artist.account == account(0)) {
             //Hold for Artist
             _artistPending += adjustedAmount;
@@ -234,32 +246,76 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     }
 
     /**
-     * @dev Artist Withdraw Pending Balance
+     * @dev Handle Payments Logic - ERC20 Tokens
      */
-    function artistWithdrawPending() public {
+    _handlePaymentERC20(address currency, uint256 amount) private {
+        //Fetch Treasury Data
+        (address treasury, uint16 treasuryFee) = _getTreasuryData();
+        //Split
+        uint256 treasuryAmount = (amount * treasuryFee) / BPS_MAX;
+        uint256 adjustedAmount = amount - treasuryAmount;
+        //Send to Treasury
+        IERC20(currency).transfer(treasury, treasuryAmount);
+        if(artist.account == account(0)) {
+            //Hold for Artist
+            _artistPending += adjustedAmount;
+        }else{
+            //Send to Artist
+            IERC20(currency).transfer(artist.account, adjustedAmount);
+        }
+    }
+
+    /**
+     * @dev Withdraw Additional Funds (Not from minting)
+     */
+    function withdraw() external whenNotPaused{
+        require(address(this).balance > _artistPending, "No Available Balance");
+        uint256 _balanceAvailable = address(this).balance - _artistPending;
+        require(_balanceAvailable > 0, "No Available Balance");
+        //Process any additional funds
+        _handlePaymentNative(_balanceAvailable);
+    }
+
+    /**
+     * @dev Send All Funds From Contract to Owner
+     */
+    function withdrawERC20(address currency) external whenNotPaused {
+        require(currency != address(0), "Currency Address Not Set");
+        uint265 _balance = IERC20(currency).balanceOf(address(this));
+        uint265 _balanceAvailable = IERC20(currency).balanceOf(address(this)) - _artistPendingERC20[currency];
+        uint265 _balanceAvailable = _balance - _artistPendingERC20[currency];
+        require(_balanceAvailable > 0, "No Available Balance");
+        //Process any additional funds
+        _handlePaymentERC20(currency, amount);
+    }
+
+    /**
+     * @dev Artist Withdraw Pending Balance of Native Tokens
+     */
+    function artistWithdrawPending() external whenNotPaused {
+        //Validate
         require(artist.account !== account(0), "Artist Account Not Set");
-        require(_artistPending > 0, "Artist Pending Balance");
+        require(_artistPending > 0, "No Artist Pending Balance");
+        //Transfer Pending Balance
         payable(artist.account).transfer(_artistPending);
+        //Reset Pending Balance
         _artistPending = 0;
     }
 
     /**
-     * Send All Funds From Contract to Owner
-     * todo: Split to two addresses
+     * @dev Artist Withdraw Pending Balance of ERC20 Token
      */
-    function withdraw() public onlyOwnerOrAdmin {
-        payable(owner()).transfer(address(this).balance);
+    function artistWithdrawPendingERC20(address currency) external whenNotPaused {
+        //Validate
+        require(artist.account !== account(0), "Artist Account Not Set");
+        require(_artistPendingERC20[currency] > 0, "No Artist Pending Balance");
+        //Transfer Pending Balance
+        IERC20(currency).transfer(artist.account, _artistPendingERC20[currency]);
+        //Reset Pending Balance
+        _artistPendingERC20[currency] = 0;
     }
 
-    /**
-     * Send All Funds From Contract to Owner
-     * todo: Split to two addresses
-     */
-    function withdrawToken(address _tokenContract, uint256 _amount) external onlyOwnerOrAdmin {
-        // transfer the token from address of this contract
-        IERC20(_tokenContract).transfer(owner(), _amount);
-    }
-
+    
     
 
     // function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
