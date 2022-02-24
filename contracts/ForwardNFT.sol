@@ -48,10 +48,20 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     // address => allowedToCallFunctions
     mapping(address => bool) private _admins;
 
-    // royalties
+    // 3rd party royalties Request
     uint256 private _royaltyBPS;
-    address payable private _fundingRecipient;
+    // address payable private _fundingRecipient;   //Using Self
 
+    // Artist Data
+    Artist public artist;
+    uint256 public _artistPending;
+
+    // Treasury
+    uint16 internal constant BPS_MAX = 10000;
+    uint256 private _treasuryFee;
+    address _treasury;
+
+    
     // Settings
     uint256 private _amountMin = 1;
     uint256 private _amountMax = 20;
@@ -62,11 +72,6 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     // Contract version
     uint256 public constant version = 1;
 
-    // Artist Data
-    Artist public artist;
-
-    // Treasury
-    // address _treasury;
 
     // ============ Modifiers ============
 
@@ -119,6 +124,15 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     }
 
     /**
+     * @dev Claim Contract - Set Artist's Account
+     */
+    function setArtistAccount(address memory account) public {
+        //Owner or Adming or Artist
+        require(owner() == _msgSender() || _admins[_msgSender() || _msgSender() == artist.account], "Only admin or artist");
+        artist.account = account;
+    }
+
+    /**
      * @dev Set Royalties Requested
      */
     function setRoyalties(uint256 royaltyBPS, address payable fundingRecipient) public onlyOwner {
@@ -131,7 +145,7 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     * enables an address for only admin functions
     * @param admin the address to enable
     */
-    function addAdmin(address admin) external onlyOwner {
+    function addAdmin( admin) external onlyOwner {
         _admins[admin] = true;
     }
 
@@ -198,6 +212,35 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
             _tokenIds.increment();  //We just put this first so that we's start with 1
             _safeMint(to, _tokenIds.current());
         }
+        _handlePaymentNative(msg.amount);
+    }
+
+    /**
+     * @dev Handle Payments in Native Currency
+     */
+    function _handlePaymentNative(uint256 amount) private {
+        //Split
+        uint256 treasuryAmount = (amount * _treasuryFee) / BPS_MAX;
+        uint256 adjustedAmount = amount - treasuryAmount;
+        //Send to Treasury
+        payable(_treasury).transfer(treasuryAmount);
+        if(artist.account == account(0)) {
+            //Hold for Artist
+            _artistPending += adjustedAmount;
+        }else{
+            //Send to Artist
+            payable(artist.account).transfer(adjustedAmount);
+        }
+    }
+
+    /**
+     * @dev Artist Withdraw Pending Balance
+     */
+    function artistWithdrawPending() public {
+        require(artist.account !== account(0), "Artist Account Not Set");
+        require(_artistPending > 0, "Artist Pending Balance");
+        payable(artist.account).transfer(_artistPending);
+        _artistPending = 0;
     }
 
     /**
@@ -230,7 +273,7 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
 
     /**
      * @dev Called with the sale price to determine how much royalty is owed and to whom.
-     * @param - the NFT asset queried for royalty information
+     * @param _tokenId - the NFT asset queried for royalty information
      * @param salePrice - the sale price of the NFT asset specified by `tokenId`
      * @return receiver - address of who should be sent the royalty payment
      * @return royaltyAmount - the royalty payment amount for `salePrice`
