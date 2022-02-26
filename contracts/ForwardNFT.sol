@@ -4,7 +4,7 @@ pragma solidity >=0.8.0 <0.9.0;
 
 //import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 
@@ -17,13 +17,20 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
  */
 interface IERC20 {
     function transfer(address _to, uint256 _amount) external returns (bool);
+    function balanceOf(address owner) external view returns (uint256 balance);
 }
 
 /**
  * SuperTrue Forward NFT
- * Version 0.1.2
+ * Version 0.2.2
  */
-contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Upgradeable, IERC721ReceiverUpgradeable {
+contract ForwardNFT is 
+        OwnableUpgradeable, 
+        ERC721PausableUpgradeable, 
+        IERC2981Upgradeable
+        // IERC721ReceiverUpgradeable 
+        {
+
     using AddressUpgradeable for address;
     using StringsUpgradeable for uint256;
     using CountersUpgradeable for CountersUpgradeable.Counter;
@@ -48,25 +55,30 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     // address => allowedToCallFunctions
     mapping(address => bool) private _admins;
 
-    // royalties
+    // 3rd party royalties Request
     uint256 private _royaltyBPS;
-    address payable private _fundingRecipient;
+    uint16 internal constant BPS_MAX = 10000;
+    // address payable private _fundingRecipient;   //Using Self
 
+    // Artist Data
+    Artist public artist;
+    uint256 public _artistPending;
+    mapping(address => uint256) private _artistPendingERC20;
+
+    // Treasury
+    uint256 private _treasuryFee;
+    address _treasury;
+    
     // Settings
-    uint256 private _amountMin = 1;
-    uint256 private _amountMax = 20;
     uint256 private _priceBase = 0.002 ether;
     uint256 private _priceCurrent = 0.002 ether;
     uint256 private _priceInterval = 0.0001 ether;
+    // uint256 private _amountMin = 1;
+    // uint256 private _amountMax = 20;
 
     // Contract version
     uint256 public constant version = 1;
 
-    // Artist Data
-    Artist public artist;
-
-    // Treasury
-    // address _treasury;
 
     // ============ Modifiers ============
 
@@ -91,12 +103,12 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     ) public initializer {
         __ERC721Pausable_init();
         __ERC721_init_unchained(name_, symbol_);
-
+        //Set Owner
         _transferOwnership(owner_);
-
+        //Set URI
         _uri = uri_;
-        _royaltyBPS = 10_000;
-        _fundingRecipient = payable(owner_);
+        _royaltyBPS = 1_000;    //Request for 10% royalties on seconday sales       //TODO: Test these weird numbers...
+        // _fundingRecipient = payable(owner_);
 
         artist.id = artistId_;
         artist.name = artistName_;
@@ -119,12 +131,22 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     }
 
     /**
+     * @dev Claim Contract - Set Artist's Account
+     */
+    function setArtistAccount(address account) public {
+        //Owner or Adming or Artist
+        require(owner() == _msgSender() || _admins[_msgSender()] || _msgSender() == artist.account, "Only admin or artist");
+        artist.account = account;
+    }
+
+    /**
      * @dev Set Royalties Requested
      */
-    function setRoyalties(uint256 royaltyBPS, address payable fundingRecipient) public onlyOwner {
+    // function setRoyalties(uint256 royaltyBPS, address payable fundingRecipient) public onlyOwner {
+    function setRoyalties(uint256 royaltyBPS) public onlyOwner {
         require(royaltyBPS >= 0 && royaltyBPS <= 10_000, "Wrong royaltyBPS value");
         _royaltyBPS = royaltyBPS;
-        _fundingRecipient = fundingRecipient;
+        // _fundingRecipient = fundingRecipient;
     }
 
     /**
@@ -192,50 +214,132 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     }
 
     /**
-     * @dev Buy New Token(s)
+     * @dev Buy New Token
+     * Single token at a time
      */
-    function mint(uint256 amount, address to) public payable whenNotPaused {
-        require(amount >= _amountMin, "Amount too small");
-        require(amount <= _amountMax, "Amount too big");
-        require(msg.value >= getCurrentPrice() * amount, "Not enough ETH sent");
+    // function mint(uint256 amount, address to) public payable whenNotPaused {
+    function mint(address to) public payable whenNotPaused {
+        // require(amount >= _amountMin, "Amount too small");
+        // require(amount <= _amountMax, "Amount too big");
+        // require(msg.value >= getCurrentPrice() * amount, "Not enough ETH sent");
+        _handlePaymentNative(msg.value);
         //Mint    
-        for (uint256 i = 0; i < amount; i++) {
+        // for (uint256 i = 0; i < amount; i++) {
             _tokenIds.increment();  //We just put this first so that we's start with 1
             _safeMint(to, _tokenIds.current());
+        // }
+    }
+
+    /**
+     * @dev Fetch Treasury Data
+     * TODO: Centralize Treasury Settings for all Artist Contracts
+     */
+    function _getTreasuryData() internal view returns (address, uint256) {
+        return (_treasury, _treasuryFee);
+    }
+
+    /**
+     * @dev Handle Payments Logic -  Native Currency
+     */
+    function _handlePaymentNative(uint256 amount) private {
+        //Fetch Treasury Data
+        (address treasury, uint256 treasuryFee) = _getTreasuryData();
+        //Split
+        uint256 treasuryAmount = (amount * treasuryFee) / BPS_MAX;
+        uint256 adjustedAmount = amount - treasuryAmount;
+        //Send to Treasury
+        payable(treasury).transfer(treasuryAmount);
+        if(artist.account == address(0)) {
+            //Hold for Artist
+            _artistPending += adjustedAmount;
+        }else{
+            //Send to Artist
+            payable(artist.account).transfer(adjustedAmount);
         }
     }
 
     /**
-     * Send All Funds From Contract to Owner
-     * todo: Split to two addresses
+     * @dev Handle Payments Logic - ERC20 Tokens
      */
-    function withdraw() public onlyOwnerOrAdmin {
-        payable(owner()).transfer(address(this).balance);
+    function _handlePaymentERC20(address currency, uint256 amount) private {
+        //Fetch Treasury Data
+        (address treasury, uint256 treasuryFee) = _getTreasuryData();
+        //Split
+        uint256 treasuryAmount = (amount * treasuryFee) / BPS_MAX;
+        uint256 adjustedAmount = amount - treasuryAmount;
+        //Send to Treasury
+        IERC20(currency).transfer(treasury, treasuryAmount);
+        if(artist.account == address(0)) {
+            //Hold for Artist
+            _artistPending += adjustedAmount;
+        }else{
+            //Send to Artist
+            IERC20(currency).transfer(artist.account, adjustedAmount);
+        }
     }
 
     /**
-     * Send All Funds From Contract to Owner
-     * todo: Split to two addresses
+     * @dev Withdraw Additional Funds (Not from minting)
      */
-    function withdrawToken(address _tokenContract, uint256 _amount) external onlyOwnerOrAdmin {
-        // transfer the token from address of this contract
-        IERC20(_tokenContract).transfer(owner(), _amount);
+    function withdraw() external whenNotPaused{
+        require(address(this).balance > _artistPending, "No Available Balance");
+        uint256 _balanceAvailable = address(this).balance - _artistPending;
+        require(_balanceAvailable > 0, "No Available Balance");
+        //Process any additional funds
+        _handlePaymentNative(_balanceAvailable);
+    }
+
+    /**
+     * @dev Send All Funds From Contract to Owner
+     */
+    function withdrawERC20(address currency) external whenNotPaused {
+        require(currency != address(0), "Currency Address Not Set");
+        uint256 balance = IERC20(currency).balanceOf(address(this));
+        uint256 _balanceAvailable = balance - _artistPendingERC20[currency];
+        require(_balanceAvailable > 0, "No Available Balance");
+        //Process any additional funds
+        _handlePaymentERC20(currency, _balanceAvailable);
+    }
+
+    /**
+     * @dev Artist Withdraw Pending Balance of Native Tokens
+     */
+    function artistWithdrawPending() external whenNotPaused {
+        //Validate
+        require(artist.account != address(0), "Artist Account Not Set");
+        require(_artistPending > 0, "No Artist Pending Balance");
+        //Transfer Pending Balance
+        payable(artist.account).transfer(_artistPending);
+        //Reset Pending Balance
+        _artistPending = 0;
+    }
+
+    /**
+     * @dev Artist Withdraw Pending Balance of ERC20 Token
+     */
+    function artistWithdrawPendingERC20(address currency) external whenNotPaused {
+        //Validate
+        require(artist.account != address(0), "Artist Account Not Set");
+        require(_artistPendingERC20[currency] > 0, "No Artist Pending Balance");
+        //Transfer Pending Balance
+        IERC20(currency).transfer(artist.account, _artistPendingERC20[currency]);
+        //Reset Pending Balance
+        _artistPendingERC20[currency] = 0;
     }
 
     
+    
+/* Why receive ERC721? What happens with these tokens after they are received? Can they be extracted?
 
     // function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external pure override returns (bytes4) {
         return IERC721ReceiverUpgradeable.onERC721Received.selector;
-
-        // ? What happens with these tokens after they are received? Can they be extracted?
-
     }
-
+*/
 
     /**
      * @dev Called with the sale price to determine how much royalty is owed and to whom.
-     * @param - the NFT asset queried for royalty information
+     * @ param _tokenId - the NFT asset queried for royalty information
      * @param salePrice - the sale price of the NFT asset specified by `tokenId`
      * @return receiver - address of who should be sent the royalty payment
      * @return royaltyAmount - the royalty payment amount for `salePrice`
