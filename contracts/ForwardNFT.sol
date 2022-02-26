@@ -56,7 +56,6 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     // Artist Data
     Artist public artist;
     uint256 public _artistPending;
-    uint256 public _artistPendingERC20;
     mapping(address => uint256) private _artistPendingERC20;
 
     // Treasury
@@ -64,11 +63,11 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     address _treasury;
     
     // Settings
-    uint256 private _amountMin = 1;
-    uint256 private _amountMax = 20;
     uint256 private _priceBase = 0.002 ether;
     uint256 private _priceCurrent = 0.002 ether;
     uint256 private _priceInterval = 0.0001 ether;
+    // uint256 private _amountMin = 1;
+    // uint256 private _amountMax = 20;
 
     // Contract version
     uint256 public constant version = 1;
@@ -127,9 +126,9 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     /**
      * @dev Claim Contract - Set Artist's Account
      */
-    function setArtistAccount(address memory account) public {
+    function setArtistAccount(address account) public {
         //Owner or Adming or Artist
-        require(owner() == _msgSender() || _admins[_msgSender() || _msgSender() == artist.account], "Only admin or artist");
+        require(owner() == _msgSender() || _admins[_msgSender()] || _msgSender() == artist.account, "Only admin or artist");
         artist.account = account;
     }
 
@@ -147,7 +146,7 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     * enables an address for only admin functions
     * @param admin the address to enable
     */
-    function addAdmin( admin) external onlyOwner {
+    function addAdmin(address admin) external onlyOwner {
         _admins[admin] = true;
     }
 
@@ -203,25 +202,27 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     }
 
     /**
-     * @dev Buy New Token(s)
+     * @dev Buy New Token
+     * Single token at a time
      */
-    function mint(uint256 amount, address to) public payable whenNotPaused {
-        require(amount >= _amountMin, "Amount too small");
-        require(amount <= _amountMax, "Amount too big");
-        require(msg.value >= getCurrentPrice() * amount, "Not enough ETH sent");
+    // function mint(uint256 amount, address to) public payable whenNotPaused {
+    function mint(address to) public payable whenNotPaused {
+        // require(amount >= _amountMin, "Amount too small");
+        // require(amount <= _amountMax, "Amount too big");
+        // require(msg.value >= getCurrentPrice() * amount, "Not enough ETH sent");
+        _handlePaymentNative(msg.value);
         //Mint    
-        for (uint256 i = 0; i < amount; i++) {
+        // for (uint256 i = 0; i < amount; i++) {
             _tokenIds.increment();  //We just put this first so that we's start with 1
             _safeMint(to, _tokenIds.current());
-        }
-        _handlePaymentNative(msg.amount);
+        // }
     }
 
     /**
      * @dev Fetch Treasury Data
      * TODO: Centralize Treasury Settings for all Artist Contracts
      */
-    function _getTreasuryData() internal view returns (address, uint16) {
+    function _getTreasuryData() internal view returns (address, uint256) {
         return (_treasury, _treasuryFee);
     }
 
@@ -230,13 +231,13 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
      */
     function _handlePaymentNative(uint256 amount) private {
         //Fetch Treasury Data
-        (address treasury, uint16 treasuryFee) = _getTreasuryData();
+        (address treasury, uint256 treasuryFee) = _getTreasuryData();
         //Split
         uint256 treasuryAmount = (amount * treasuryFee) / BPS_MAX;
         uint256 adjustedAmount = amount - treasuryAmount;
         //Send to Treasury
         payable(treasury).transfer(treasuryAmount);
-        if(artist.account == account(0)) {
+        if(artist.account == address(0)) {
             //Hold for Artist
             _artistPending += adjustedAmount;
         }else{
@@ -248,15 +249,15 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     /**
      * @dev Handle Payments Logic - ERC20 Tokens
      */
-    _handlePaymentERC20(address currency, uint256 amount) private {
+    function _handlePaymentERC20(address currency, uint256 amount) private {
         //Fetch Treasury Data
-        (address treasury, uint16 treasuryFee) = _getTreasuryData();
+        (address treasury, uint256 treasuryFee) = _getTreasuryData();
         //Split
         uint256 treasuryAmount = (amount * treasuryFee) / BPS_MAX;
         uint256 adjustedAmount = amount - treasuryAmount;
         //Send to Treasury
         IERC20(currency).transfer(treasury, treasuryAmount);
-        if(artist.account == account(0)) {
+        if(artist.account == address(0)) {
             //Hold for Artist
             _artistPending += adjustedAmount;
         }else{
@@ -281,12 +282,11 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
      */
     function withdrawERC20(address currency) external whenNotPaused {
         require(currency != address(0), "Currency Address Not Set");
-        uint265 _balance = IERC20(currency).balanceOf(address(this));
-        uint265 _balanceAvailable = IERC20(currency).balanceOf(address(this)) - _artistPendingERC20[currency];
-        uint265 _balanceAvailable = _balance - _artistPendingERC20[currency];
+        uint256 balance = IERC20(currency).balanceOf(address(this));
+        uint256 _balanceAvailable = balance - _artistPendingERC20[currency];
         require(_balanceAvailable > 0, "No Available Balance");
         //Process any additional funds
-        _handlePaymentERC20(currency, amount);
+        _handlePaymentERC20(currency, _balanceAvailable);
     }
 
     /**
@@ -294,7 +294,7 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
      */
     function artistWithdrawPending() external whenNotPaused {
         //Validate
-        require(artist.account !== account(0), "Artist Account Not Set");
+        require(artist.account != address(0), "Artist Account Not Set");
         require(_artistPending > 0, "No Artist Pending Balance");
         //Transfer Pending Balance
         payable(artist.account).transfer(_artistPending);
@@ -307,7 +307,7 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
      */
     function artistWithdrawPendingERC20(address currency) external whenNotPaused {
         //Validate
-        require(artist.account !== account(0), "Artist Account Not Set");
+        require(artist.account != address(0), "Artist Account Not Set");
         require(_artistPendingERC20[currency] > 0, "No Artist Pending Balance");
         //Transfer Pending Balance
         IERC20(currency).transfer(artist.account, _artistPendingERC20[currency]);
@@ -334,7 +334,7 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
      * @return receiver - address of who should be sent the royalty payment
      * @return royaltyAmount - the royalty payment amount for `salePrice`
      */
-    function royaltyInfo(uint256, uint256 salePrice) public view override returns (address receiver, uint256 royaltyAmount) {
+    function royaltyInfo(uint256 _tokenId, uint256 salePrice) public view override returns (address receiver, uint256 royaltyAmount) {
         // if (_fundingRecipient == address(0x0)) {
         //     return (_fundingRecipient, 0);
         // }
