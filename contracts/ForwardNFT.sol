@@ -4,7 +4,7 @@ pragma solidity >=0.8.0 <0.9.0;
 
 //import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 
@@ -17,13 +17,20 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
  */
 interface IERC20 {
     function transfer(address _to, uint256 _amount) external returns (bool);
+    function balanceOf(address owner) external view returns (uint256 balance);
 }
 
 /**
  * SuperTrue Forward NFT
  * Version 0.2.2
  */
-contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Upgradeable, IERC721ReceiverUpgradeable {
+contract ForwardNFT is 
+        OwnableUpgradeable, 
+        ERC721PausableUpgradeable, 
+        IERC2981Upgradeable
+        // IERC721ReceiverUpgradeable 
+        {
+
     using AddressUpgradeable for address;
     using StringsUpgradeable for uint256;
     using CountersUpgradeable for CountersUpgradeable.Counter;
@@ -317,24 +324,22 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
 
     
     
+/* Why receive ERC721? What happens with these tokens after they are received? Can they be extracted?
 
     // function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external pure override returns (bytes4) {
         return IERC721ReceiverUpgradeable.onERC721Received.selector;
-
-        // ? What happens with these tokens after they are received? Can they be extracted?
-
     }
-
+*/
 
     /**
      * @dev Called with the sale price to determine how much royalty is owed and to whom.
-     * @param _tokenId - the NFT asset queried for royalty information
+     * @ param _tokenId - the NFT asset queried for royalty information
      * @param salePrice - the sale price of the NFT asset specified by `tokenId`
      * @return receiver - address of who should be sent the royalty payment
      * @return royaltyAmount - the royalty payment amount for `salePrice`
      */
-    function royaltyInfo(uint256 _tokenId, uint256 salePrice) public view override returns (address receiver, uint256 royaltyAmount) {
+    function royaltyInfo(uint256, uint256 salePrice) public view override returns (address receiver, uint256 royaltyAmount) {
         // if (_fundingRecipient == address(0x0)) {
         //     return (_fundingRecipient, 0);
         // }
