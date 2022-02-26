@@ -74,7 +74,7 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
      * @dev Throws if called by any account other than the owner or admins.
      */
     modifier onlyOwnerOrAdmin() {
-        require(owner() == _msgSender() || _admins[_msgSender()], "Only admin or owner");
+        require(owner() == _msgSender() || isAdmin(_msgSender()), "Only admin or owner");
         _;
     }
 
@@ -128,7 +128,7 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     }
 
     /**
-    * enables an address for only admin functions
+    * @dev enables an address for only admin functions
     * @param admin the address to enable
     */
     function addAdmin(address admin) external onlyOwner {
@@ -136,11 +136,17 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
     }
 
     /**
-    * disables an address for only admin functions
+    * @dev disables an address for only admin functions
     * @param admin the address to disbale
     */
     function removeAdmin(address admin) external onlyOwner {
         _admins[admin] = false;
+    }
+    /**
+     * @dev Function to check if address is admin
+     */
+    function isAdmin(address admin) public view returns (bool) {
+        return _admins[admin];
     }
 
     /**
@@ -182,7 +188,6 @@ contract ForwardNFT is OwnableUpgradeable, ERC721PausableUpgradeable, IERC2981Up
      * @dev Transfer Free Minted NFTs
      */
     function transferReserved(address to, uint256 tokenId) public onlyOwnerOrAdmin {
-        // require(_msgSender() == owner() || _admins[_msgSender()], "Only admin or owner");      //Already Checked By Modifier
         _safeTransfer(address(this), to, tokenId, "");
     }
 
