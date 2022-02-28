@@ -24,7 +24,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // address used for signature verification, changeable by owner
     address public admin;
     address public beaconAddress;
-    address private _config;    //Configuration Contract
+    address private _CONFIG;    //Configuration Contract
     
     // registry of created contracts
     // address[] public artistContracts;
@@ -54,6 +54,19 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         atArtistId.increment();
 
         baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
+    } 
+
+    /**
+     * Get Configurations Contract Address
+     */
+    function getConfig() public view returns (address) {
+        return _CONFIG;
+    }
+    /**
+     * Set Configurations Contract Address
+     */
+    function setConfig(address _config) public onlyOwner {
+        _CONFIG = _config;
     }
 
     function setBaseURI(string memory baseURI_) public {
