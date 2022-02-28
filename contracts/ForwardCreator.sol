@@ -94,7 +94,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
         // add to registry
         // artistContracts.push(address(proxy));    //Array
-        artistContracts[id] = proxy;    //Mapping
+        artistContracts[id] = address(proxy);    //Mapping
 
         emit CreatedArtist(atArtistId.current(), name, symbol, address(proxy));
 
