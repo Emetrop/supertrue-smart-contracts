@@ -73,11 +73,9 @@ contract ForwardNFT is
 
 
     // Settings
-    uint256 private _priceBase = 0.002 ether;
-    uint256 private _priceCurrent = 0.002 ether;
-    uint256 private _priceInterval = 0.0001 ether;
-    // uint256 private _amountMin = 1;
-    // uint256 private _amountMax = 20;
+    uint256 private _price = 0.002 ether;           //Current Price
+    uint256 private _priceBase = 0.002 ether;       //Base Price
+    uint256 private _priceInterval = 0.0001 ether;  //Price Increments
 
     // Contract version
     uint256 public constant version = 1;
@@ -132,9 +130,16 @@ contract ForwardNFT is
     /**
      * Get the Current Token Price
      */
-    function getCurrentPrice() public view returns (uint256) {
-        return _priceBase + (totalSupply() * _priceInterval);
+    function price() public view returns (uint256) {
+        return _price;
     }
+
+    function _updatePrice() private {
+        _price += _priceInterval;
+    }
+
+    
+
 
     /**
      * @dev Set Artist's Details
@@ -240,16 +245,17 @@ contract ForwardNFT is
      * Single token at a time
      */
     // function mint(uint256 amount, address to) public payable whenNotPaused {
-    function mint(address to) public payable whenNotPaused {
-        // require(amount >= _amountMin, "Amount too small");
-        // require(amount <= _amountMax, "Amount too big");
-        // require(msg.value >= getCurrentPrice() * amount, "Not enough ETH sent");
+    function mint(address to) public payable whenNotPaused { 
+        //Validate Amount
+        require(_price >= amount, "Insuficient Payment");
+        //Handle Payment
         _handlePaymentNative(msg.value);
+        //Increment Token ID    
+        _tokenIds.increment();  //We just put this first so that we's start with 1
         //Mint    
-        // for (uint256 i = 0; i < amount; i++) {
-            _tokenIds.increment();  //We just put this first so that we's start with 1
-            _safeMint(to, _tokenIds.current());
-        // }
+        _safeMint(to, _tokenIds.current());
+        //Update Price
+        _updatePrice();
     }
 
     /**
@@ -286,6 +292,8 @@ contract ForwardNFT is
      * @dev Handle Payments Logic - ERC20 Tokens
      */
     function _handlePaymentERC20(address currency, uint256 amount) private {
+        // require(_price > amount, "Insuficient Payment");
+
         //Fetch Treasury Data
         (address treasury, uint256 treasuryFee) = _getTreasuryData();
         //Split
