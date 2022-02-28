@@ -12,6 +12,8 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
+import "interfaces/IForwardCreator.sol";
+
 /**
  * @dev ERC20 Intreface for transfer
  */
@@ -66,10 +68,14 @@ contract ForwardNFT is
     uint256 public _artistPending;
     mapping(address => uint256) private _artistPendingERC20;
 
+
+
     // Treasury
     uint256 private _treasuryFee;
     address _treasury;
     
+
+
     // Settings
     uint256 private _priceBase = 0.002 ether;
     uint256 private _priceCurrent = 0.002 ether;
@@ -255,6 +261,9 @@ contract ForwardNFT is
      * TODO: Centralize Treasury Settings for all Artist Contracts
      */
     function _getTreasuryData() internal view returns (address, uint256) {
+        address configContract = IForwardCreator(_hub).getConfig();
+        IConfig(configContract).getConfig();
+
         return (_treasury, _treasuryFee);
     }
 
@@ -307,6 +316,7 @@ contract ForwardNFT is
         require(_balanceAvailable > 0, "No Available Balance");
         //Process any additional funds
         _handlePaymentNative(_balanceAvailable);
+        //TODO: Emit Event   
     }
 
     /**
@@ -319,6 +329,7 @@ contract ForwardNFT is
         require(_balanceAvailable > 0, "No Available Balance");
         //Process any additional funds
         _handlePaymentERC20(currency, _balanceAvailable);
+        //TODO: Emit Event   
     }
 
     /**
@@ -330,8 +341,11 @@ contract ForwardNFT is
         require(_artistPending > 0, "No Artist Pending Balance");
         //Transfer Pending Balance
         payable(artist.account).transfer(_artistPending);
+
         //Reset Pending Balance
         _artistPending = 0;
+        //TODO: Make into a function & Emit Event
+
     }
 
     /**
