@@ -12,15 +12,11 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
+//Interfaces
 import "interfaces/IForwardCreator.sol";
+import "interfaces/IConfig.sol";
+import "interfaces/IERC20.sol";
 
-/**
- * @dev ERC20 Intreface for transfer
- */
-interface IERC20 {
-    function transfer(address _to, uint256 _amount) external returns (bool);
-    function balanceOf(address owner) external view returns (uint256 balance);
-}
 
 /**
  * SuperTrue Forward NFT
@@ -258,13 +254,12 @@ contract ForwardNFT is
 
     /**
      * @dev Fetch Treasury Data
-     * TODO: Centralize Treasury Settings for all Artist Contracts
+     * Centralized Treasury Settings for all Artist Contracts
      */
     function _getTreasuryData() internal view returns (address, uint256) {
         address configContract = IForwardCreator(_hub).getConfig();
-        IConfig(configContract).getConfig();
-
-        return (_treasury, _treasuryFee);
+        return IConfig(configContract).getTreasuryData();
+        // return (_treasury, _treasuryFee);
     }
 
     /**
