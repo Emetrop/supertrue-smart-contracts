@@ -24,6 +24,8 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // address used for signature verification, changeable by owner
     address public admin;
     address public beaconAddress;
+    address private _config;    //Configuration Contract
+    
     // registry of created contracts
     // address[] public artistContracts;
     mapping(uint256 => address) private artistContracts;
@@ -79,6 +81,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             abi.encodeWithSelector(
                 ForwardNFT(address(0)).initialize.selector,
                 admin,
+                address(this),
                 // 12, "SuperTrue 12", SP12, https://supertrue.fans/
                 id,
                 name,

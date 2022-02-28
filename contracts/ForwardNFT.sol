@@ -51,6 +51,7 @@ contract ForwardNFT is
 
     // json and contract base uri
     string private _uri;
+    address private _hub;   //Hub Contract
 
     // address => allowedToCallFunctions
     mapping(address => bool) private _admins;
@@ -90,10 +91,19 @@ contract ForwardNFT is
         _;
     }
 
+    /**
+     * @dev Throws if called by any account other than the hub.
+     */
+    modifier onlyHub() {
+        require(_hub == _msgSender(), "Only Hub");
+        _;
+    }
+
     // ============ Methods ============
 
     function initialize (
         address owner_,
+        address hub_,
         uint256 artistId_,
         string memory artistName_,
         string memory artistInstagram_,
@@ -103,11 +113,13 @@ contract ForwardNFT is
     ) public initializer {
         __ERC721Pausable_init();
         __ERC721_init_unchained(name_, symbol_);
-        //Set Owner
+        //Set Owner Account
         _transferOwnership(owner_);
+        //Set Hub Address
+        _hub = hub_;
         //Set URI
         _uri = uri_;
-        _royaltyBPS = 1_000;    //Request for 10% royalties on seconday sales       //TODO: Test these weird numbers...
+        _royaltyBPS = 1_000;    //Deafult to 10% royalties on seconday sales
         // _fundingRecipient = payable(owner_);
 
         artist.id = artistId_;
@@ -169,6 +181,14 @@ contract ForwardNFT is
      */
     function isAdmin(address admin) public view returns (bool) {
         return _admins[admin];
+    }
+
+    
+    /**
+     * @dev Function to check if address is admin
+     */
+    function hub(address admin) public view returns (address) {
+        return _hub;
     }
 
     /**
