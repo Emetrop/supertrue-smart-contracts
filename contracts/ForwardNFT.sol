@@ -269,6 +269,14 @@ contract ForwardNFT is
     }
 
     /**
+     * @dev General purpose native currency reception function (donations)
+     */
+    receive() external payable {
+        //Handle Payment
+        _handlePaymentNative(msg.value);
+    }
+
+    /**
      * @dev Handle Payments Logic -  Native Currency
      */
     function _handlePaymentNative(uint256 amount) private {
