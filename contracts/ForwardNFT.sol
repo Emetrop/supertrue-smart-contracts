@@ -52,7 +52,7 @@ contract ForwardNFT is
     address private _hub;   //Hub Contract
 
     // address => allowedToCallFunctions
-    mapping(address => bool) private _admins;
+    mapping(address => bool) private _admins;   //Admins of this contract
 
     // 3rd party royalties Request
     uint256 private _royaltyBPS;
@@ -154,7 +154,7 @@ contract ForwardNFT is
      */
     function setArtistAccount(address account) public {
         //Owner or Adming or Artist
-        require(owner() == _msgSender() || _admins[_msgSender()] || _msgSender() == artist.account, "Only admin or artist");
+        require(owner() == _msgSender() || isAdmin(_msgSender()) || _msgSender() == artist.account, "Only admin or artist");
         artist.account = account;
     }
 
