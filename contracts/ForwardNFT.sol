@@ -185,6 +185,7 @@ contract ForwardNFT is
     }
     /**
      * @dev Function to check if address is admin
+     * TODO: Centralized function to all instance contracts
      */
     function isAdmin(address admin) public view returns (bool) {
         return _admins[admin];
