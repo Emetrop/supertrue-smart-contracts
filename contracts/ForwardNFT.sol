@@ -21,6 +21,8 @@ import "./interfaces/IERC20.sol";
 /**
  * SuperTrue Forward NFT
  * Version 0.2.2
+ * 
+ * TODO: Central Admin for all Contract (In Config)
  */
 contract ForwardNFT is 
         OwnableUpgradeable, 
@@ -55,8 +57,8 @@ contract ForwardNFT is
     mapping(address => bool) private _admins;   //Admins of this contract
 
     // 3rd party royalties Request
-    uint256 private _royaltyBPS;
-    uint16 internal constant BPS_MAX = 10000;
+    uint256 private _royaltyBPS = 1_000;    //Deafult to 10% royalties on seconday sales
+    uint16 internal constant BPS_MAX = 10_000;
     // address payable private _fundingRecipient;   //Using Self
 
     // Artist Data
@@ -66,7 +68,7 @@ contract ForwardNFT is
 
 
 
-    // Treasury
+    // Treasury //TODO: Should Fetch from config
     uint256 private _treasuryFee;
     address _treasury;
     
@@ -119,7 +121,7 @@ contract ForwardNFT is
         _hub = hub_;
         //Set URI
         _uri = uri_;
-        _royaltyBPS = 1_000;    //Deafult to 10% royalties on seconday sales
+        // _royaltyBPS = 1_000;    //Deafult to 10% royalties on seconday sales        //Redundant
         // _fundingRecipient = payable(owner_);
 
         artist.id = artistId_;
@@ -127,19 +129,22 @@ contract ForwardNFT is
         artist.instagram = artistInstagram_;
     }
 
+    //-- Token Price
+    
     /**
-     * Get the Current Token Price
+     * @dev Get the Current Token Price
      */
     function price() public view returns (uint256) {
         return _price;
     }
-
+    /**
+     * @dev Update Token Price
+     */
     function _updatePrice() private {
         _price += _priceInterval;
     }
 
-    
-
+    //-- Artist Data
 
     /**
      * @dev Set Artist's Details
@@ -158,15 +163,7 @@ contract ForwardNFT is
         artist.account = account;
     }
 
-    /**
-     * @dev Set Royalties Requested
-     */
-    // function setRoyalties(uint256 royaltyBPS, address payable fundingRecipient) public onlyOwner {
-    function setRoyalties(uint256 royaltyBPS) public onlyOwner {
-        require(royaltyBPS >= 0 && royaltyBPS <= 10_000, "Wrong royaltyBPS value");
-        _royaltyBPS = royaltyBPS;
-        // _fundingRecipient = fundingRecipient;
-    }
+    //-- Admin Management
 
     /**
     * @dev enables an address for only admin functions
@@ -191,7 +188,16 @@ contract ForwardNFT is
         return _admins[admin];
     }
 
-    
+    /**
+     * @dev Fetch Treasury Data
+     * Centralized Treasury Settings for all Artist Contracts
+     */
+    function _getTreasuryData() internal view returns (address, uint256) {
+        address configContract = IForwardCreator(_hub).getConfig();
+        return IConfig(configContract).getTreasuryData();
+        // return (_treasury, _treasuryFee);
+    }
+
     /**
      * @dev Function to check if address is admin
      */
@@ -204,7 +210,7 @@ contract ForwardNFT is
      *
      * See {ERC721Pausable} and {Pausable-_pause}.
      */
-    function pause() public onlyOwner {
+    function pause() public onlyOwnerOrAdmin {
         _pause();
     }
 
@@ -213,11 +219,11 @@ contract ForwardNFT is
      *
      * See {ERC721Pausable} and {Pausable-_unpause}.
      */
-    function unpause() public onlyOwner {
+    function unpause() public onlyOwnerOrAdmin {
         _unpause();
     }
 
-    function setBaseURI(string memory baseURI) public onlyOwner {
+    function setBaseURI(string memory baseURI) public onlyOwnerOrAdmin {
         _uri = baseURI;
     }
 
@@ -260,20 +266,10 @@ contract ForwardNFT is
     }
 
     /**
-     * @dev Fetch Treasury Data
-     * Centralized Treasury Settings for all Artist Contracts
-     */
-    function _getTreasuryData() internal view returns (address, uint256) {
-        address configContract = IForwardCreator(_hub).getConfig();
-        return IConfig(configContract).getTreasuryData();
-        // return (_treasury, _treasuryFee);
-    }
-
-    /**
      * @dev General purpose native currency reception function (donations)
      */
     receive() external payable {
-        //Handle Payment
+        //Handle as Payment
         _handlePaymentNative(msg.value);
     }
 
@@ -301,7 +297,7 @@ contract ForwardNFT is
      * @dev Handle Payments Logic - ERC20 Tokens
      */
     function _handlePaymentERC20(address currency, uint256 amount) private {
-        // require(_price > amount, "Insuficient Payment");
+        // require(_price > amount, "Insuficient Payment"); //Not Currently Handled
 
         //Fetch Treasury Data
         (address treasury, uint256 treasuryFee) = _getTreasuryData();
@@ -322,7 +318,7 @@ contract ForwardNFT is
     /**
      * @dev Withdraw Additional Funds (Not from minting)
      */
-    function withdraw() external whenNotPaused{
+    function withdraw() external whenNotPaused {
         require(address(this).balance > _artistPending, "No Available Balance");
         uint256 _balanceAvailable = address(this).balance - _artistPending;
         require(_balanceAvailable > 0, "No Available Balance");
@@ -383,6 +379,18 @@ contract ForwardNFT is
     }
 */
 
+    //-- Royalties
+
+    /**
+     * @dev Set Royalties Requested
+     */
+    // function setRoyalties(uint256 royaltyBPS, address payable fundingRecipient) public onlyOwner {
+    function setRoyalties(uint256 royaltyBPS) public onlyOwner {
+        require(royaltyBPS >= 0 && royaltyBPS <= 10_000, "Wrong royaltyBPS value");
+        _royaltyBPS = royaltyBPS;
+        // _fundingRecipient = fundingRecipient;
+    }
+
     /**
      * @dev Called with the sale price to determine how much royalty is owed and to whom.
      * @ param _tokenId - the NFT asset queried for royalty information
@@ -399,6 +407,8 @@ contract ForwardNFT is
         //Using the contract to hold royalties
         return (address(this), (salePrice * _royaltyBPS) / 10_000);
     }
+
+    //-- URI Handling
 
     // https://docs.opensea.io/docs/contract-level-metadata
     function contractURI() public view returns (string memory) {
