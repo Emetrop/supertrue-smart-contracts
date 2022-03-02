@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * Global Configuration Contract
+ * TODO: General Admin(s) for whole protocol
  */
 contract Config is Ownable {
 
@@ -17,6 +18,7 @@ contract Config is Ownable {
     //-- Events --//
     event TreasurySet(address treasury);
     event TreasuryFeeSet(uint256 treasuryFee);
+    
     
     //-- Methods --//
     /**
