@@ -1,9 +1,9 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/contracts/BaseUri.sol": {
-      "lastModificationDate": 1641835038184,
-      "contentHash": "f85e6d0b3d604eb8246049e451d2efe7",
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\contracts\\BaseUri.sol": {
+      "lastModificationDate": 1646161317083,
+      "contentHash": "6919654e2cf6d81b9c17646745c1f768",
       "sourceName": "contracts/BaseUri.sol",
       "solcConfig": {
         "version": "0.8.2",
@@ -46,8 +46,8 @@
         "BaseUri"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol": {
-      "lastModificationDate": 1641263287147,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\access\\OwnableUpgradeable.sol": {
+      "lastModificationDate": 1646186404584,
       "contentHash": "cf6aabe70ba1e832bfd230a0bca4a90a",
       "sourceName": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
       "solcConfig": {
@@ -91,9 +91,9 @@
         "OwnableUpgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/contracts/IBaseUri.sol": {
-      "lastModificationDate": 1641835038186,
-      "contentHash": "149dde98d9e7d1957168ed9cbfbaf92d",
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\contracts\\IBaseUri.sol": {
+      "lastModificationDate": 1646161317085,
+      "contentHash": "e0872aa2bc4c37c33028d01d226adc97",
       "sourceName": "contracts/IBaseUri.sol",
       "solcConfig": {
         "version": "0.8.2",
@@ -133,8 +133,8 @@
         "IBaseUri"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol": {
-      "lastModificationDate": 1641263287154,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\utils\\ContextUpgradeable.sol": {
+      "lastModificationDate": 1646186404033,
       "contentHash": "f6ab00c776fdf19b4fa9ba0309b0218c",
       "sourceName": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol",
       "solcConfig": {
@@ -177,8 +177,8 @@
         "ContextUpgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol": {
-      "lastModificationDate": 1641263291360,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\proxy\\utils\\Initializable.sol": {
+      "lastModificationDate": 1646186404561,
       "contentHash": "5794bf69c8a9e3f669b107e773226716",
       "sourceName": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
       "solcConfig": {
@@ -221,8 +221,8 @@
         "Initializable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol": {
-      "lastModificationDate": 1641263287154,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\utils\\AddressUpgradeable.sol": {
+      "lastModificationDate": 1646186403999,
       "contentHash": "55b302649ec6d2886b1a017576fe887d",
       "sourceName": "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol",
       "solcConfig": {
@@ -263,10 +263,10 @@
         "AddressUpgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/contracts/ForwardNFTV2.sol": {
-      "lastModificationDate": 1642109510671,
-      "contentHash": "ba3bccec59d623dd228628a6862b5029",
-      "sourceName": "contracts/ForwardNFTV2.sol",
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\contracts\\ForwardNFT.sol": {
+      "lastModificationDate": 1646187703062,
+      "contentHash": "c59ee17b2ec8a5d3e86ee3a3f7cf241f",
+      "sourceName": "contracts/ForwardNFT.sol",
       "solcConfig": {
         "version": "0.8.2",
         "settings": {
@@ -299,22 +299,24 @@
       },
       "imports": [
         "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol",
         "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
         "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol",
         "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol",
         "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol"
+        "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol",
+        "./interfaces/IForwardCreator.sol",
+        "./interfaces/IConfig.sol",
+        "./interfaces/IERC20.sol"
       ],
       "versionPragmas": [
         ">=0.8.0 <0.9.0"
       ],
       "artifacts": [
-        "ForwardNFTV2"
+        "ForwardNFT"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol": {
-      "lastModificationDate": 1641263293150,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\token\\ERC721\\extensions\\ERC721PausableUpgradeable.sol": {
+      "lastModificationDate": 1646186404322,
       "contentHash": "9e24c7ce5489553e470a50d52d54b8e7",
       "sourceName": "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol",
       "solcConfig": {
@@ -359,50 +361,8 @@
         "ERC721PausableUpgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol": {
-      "lastModificationDate": 1641263291359,
-      "contentHash": "60093f8f135a0646b7193788efa26af3",
-      "sourceName": "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol",
-      "solcConfig": {
-        "version": "0.8.2",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata",
-                "devdoc",
-                "userdoc",
-                "storageLayout",
-                "evm.gasEstimates"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          },
-          "metadata": {
-            "useLiteralContent": true
-          }
-        }
-      },
-      "imports": [],
-      "versionPragmas": [
-        "^0.8.0"
-      ],
-      "artifacts": [
-        "IERC721ReceiverUpgradeable"
-      ]
-    },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol": {
-      "lastModificationDate": 1641263287152,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\interfaces\\IERC2981Upgradeable.sol": {
+      "lastModificationDate": 1646186404482,
       "contentHash": "cfac01f8eb9d80574d5fe4c22408e7c9",
       "sourceName": "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol",
       "solcConfig": {
@@ -445,8 +405,8 @@
         "IERC2981Upgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol": {
-      "lastModificationDate": 1641263287154,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\utils\\StringsUpgradeable.sol": {
+      "lastModificationDate": 1646186404714,
       "contentHash": "f60b5fcbc57911b0fbc7a31a110f90bc",
       "sourceName": "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol",
       "solcConfig": {
@@ -487,8 +447,8 @@
         "StringsUpgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol": {
-      "lastModificationDate": 1641263287154,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\utils\\CountersUpgradeable.sol": {
+      "lastModificationDate": 1646186404038,
       "contentHash": "2e908c762a799baea365e68a50500e2c",
       "sourceName": "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol",
       "solcConfig": {
@@ -529,8 +489,134 @@
         "CountersUpgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol": {
-      "lastModificationDate": 1641263291359,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\contracts\\interfaces\\IForwardCreator.sol": {
+      "lastModificationDate": 1646186858307,
+      "contentHash": "8cd0ad81235ef7d17d443f7735897712",
+      "sourceName": "contracts/interfaces/IForwardCreator.sol",
+      "solcConfig": {
+        "version": "0.8.2",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "devdoc",
+                "userdoc",
+                "storageLayout",
+                "evm.gasEstimates"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          },
+          "metadata": {
+            "useLiteralContent": true
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IForwardCreator"
+      ]
+    },
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\contracts\\interfaces\\IConfig.sol": {
+      "lastModificationDate": 1646186882185,
+      "contentHash": "ac691cd0f91c4db2a2d2a68e0661332a",
+      "sourceName": "contracts/interfaces/IConfig.sol",
+      "solcConfig": {
+        "version": "0.8.2",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "devdoc",
+                "userdoc",
+                "storageLayout",
+                "evm.gasEstimates"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          },
+          "metadata": {
+            "useLiteralContent": true
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IConfig"
+      ]
+    },
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\contracts\\interfaces\\IERC20.sol": {
+      "lastModificationDate": 1646161317086,
+      "contentHash": "b2d729da2ffe3a3cb3853d4080309c2f",
+      "sourceName": "contracts/interfaces/IERC20.sol",
+      "solcConfig": {
+        "version": "0.8.2",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "devdoc",
+                "userdoc",
+                "storageLayout",
+                "evm.gasEstimates"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          },
+          "metadata": {
+            "useLiteralContent": true
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC20"
+      ]
+    },
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\token\\ERC721\\ERC721Upgradeable.sol": {
+      "lastModificationDate": 1646186404333,
       "contentHash": "f2e1f42255bfd34f3da7998b4aeba6a2",
       "sourceName": "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol",
       "solcConfig": {
@@ -580,8 +666,8 @@
         "ERC721Upgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol": {
-      "lastModificationDate": 1641263287150,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\security\\PausableUpgradeable.sol": {
+      "lastModificationDate": 1646186404593,
       "contentHash": "56eb710f3dbdaf143774cec1e8bab998",
       "sourceName": "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol",
       "solcConfig": {
@@ -625,8 +711,8 @@
         "PausableUpgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol": {
-      "lastModificationDate": 1641263291359,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\token\\ERC721\\IERC721Upgradeable.sol": {
+      "lastModificationDate": 1646186404520,
       "contentHash": "3bea986b69e509a8d978ab2502a8bf2e",
       "sourceName": "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol",
       "solcConfig": {
@@ -669,8 +755,50 @@
         "IERC721Upgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol": {
-      "lastModificationDate": 1641263293151,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\token\\ERC721\\IERC721ReceiverUpgradeable.sol": {
+      "lastModificationDate": 1646186404512,
+      "contentHash": "60093f8f135a0646b7193788efa26af3",
+      "sourceName": "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol",
+      "solcConfig": {
+        "version": "0.8.2",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "devdoc",
+                "userdoc",
+                "storageLayout",
+                "evm.gasEstimates"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          },
+          "metadata": {
+            "useLiteralContent": true
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "IERC721ReceiverUpgradeable"
+      ]
+    },
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\token\\ERC721\\extensions\\IERC721MetadataUpgradeable.sol": {
+      "lastModificationDate": 1646186404506,
       "contentHash": "76212ca0265501d1eb3dd1175e6afca4",
       "sourceName": "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/IERC721MetadataUpgradeable.sol",
       "solcConfig": {
@@ -713,8 +841,8 @@
         "IERC721MetadataUpgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol": {
-      "lastModificationDate": 1641263291360,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\utils\\introspection\\ERC165Upgradeable.sol": {
+      "lastModificationDate": 1646186404223,
       "contentHash": "a71370fa2c90b44922da1995bdf95e2a",
       "sourceName": "@openzeppelin/contracts-upgradeable/utils/introspection/ERC165Upgradeable.sol",
       "solcConfig": {
@@ -758,8 +886,8 @@
         "ERC165Upgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol": {
-      "lastModificationDate": 1641263291361,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\utils\\introspection\\IERC165Upgradeable.sol": {
+      "lastModificationDate": 1646186404452,
       "contentHash": "d6ecf203a5e72c845be9bbf2f304a289",
       "sourceName": "@openzeppelin/contracts-upgradeable/utils/introspection/IERC165Upgradeable.sol",
       "solcConfig": {
@@ -800,8 +928,8 @@
         "IERC165Upgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol": {
-      "lastModificationDate": 1641263287152,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\interfaces\\IERC165Upgradeable.sol": {
+      "lastModificationDate": 1646186404447,
       "contentHash": "0ce0dc23b57eb688403ad5169cc18a7d",
       "sourceName": "@openzeppelin/contracts-upgradeable/interfaces/IERC165Upgradeable.sol",
       "solcConfig": {
@@ -842,10 +970,10 @@
       ],
       "artifacts": []
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/contracts/ForwardCreatorV2.sol": {
-      "lastModificationDate": 1641835038184,
-      "contentHash": "ae3321bc36bfdce8bbfb2d96824af9cb",
-      "sourceName": "contracts/ForwardCreatorV2.sol",
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\contracts\\ForwardCreator.sol": {
+      "lastModificationDate": 1646188055315,
+      "contentHash": "b4b1da74019588711f8274adb7e665e0",
+      "sourceName": "contracts/ForwardCreator.sol",
       "solcConfig": {
         "version": "0.8.2",
         "settings": {
@@ -882,6 +1010,7 @@
         "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
         "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol",
         "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol",
+        "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol",
         "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol",
         "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol",
         "./ForwardNFT.sol",
@@ -891,11 +1020,11 @@
         ">=0.8.0 <0.9.0"
       ],
       "artifacts": [
-        "ForwardCreatorV2"
+        "ForwardCreator"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol": {
-      "lastModificationDate": 1641263291360,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\proxy\\utils\\UUPSUpgradeable.sol": {
+      "lastModificationDate": 1646186404768,
       "contentHash": "38239f5716fb005a4942175109ce7544",
       "sourceName": "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
       "solcConfig": {
@@ -939,8 +1068,8 @@
         "UUPSUpgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol": {
-      "lastModificationDate": 1641263291360,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\utils\\cryptography\\ECDSAUpgradeable.sol": {
+      "lastModificationDate": 1646186404097,
       "contentHash": "7d4bea73a6c4c41b6226fab3c9b750e7",
       "sourceName": "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol",
       "solcConfig": {
@@ -983,8 +1112,8 @@
         "ECDSAUpgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol": {
-      "lastModificationDate": 1641263291381,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts\\proxy\\beacon\\BeaconProxy.sol": {
+      "lastModificationDate": 1646186404035,
       "contentHash": "0d71075819600720f2c99ed4b31d88e0",
       "sourceName": "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol",
       "solcConfig": {
@@ -1029,8 +1158,8 @@
         "BeaconProxy"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol": {
-      "lastModificationDate": 1641263291381,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts\\proxy\\beacon\\UpgradeableBeacon.sol": {
+      "lastModificationDate": 1646186404847,
       "contentHash": "8ffefb755605824cf730ce4092b2f581",
       "sourceName": "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol",
       "solcConfig": {
@@ -1075,8 +1204,8 @@
         "UpgradeableBeacon"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/hardhat/console.sol": {
-      "lastModificationDate": 1641263283979,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\hardhat\\console.sol": {
+      "lastModificationDate": 1646186405852,
       "contentHash": "cc4777addd464ea56fa35b1c45df0591",
       "sourceName": "hardhat/console.sol",
       "solcConfig": {
@@ -1117,8 +1246,8 @@
         "console"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol": {
-      "lastModificationDate": 1641263291360,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\proxy\\ERC1967\\ERC1967UpgradeUpgradeable.sol": {
+      "lastModificationDate": 1646186404235,
       "contentHash": "523aba2cb7f40529165e0b1da3beaff3",
       "sourceName": "@openzeppelin/contracts-upgradeable/proxy/ERC1967/ERC1967UpgradeUpgradeable.sol",
       "solcConfig": {
@@ -1164,8 +1293,8 @@
         "ERC1967UpgradeUpgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/proxy/beacon/IBeaconUpgradeable.sol": {
-      "lastModificationDate": 1641263291360,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\proxy\\beacon\\IBeaconUpgradeable.sol": {
+      "lastModificationDate": 1646186404408,
       "contentHash": "21bffd733b4ca013e125a0ffe2e52254",
       "sourceName": "@openzeppelin/contracts-upgradeable/proxy/beacon/IBeaconUpgradeable.sol",
       "solcConfig": {
@@ -1206,8 +1335,8 @@
         "IBeaconUpgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts-upgradeable/utils/StorageSlotUpgradeable.sol": {
-      "lastModificationDate": 1641263287154,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts-upgradeable\\utils\\StorageSlotUpgradeable.sol": {
+      "lastModificationDate": 1646186404705,
       "contentHash": "fffe21caed735dbc8a621e3844f0adb1",
       "sourceName": "@openzeppelin/contracts-upgradeable/utils/StorageSlotUpgradeable.sol",
       "solcConfig": {
@@ -1248,8 +1377,8 @@
         "StorageSlotUpgradeable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts/proxy/beacon/IBeacon.sol": {
-      "lastModificationDate": 1641263291381,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts\\proxy\\beacon\\IBeacon.sol": {
+      "lastModificationDate": 1646186404472,
       "contentHash": "b6bd23bf19e90b771337037706470933",
       "sourceName": "@openzeppelin/contracts/proxy/beacon/IBeacon.sol",
       "solcConfig": {
@@ -1290,9 +1419,9 @@
         "IBeacon"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts/proxy/Proxy.sol": {
-      "lastModificationDate": 1641263287157,
-      "contentHash": "0ce1b80a6e3f466bd652ca52bb406173",
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts\\proxy\\Proxy.sol": {
+      "lastModificationDate": 1646186404793,
+      "contentHash": "64bbdea195e6365927334efd0fc13255",
       "sourceName": "@openzeppelin/contracts/proxy/Proxy.sol",
       "solcConfig": {
         "version": "0.8.2",
@@ -1332,9 +1461,9 @@
         "Proxy"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts/proxy/ERC1967/ERC1967Upgrade.sol": {
-      "lastModificationDate": 1641263291390,
-      "contentHash": "ceadc1585c7916aea8d2f4c04c82c462",
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts\\proxy\\ERC1967\\ERC1967Upgrade.sol": {
+      "lastModificationDate": 1646186404291,
+      "contentHash": "6baa887a798e95b14f34e093f117e9b2",
       "sourceName": "@openzeppelin/contracts/proxy/ERC1967/ERC1967Upgrade.sol",
       "solcConfig": {
         "version": "0.8.2",
@@ -1368,6 +1497,7 @@
       },
       "imports": [
         "../beacon/IBeacon.sol",
+        "../../interfaces/draft-IERC1822.sol",
         "../../utils/Address.sol",
         "../../utils/StorageSlot.sol"
       ],
@@ -1378,10 +1508,10 @@
         "ERC1967Upgrade"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts/utils/Address.sol": {
-      "lastModificationDate": 1641263287169,
-      "contentHash": "4cff8b2ea0d958750786b4e3ca308445",
-      "sourceName": "@openzeppelin/contracts/utils/Address.sol",
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts\\interfaces\\draft-IERC1822.sol": {
+      "lastModificationDate": 1646186404187,
+      "contentHash": "2858d98e74e67987ec81b39605230b74",
+      "sourceName": "@openzeppelin/contracts/interfaces/draft-IERC1822.sol",
       "solcConfig": {
         "version": "0.8.2",
         "settings": {
@@ -1417,11 +1547,53 @@
         "^0.8.0"
       ],
       "artifacts": [
+        "IERC1822Proxiable"
+      ]
+    },
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts\\utils\\Address.sol": {
+      "lastModificationDate": 1646186404015,
+      "contentHash": "ad714a6368ee7d43cded6bbe8af0b155",
+      "sourceName": "@openzeppelin/contracts/utils/Address.sol",
+      "solcConfig": {
+        "version": "0.8.2",
+        "settings": {
+          "optimizer": {
+            "enabled": true,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "devdoc",
+                "userdoc",
+                "storageLayout",
+                "evm.gasEstimates"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          },
+          "metadata": {
+            "useLiteralContent": true
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.1"
+      ],
+      "artifacts": [
         "Address"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts/utils/StorageSlot.sol": {
-      "lastModificationDate": 1641263287175,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts\\utils\\StorageSlot.sol": {
+      "lastModificationDate": 1646186404829,
       "contentHash": "187a01c1e4e638014509dfee3ac6faa9",
       "sourceName": "@openzeppelin/contracts/utils/StorageSlot.sol",
       "solcConfig": {
@@ -1462,8 +1634,8 @@
         "StorageSlot"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts/access/Ownable.sol": {
-      "lastModificationDate": 1641263287153,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts\\access\\Ownable.sol": {
+      "lastModificationDate": 1646186404776,
       "contentHash": "8398972af73b4e9e5ff3b31cad86234f",
       "sourceName": "@openzeppelin/contracts/access/Ownable.sol",
       "solcConfig": {
@@ -1506,8 +1678,8 @@
         "Ownable"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/node_modules/@openzeppelin/contracts/utils/Context.sol": {
-      "lastModificationDate": 1641263287171,
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\node_modules\\@openzeppelin\\contracts\\utils\\Context.sol": {
+      "lastModificationDate": 1646186404082,
       "contentHash": "5f2c5c4b6af2dd4551027144797bc8be",
       "sourceName": "@openzeppelin/contracts/utils/Context.sol",
       "solcConfig": {
@@ -1548,9 +1720,9 @@
         "Context"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/contracts/ForwardUpgradeableBeacon.sol": {
-      "lastModificationDate": 1641835038186,
-      "contentHash": "759fd245182f447e18f64559d9744766",
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\contracts\\ForwardUpgradeableBeacon.sol": {
+      "lastModificationDate": 1646161317085,
+      "contentHash": "3dc7aa45ae5e9910d6ad2d8d8972ab7b",
       "sourceName": "contracts/ForwardUpgradeableBeacon.sol",
       "solcConfig": {
         "version": "0.8.2",
@@ -1592,9 +1764,9 @@
         "ForwardUpgradeableBeacon"
       ]
     },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/contracts/UpgradeableBeacon.sol": {
-      "lastModificationDate": 1641835038187,
-      "contentHash": "e5d92c55ae93f43b90622eed960a752a",
+    "C:\\Users\\toled\\Downloads\\GitHub\\supertrue-smart-contracts\\contracts\\UpgradeableBeacon.sol": {
+      "lastModificationDate": 1646161317085,
+      "contentHash": "b4260c0e430e8e2f01aee130395844ac",
       "sourceName": "contracts/UpgradeableBeacon.sol",
       "solcConfig": {
         "version": "0.8.2",
@@ -1636,108 +1808,6 @@
       ],
       "artifacts": [
         "UpgradeableBeacon"
-      ]
-    },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/contracts/ForwardNFT.sol": {
-      "lastModificationDate": 1642783507909,
-      "contentHash": "fd132df6b579c2ff025a97fe9daaf9ae",
-      "sourceName": "contracts/ForwardNFT.sol",
-      "solcConfig": {
-        "version": "0.8.2",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata",
-                "devdoc",
-                "userdoc",
-                "storageLayout",
-                "evm.gasEstimates"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          },
-          "metadata": {
-            "useLiteralContent": true
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol"
-      ],
-      "versionPragmas": [
-        ">=0.8.0 <0.9.0"
-      ],
-      "artifacts": [
-        "ForwardNFT"
-      ]
-    },
-    "/Users/martin/Work/personal/nfts/forward-nft/packages/hardhat/contracts/ForwardCreator.sol": {
-      "lastModificationDate": 1642782771879,
-      "contentHash": "1c40bc0698222e75a10010fa26a809ad",
-      "sourceName": "contracts/ForwardCreator.sol",
-      "solcConfig": {
-        "version": "0.8.2",
-        "settings": {
-          "optimizer": {
-            "enabled": true,
-            "runs": 200
-          },
-          "outputSelection": {
-            "*": {
-              "*": [
-                "abi",
-                "evm.bytecode",
-                "evm.deployedBytecode",
-                "evm.methodIdentifiers",
-                "metadata",
-                "devdoc",
-                "userdoc",
-                "storageLayout",
-                "evm.gasEstimates"
-              ],
-              "": [
-                "ast"
-              ]
-            }
-          },
-          "metadata": {
-            "useLiteralContent": true
-          }
-        }
-      },
-      "imports": [
-        "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol",
-        "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol",
-        "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol",
-        "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol",
-        "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol",
-        "./ForwardNFT.sol"
-      ],
-      "versionPragmas": [
-        ">=0.8.0 <0.9.0"
-      ],
-      "artifacts": [
-        "ForwardCreator"
       ]
     }
   }
