@@ -20,9 +20,10 @@ import "./interfaces/IERC20.sol";
 
 /**
  * SuperTrue Forward NFT
- * Version 0.2.2
+ * Version 0.4.0
  * 
  * TODO: Central Admin for all Contract (In Config)
+ * TODO: Remove reserve() Functionality
  */
 contract ForwardNFT is 
         OwnableUpgradeable, 
@@ -67,16 +68,15 @@ contract ForwardNFT is
     mapping(address => uint256) private _artistPendingERC20;
 
 
-
-    // Treasury //TODO: Should Fetch from config
-    uint256 private _treasuryFee;
-    address _treasury;
-    
+    /* DEPRECATED: Fetch from Main Config
+    // Treasury     
+    // uint256 private _treasuryFee;
+    // address _treasury;
+    */
 
 
     // Settings
-    uint256 private _price = 0.002 ether;           //Current Price
-    uint256 private _priceBase = 0.002 ether;       //Base Price
+    uint256 private _price = 0.002 ether;           //Current Price / Base Price
     uint256 private _priceInterval = 0.0001 ether;  //Price Increments
 
     // Contract version
@@ -100,6 +100,25 @@ contract ForwardNFT is
         require(_hub == _msgSender(), "Only Hub");
         _;
     }
+
+    // ============ Events ============
+
+    /**
+     * @dev Admin Added
+     */
+    event AdminAdded(address admin);
+    /**
+     * @dev Admin Removed
+     */
+    event AdminRemoved(address admin);
+    /**
+     * @dev Funds Withdrawal
+     */
+    event Withdrawal(address indexed to, address indexed currency, uint256 amount);
+    /**
+     * @dev Claimed by Artist
+     */
+    event ArtistClaimed(address artist);
 
     // ============ Methods ============
 
@@ -161,7 +180,15 @@ contract ForwardNFT is
         //Owner or Adming or Artist
         require(owner() == _msgSender() || isAdmin(_msgSender()) || _msgSender() == artist.account, "Only admin or artist");
         artist.account = account;
+        emit ArtistClaimed(account);
     }
+    
+    /**
+     * @dev Get Artist's Address
+     */
+    // function artistAddress() public view returns (address) {
+    //     return artist.account;
+    // }
 
     //-- Admin Management
 
@@ -171,6 +198,7 @@ contract ForwardNFT is
     */
     function addAdmin(address admin) external onlyOwner {
         _admins[admin] = true;
+        emit AdminAdded(admin);
     }
 
     /**
@@ -179,14 +207,16 @@ contract ForwardNFT is
     */
     function removeAdmin(address admin) external onlyOwner {
         _admins[admin] = false;
+        emit AdminRemoved(admin);
     }
+
     /**
      * @dev Function to check if address is admin
-     * TODO: Centralized function to all instance contracts
      */
     function isAdmin(address admin) public view returns (bool) {
         return _admins[admin];
     }
+
 
     /**
      * @dev Fetch Treasury Data
@@ -199,7 +229,7 @@ contract ForwardNFT is
     }
 
     /**
-     * @dev Function to check if address is admin
+     * @dev Get Hub address
      */
     function hub() public view returns (address) {
         return _hub;
@@ -231,11 +261,12 @@ contract ForwardNFT is
         return _tokenIds.current() - 1;
     }
 
+
+
    /**
      * @dev Mint Free NFTs
      */
     function reserve() public onlyOwnerOrAdmin {
-        // require(_msgSender() == owner(), "Only admin or owner");     //Already Checked By Modifier
         _tokenIds.increment();
         _mint(address(this), _tokenIds.current());
     }
@@ -246,6 +277,8 @@ contract ForwardNFT is
     function transferReserved(address to, uint256 tokenId) public onlyOwnerOrAdmin {
         _safeTransfer(address(this), to, tokenId, "");
     }
+
+
 
     /**
      * @dev Buy New Token
@@ -284,12 +317,14 @@ contract ForwardNFT is
         uint256 adjustedAmount = amount - treasuryAmount;
         //Send to Treasury
         payable(treasury).transfer(treasuryAmount);
+        emit Withdrawal(treasury, address(0), treasuryAmount);
         if(artist.account == address(0)) {
             //Hold for Artist
             _artistPending += adjustedAmount;
         }else{
             //Send to Artist
             payable(artist.account).transfer(adjustedAmount);
+            emit Withdrawal(artist.account, address(0), adjustedAmount);
         }
     }
 
@@ -306,12 +341,14 @@ contract ForwardNFT is
         uint256 adjustedAmount = amount - treasuryAmount;
         //Send to Treasury
         IERC20(currency).transfer(treasury, treasuryAmount);
+        emit Withdrawal(treasury, currency, treasuryAmount);
         if(artist.account == address(0)) {
             //Hold for Artist
             _artistPending += adjustedAmount;
         }else{
             //Send to Artist
             IERC20(currency).transfer(artist.account, adjustedAmount);
+            emit Withdrawal(artist.account, currency, adjustedAmount);
         }
     }
 
@@ -324,7 +361,6 @@ contract ForwardNFT is
         require(_balanceAvailable > 0, "No Available Balance");
         //Process any additional funds
         _handlePaymentNative(_balanceAvailable);
-        //TODO: Emit Event   
     }
 
     /**
@@ -337,7 +373,6 @@ contract ForwardNFT is
         require(_balanceAvailable > 0, "No Available Balance");
         //Process any additional funds
         _handlePaymentERC20(currency, _balanceAvailable);
-        //TODO: Emit Event   
     }
 
     /**
@@ -349,11 +384,9 @@ contract ForwardNFT is
         require(_artistPending > 0, "No Artist Pending Balance");
         //Transfer Pending Balance
         payable(artist.account).transfer(_artistPending);
-
+        emit Withdrawal(artist.account, address(0), _artistPending);
         //Reset Pending Balance
         _artistPending = 0;
-        //TODO: Make into a function & Emit Event
-
     }
 
     /**
@@ -365,6 +398,7 @@ contract ForwardNFT is
         require(_artistPendingERC20[currency] > 0, "No Artist Pending Balance");
         //Transfer Pending Balance
         IERC20(currency).transfer(artist.account, _artistPendingERC20[currency]);
+        emit Withdrawal(artist.account, currency, _artistPendingERC20[currency]);
         //Reset Pending Balance
         _artistPendingERC20[currency] = 0;
     }
