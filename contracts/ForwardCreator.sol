@@ -11,7 +11,7 @@ import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import '@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol';
 import '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
 import './ForwardNFT.sol';
-//import "hardhat/console.sol";
+// import "hardhat/console.sol";
 
 contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     using CountersUpgradeable for CountersUpgradeable.Counter;
@@ -92,7 +92,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         BeaconProxy proxy = new BeaconProxy(
             beaconAddress,
             abi.encodeWithSelector(
-                ForwardNFT(address(0)).initialize.selector,
+                ForwardNFT(payable(address(0)) ).initialize.selector,
                 admin,
                 address(this),
                 // 12, "SuperTrue 12", SP12, https://supertrue.fans/

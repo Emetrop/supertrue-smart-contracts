@@ -13,9 +13,9 @@ import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
 //Interfaces
-import "interfaces/IForwardCreator.sol";
-import "interfaces/IConfig.sol";
-import "interfaces/IERC20.sol";
+import "./interfaces/IForwardCreator.sol";
+import "./interfaces/IConfig.sol";
+import "./interfaces/IERC20.sol";
 
 
 /**
@@ -182,6 +182,7 @@ contract ForwardNFT is
     }
     /**
      * @dev Function to check if address is admin
+     * TODO: Centralized function to all instance contracts
      */
     function isAdmin(address admin) public view returns (bool) {
         return _admins[admin];
@@ -200,7 +201,7 @@ contract ForwardNFT is
     /**
      * @dev Function to check if address is admin
      */
-    function hub(address admin) public view returns (address) {
+    function hub() public view returns (address) {
         return _hub;
     }
 
@@ -253,7 +254,7 @@ contract ForwardNFT is
     // function mint(uint256 amount, address to) public payable whenNotPaused {
     function mint(address to) public payable whenNotPaused { 
         //Validate Amount
-        require(_price >= amount, "Insuficient Payment");
+        require(_price >= msg.value, "Insuficient Payment");
         //Handle Payment
         _handlePaymentNative(msg.value);
         //Increment Token ID    
