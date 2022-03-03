@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract Config is Ownable {
 
-    //-- State --//
+    //-- Storage --//
     //Treasury
     uint256 private _treasuryFee;
     address _treasury;
