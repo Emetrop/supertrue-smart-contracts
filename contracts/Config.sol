@@ -6,20 +6,21 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * Global Configuration Contract
- * TODO: General Admin(s) for whole protocol
  */
 contract Config is Ownable {
 
     // Arbitrary contract designation signature
-    bytes16 public constant role = "SupertrueConfig";
+    string public constant role = "SupertrueConfig";
 
     //-- Storage --//
     //Treasury
-    uint256 private _treasuryFee;
-    address _treasury;
-
+    uint256 private _treasuryFee = 2000;   //Default to 20%
+    address private _treasury;
     //Admin
     mapping(address => bool) private _admins;   //Admins of this contract
+    //Base URI
+    string private _BaseURI;
+
 
     //-- Events --//
     event TreasurySet(address treasury);
@@ -58,9 +59,7 @@ contract Config is Ownable {
         _treasuryFee = newTreasuryFee;
         emit TreasuryFeeSet(newTreasuryFee);
     }
-    
-
-    
+        
     //-- Admin Management
 
     /**
