@@ -71,7 +71,7 @@ contract ForwardNFT is
     /* DEPRECATED: Fetch from Main Config
     // Treasury     
     // uint256 private _treasuryFee;
-    // address _treasury;
+    // address private _treasury;
     */
 
 
