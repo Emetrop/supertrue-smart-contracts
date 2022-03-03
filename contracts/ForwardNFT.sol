@@ -182,7 +182,7 @@ contract ForwardNFT is
         artist.account = account;
         emit ArtistClaimed(account);
     }
-    
+
     /**
      * @dev Get Artist's Address
      */
@@ -258,7 +258,7 @@ contract ForwardNFT is
     }
 
     function totalSupply() public view returns (uint256) {
-        return _tokenIds.current() - 1;
+        return _tokenIds.current();
     }
 
 
