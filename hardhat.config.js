@@ -28,7 +28,8 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 //
 // Select the network you want to deploy to here:
 //
-const defaultNetwork = "localhost";
+// const defaultNetwork = "localhost";
+const defaultNetwork =  "hardhat";
 
 const mainnetGwei = 21;
 
@@ -66,6 +67,8 @@ module.exports = {
   // Follow the directions, and uncomment the network you wish to deploy to.
 
   networks: {
+    hardhat: {
+    },
     localhost: {
       url: "http://localhost:8545",
       /*
