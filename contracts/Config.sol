@@ -10,17 +10,28 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract Config is Ownable {
 
+    // Arbitrary contract designation signature
+    bytes16 public constant role = "SupertrueConfig";
+
     //-- Storage --//
     //Treasury
     uint256 private _treasuryFee;
     address _treasury;
 
+    //Admin
+    mapping(address => bool) private _admins;   //Admins of this contract
+
     //-- Events --//
     event TreasurySet(address treasury);
     event TreasuryFeeSet(uint256 treasuryFee);
+    event AdminAdded(address admin);
+    event AdminRemoved(address admin);
     
-    
+
     //-- Methods --//
+    
+    //-- Treasury
+
     /**
      * @dev Fetch Treasury Data
      */
@@ -48,4 +59,34 @@ contract Config is Ownable {
         emit TreasuryFeeSet(newTreasuryFee);
     }
     
+
+    
+    //-- Admin Management
+
+    /**
+    * @dev enables an address for only admin functions
+    * @param admin the address to enable
+    */
+    function addAdmin(address admin) external onlyOwner {
+        _admins[admin] = true;
+        emit AdminAdded(admin);
+    }
+
+    /**
+    * @dev disables an address for only admin functions
+    * @param admin the address to disbale
+    */
+    function removeAdmin(address admin) external onlyOwner {
+        _admins[admin] = false;
+        emit AdminRemoved(admin);
+    }
+
+    /**
+     * @dev Function to check if address is admin
+     */
+    function isAdmin(address account) public view returns (bool) {
+        return _admins[account];
+    }
+
+
 }

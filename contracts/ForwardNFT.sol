@@ -103,14 +103,7 @@ contract ForwardNFT is
 
     // ============ Events ============
 
-    /**
-     * @dev Admin Added
-     */
-    event AdminAdded(address admin);
-    /**
-     * @dev Admin Removed
-     */
-    event AdminRemoved(address admin);
+    
     /**
      * @dev Funds Withdrawal
      */
@@ -177,7 +170,7 @@ contract ForwardNFT is
      * @dev Claim Contract - Set Artist's Account
      */
     function setArtistAccount(address account) public {
-        //Owner or Adming or Artist
+        //Owner or Admin or Artist
         require(owner() == _msgSender() || isAdmin(_msgSender()) || _msgSender() == artist.account, "Only admin or artist");
         artist.account = account;
         emit ArtistClaimed(account);
@@ -190,33 +183,14 @@ contract ForwardNFT is
     //     return artist.account;
     // }
 
-    //-- Admin Management
-
-    /**
-    * @dev enables an address for only admin functions
-    * @param admin the address to enable
-    */
-    function addAdmin(address admin) external onlyOwner {
-        _admins[admin] = true;
-        emit AdminAdded(admin);
-    }
-
-    /**
-    * @dev disables an address for only admin functions
-    * @param admin the address to disbale
-    */
-    function removeAdmin(address admin) external onlyOwner {
-        _admins[admin] = false;
-        emit AdminRemoved(admin);
-    }
-
     /**
      * @dev Function to check if address is admin
      */
-    function isAdmin(address admin) public view returns (bool) {
-        return _admins[admin];
+    function isAdmin(address account) public view returns (bool) {
+        // return _admins[account];
+        address configContract = IForwardCreator(_hub).getConfig();
+        return IConfig(configContract).isAdmin(account);
     }
-
 
     /**
      * @dev Fetch Treasury Data
