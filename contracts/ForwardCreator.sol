@@ -11,6 +11,8 @@ import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import '@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol';
 import '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
 import './ForwardNFT.sol';
+import "./interfaces/IConfig.sol";
+
 // import "hardhat/console.sol";
 
 contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
@@ -62,10 +64,19 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     function getConfig() public view returns (address) {
         return _CONFIG;
     }
+
+    // Test Function
+    function getConfRole(address _config) external view onlyOwner returns (string memory) {
+        return IConfig(_config).role();
+    }
+
     /**
      * Set Configurations Contract Address
      */
     function setConfig(address _config) public onlyOwner {
+        //String Match - Validate Contract's Designation
+        require(keccak256(abi.encodePacked(IConfig(_config).role())) == keccak256(abi.encodePacked("SupertrueConfig")), "Invalid Config Contract");
+        //Set
         _CONFIG = _config;
     }
 
@@ -73,6 +84,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         require(owner() == _msgSender() || admin == _msgSender(), 'UNAUTHORIZED');
         baseURI = baseURI_;
     }
+
 
     /// Creates a new artist contract
     /// @param name Name of the artist
@@ -92,7 +104,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         BeaconProxy proxy = new BeaconProxy(
             beaconAddress,
             abi.encodeWithSelector(
-                ForwardNFT(payable(address(0)) ).initialize.selector,
+                ForwardNFT( payable(address(0)) ).initialize.selector,
                 admin,
                 address(this),
                 // 12, "SuperTrue 12", SP12, https://supertrue.fans/
@@ -118,6 +130,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     /// Sets the admin for authorizing artist deployment
     /// @param _newAdmin address of new admin
+    // TODO: Use Config for Admin Func.
     function setAdmin(address _newAdmin) external {
         require(owner() == _msgSender() || admin == _msgSender(), 'UNAUTHORIZED');
         admin = _newAdmin;
