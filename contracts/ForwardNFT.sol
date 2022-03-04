@@ -198,8 +198,10 @@ contract ForwardNFT is
      */
     function _getTreasuryData() internal view returns (address, uint256) {
         address configContract = IForwardCreator(_hub).getConfig();
-        return IConfig(configContract).getTreasuryData();
-        // return (_treasury, _treasuryFee);
+        (address treasury, uint256 treasuryFee) = IConfig(configContract).getTreasuryData();
+        //Validate (Don't Burn Assets)
+        require(treasuryFee == 0 || treasury != address(0), "Treasury Misconfigured");
+        return (treasury, treasuryFee);
     }
 
     /**
@@ -289,16 +291,20 @@ contract ForwardNFT is
         //Split
         uint256 treasuryAmount = (amount * treasuryFee) / BPS_MAX;
         uint256 adjustedAmount = amount - treasuryAmount;
-        //Send to Treasury
-        payable(treasury).transfer(treasuryAmount);
-        emit Withdrawal(treasury, address(0), treasuryAmount);
-        if(artist.account == address(0)) {
-            //Hold for Artist
-            _artistPending += adjustedAmount;
-        }else{
-            //Send to Artist
-            payable(artist.account).transfer(adjustedAmount);
-            emit Withdrawal(artist.account, address(0), adjustedAmount);
+        if(treasuryAmount > 0){
+            //Send to Treasury
+            payable(treasury).transfer(treasuryAmount);
+            emit Withdrawal(treasury, address(0), treasuryAmount);
+        }
+        if(adjustedAmount > 0){
+            if(artist.account == address(0)) {
+                //Hold for Artist
+                _artistPending += adjustedAmount;
+            }else{
+                //Send to Artist
+                payable(artist.account).transfer(adjustedAmount);
+                emit Withdrawal(artist.account, address(0), adjustedAmount);
+            }
         }
     }
 
@@ -306,23 +312,25 @@ contract ForwardNFT is
      * @dev Handle Payments Logic - ERC20 Tokens
      */
     function _handlePaymentERC20(address currency, uint256 amount) private {
-        // require(_price > amount, "Insuficient Payment"); //Not Currently Handled
-
         //Fetch Treasury Data
         (address treasury, uint256 treasuryFee) = _getTreasuryData();
         //Split
         uint256 treasuryAmount = (amount * treasuryFee) / BPS_MAX;
         uint256 adjustedAmount = amount - treasuryAmount;
-        //Send to Treasury
-        IERC20(currency).transfer(treasury, treasuryAmount);
-        emit Withdrawal(treasury, currency, treasuryAmount);
-        if(artist.account == address(0)) {
-            //Hold for Artist
-            _artistPending += adjustedAmount;
-        }else{
-            //Send to Artist
-            IERC20(currency).transfer(artist.account, adjustedAmount);
-            emit Withdrawal(artist.account, currency, adjustedAmount);
+        if(treasuryAmount > 0){
+            //Send to Treasury
+            IERC20(currency).transfer(treasury, treasuryAmount);
+            emit Withdrawal(treasury, currency, treasuryAmount);
+        }
+        if(adjustedAmount > 0){
+            if(artist.account == address(0)) {
+                //Hold for Artist
+                _artistPending += adjustedAmount;
+            }else{
+                //Send to Artist
+                IERC20(currency).transfer(artist.account, adjustedAmount);
+                emit Withdrawal(artist.account, currency, adjustedAmount);
+            }
         }
     }
 
