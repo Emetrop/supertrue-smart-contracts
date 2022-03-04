@@ -24,7 +24,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     CountersUpgradeable.Counter private atArtistId;
     // address used for signature verification, changeable by owner
-    address public admin;
+    // address public admin;
     address public beaconAddress;
     address private _CONFIG;    //Configuration Contract
     
@@ -44,9 +44,6 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     function initialize() public initializer {
         __Ownable_init_unchained();
 
-        // set admin for artist deployment authorization
-        admin = msg.sender;
-
         // set up beacon with msg.sender as the owner
         UpgradeableBeacon _beacon = new UpgradeableBeacon(address(new ForwardNFT()));
         _beacon.transferOwnership(msg.sender);
@@ -65,6 +62,14 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         return _CONFIG;
     }
 
+    /**
+     * @dev Function to check if address is admin
+     */
+    function isAdmin(address account) public view returns (bool) {
+        address configContract = getConfig();
+        return IConfig(configContract).isAdmin(account);
+    }
+
     // Test Function
     function getConfRole(address _config) external view onlyOwner returns (string memory) {
         return IConfig(_config).role();
@@ -81,7 +86,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     }
 
     function setBaseURI(string memory baseURI_) public {
-        require(owner() == _msgSender() || admin == _msgSender(), 'UNAUTHORIZED');
+        require(owner() == _msgSender() || isAdmin(_msgSender()), 'UNAUTHORIZED');
         baseURI = baseURI_;
     }
 
@@ -105,7 +110,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
             beaconAddress,
             abi.encodeWithSelector(
                 ForwardNFT( payable(address(0)) ).initialize.selector,
-                admin,
+                // admin,
                 address(this),
                 // 12, "SuperTrue 12", SP12, https://supertrue.fans/
                 id,
@@ -128,13 +133,6 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         return (address(proxy), id);
     }
 
-    /// Sets the admin for authorizing artist deployment
-    /// @param _newAdmin address of new admin
-    // TODO: Use Config for Admin Func.
-    function setAdmin(address _newAdmin) external {
-        require(owner() == _msgSender() || admin == _msgSender(), 'UNAUTHORIZED');
-        admin = _newAdmin;
-    }
-
+    /// 
     function _authorizeUpgrade(address) internal override onlyOwner {}
 }

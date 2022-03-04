@@ -9,4 +9,6 @@ interface IConfig {
     function getTreasuryData() external view returns (address, uint256);
     /// Check if Address Has Admin Privileges
     function isAdmin(address account) external view returns (bool);
+    /// Get Owner
+    function owner() external view returns (address);
 }

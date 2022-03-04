@@ -5,7 +5,7 @@ pragma solidity >=0.8.0 <0.9.0;
 //import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 // import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+// import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";  //DEPRECATED - Using Config's Owner
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
@@ -20,13 +20,13 @@ import "./interfaces/IERC20.sol";
 
 /**
  * SuperTrue Forward NFT
- * Version 0.4.0
+ * Version 0.5.0
  * 
- * TODO: Central Admin for all Contract (In Config)
- * TODO: Remove reserve() Functionality
+ * TODO: Centralized BASE URI
+ * TODO: Allow artist to override ContractURI
  */
 contract ForwardNFT is 
-        OwnableUpgradeable, 
+        // OwnableUpgradeable, 
         ERC721PausableUpgradeable, 
         IERC2981Upgradeable
         // IERC721ReceiverUpgradeable 
@@ -116,7 +116,7 @@ contract ForwardNFT is
     // ============ Methods ============
 
     function initialize (
-        address owner_,
+        // address owner_,
         address hub_,
         uint256 artistId_,
         string memory artistName_,
@@ -128,7 +128,7 @@ contract ForwardNFT is
         __ERC721Pausable_init();
         __ERC721_init_unchained(name_, symbol_);
         //Set Owner Account
-        _transferOwnership(owner_);
+        // _transferOwnership(owner_);
         //Set Hub Address
         _hub = hub_;
         //Set URI
@@ -177,17 +177,17 @@ contract ForwardNFT is
     }
 
     /**
-     * @dev Get Artist's Address
+     * @dev Returns the address of the current owner.
      */
-    // function artistAddress() public view returns (address) {
-    //     return artist.account;
-    // }
+    function owner() public view virtual returns (address) {
+        address configContract = IForwardCreator(_hub).getConfig();
+        return IConfig(configContract).owner();
+    }
 
     /**
      * @dev Function to check if address is admin
      */
     function isAdmin(address account) public view returns (bool) {
-        // return _admins[account];
         address configContract = IForwardCreator(_hub).getConfig();
         return IConfig(configContract).isAdmin(account);
     }
@@ -400,11 +400,9 @@ contract ForwardNFT is
     /**
      * @dev Set Royalties Requested
      */
-    // function setRoyalties(uint256 royaltyBPS, address payable fundingRecipient) public onlyOwner {
-    function setRoyalties(uint256 royaltyBPS) public onlyOwner {
+    function setRoyalties(uint256 royaltyBPS) public onlyOwnerOrAdmin {
         require(royaltyBPS >= 0 && royaltyBPS <= 10_000, "Wrong royaltyBPS value");
         _royaltyBPS = royaltyBPS;
-        // _fundingRecipient = fundingRecipient;
     }
 
     /**
