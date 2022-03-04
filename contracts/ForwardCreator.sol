@@ -50,7 +50,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         beaconAddress = address(_beacon);
 
         // Set artist id start to be 1 not 0
-        atArtistId.increment();
+        // atArtistId.increment();
 
         baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
     } 
@@ -98,9 +98,11 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string memory name,
         string memory instagram
     ) public returns (address, uint256) {
+        //Validate Input
         require(bytes(name).length > 0, "Empty name");
         require(bytes(instagram).length > 0, "Empty instagram");
 
+        atArtistId.increment();
         uint256 id = atArtistId.current();
         string memory collectionName = string(abi.encodePacked("SuperTrue ", id.toString()));
         string memory symbol = string(abi.encodePacked("ST", id.toString()));
@@ -127,8 +129,6 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         artistContracts[id] = address(proxy);    //Mapping
 
         emit CreatedArtist(atArtistId.current(), name, symbol, address(proxy));
-
-        atArtistId.increment();
 
         return (address(proxy), id);
     }
