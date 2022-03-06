@@ -31,7 +31,8 @@ describe("ForwardNFT", function () {
       const instagram = "ig";
       const artistName = "name";
 
-      await ArtistContract.initialize(owner.address, hub, artistId, artistName, instagram, name, symbol, url);
+      // await ArtistContract.initialize(owner.address, hub, artistId, artistName, instagram, name, symbol, url);
+      await ArtistContract.initialize(hub, artistId, artistName, instagram, name, symbol, url);
 
       expect(await ArtistContract.name()).to.equal(name);
       expect(await ArtistContract.symbol()).to.equal(symbol);
@@ -51,15 +52,17 @@ describe("ForwardNFT", function () {
       expect(await ArtistContract.contractURI()).to.equal(url + "storefront");
     });
 
+    /* MOVE TO PROTOCOL
     it("Should set up ownership to sender", async function () {
       const [owner] = await ethers.getSigners();
-
       expect(await ArtistContract.owner()).to.equal(owner.address);
     });
+    */
+    
 
   });
 
-
+/* MOVE TO PROTOCOL
   describe("setArtist()",  function () {
 
     it("Should change artist data", async function () {
@@ -92,14 +95,9 @@ describe("ForwardNFT", function () {
     });
 
   });
-
+*/
 
   //Has Royalty Info
-
-  //Can Change Royalties
-
-  //
-
 
   // describe("reserve()", function () {
   //   it("Should reserve NFT", async function () {
