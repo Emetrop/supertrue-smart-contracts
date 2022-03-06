@@ -1,3 +1,4 @@
+/* MOVED TO Protocol
 const { ethers } = require("hardhat");
 const { use, expect } = require("chai");
 const { solidity } = require("ethereum-waffle");
@@ -9,16 +10,15 @@ use(solidity);
 
 describe("Config Contract", function () {
     let configContract;
-    let owner
+    let owner;
     let addrs;
 
     before(async function () {
-        //Deploy
-        const ConfigContract = await ethers.getContractFactory("Config");
-        configContract = await ConfigContract.deploy();
-        //Addresses
+            //Deploy
+            const ConfigContract = await ethers.getContractFactory("Config");
+            configContract = await ConfigContract.deploy();
+        //Populate Accounts
         [owner, ...addrs] = await ethers.getSigners();
-
     })
 
     it("should be a SupertrueConfig", async function () {
@@ -64,7 +64,7 @@ describe("Config Contract", function () {
             await configContract.removeAdmin(admin.address);
             expect(await configContract.isAdmin(admin.address)).to.equal(false);
         });
-        
+
         it("should hold treasury data", async function () {
             //Defaults
             let treasuryData = await configContract.getTreasuryData();
@@ -84,3 +84,4 @@ describe("Config Contract", function () {
     });
 
 });
+*/
