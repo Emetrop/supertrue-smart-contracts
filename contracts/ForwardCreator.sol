@@ -29,7 +29,6 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     address private _CONFIG;    //Configuration Contract
     
     // registry of created contracts
-    // address[] public artistContracts;
     mapping(uint256 => address) private artistContracts;
     string public baseURI;
 
@@ -48,10 +47,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         UpgradeableBeacon _beacon = new UpgradeableBeacon(address(new ForwardNFT()));
         _beacon.transferOwnership(msg.sender);
         beaconAddress = address(_beacon);
-
-        // Set artist id start to be 1 not 0
-        // atArtistId.increment();
-
+        
         baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
     } 
 
@@ -71,9 +67,9 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     }
 
     // Test Function
-    function getConfRole(address _config) external view onlyOwner returns (string memory) {
-        return IConfig(_config).role();
-    }
+    // function getConfRole(address _config) external view onlyOwner returns (string memory) {
+    //     return IConfig(_config).role();
+    // }
 
     /**
      * Set Configurations Contract Address
@@ -104,10 +100,14 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
         atArtistId.increment();
         uint256 id = atArtistId.current();
-        string memory collectionName = string(abi.encodePacked("SuperTrue ", id.toString()));
+        // string memory collectionName = string(abi.encodePacked("SuperTrue ", id.toString()));
+        string memory collectionName = string(abi.encodePacked(name, " Super True Fans"));
         string memory symbol = string(abi.encodePacked("ST", id.toString()));
+
+        //TODO: Centralize baseURI
         string memory baseURI_ = string(abi.encodePacked(baseURI, id.toString(), "/"));
 
+        //Deploy 
         BeaconProxy proxy = new BeaconProxy(
             beaconAddress,
             abi.encodeWithSelector(
@@ -125,7 +125,6 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         );
 
         // add to registry
-        // artistContracts.push(address(proxy));    //Array
         artistContracts[id] = address(proxy);    //Mapping
 
         emit CreatedArtist(atArtistId.current(), name, symbol, address(proxy));
@@ -133,6 +132,12 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         return (address(proxy), id);
     }
 
-    /// 
+    /// Get Artist's Contract Address by ID
+    function getArtistContract(uint256 artistId) external view returns(address) {
+        require(artistContracts[artistId] != address(0), "Non-Existent Artist");
+        return artistContracts[artistId];
+    }
+
+    /// Define Who Can Upgrade
     function _authorizeUpgrade(address) internal override onlyOwner {}
 }
