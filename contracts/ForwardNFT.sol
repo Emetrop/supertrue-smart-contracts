@@ -58,7 +58,7 @@ contract ForwardNFT is
     mapping(address => bool) private _admins;   //Admins of this contract
 
     // 3rd party royalties Request
-    uint256 private _royaltyBPS = 1_000;    //Deafult to 10% royalties on seconday sales
+    uint256 private _royaltyBPS;    //Deafult to 10% royalties on seconday sales
     uint16 internal constant BPS_MAX = 10_000;
     // address payable private _fundingRecipient;   //Using Self
 
@@ -76,8 +76,8 @@ contract ForwardNFT is
 
 
     // Settings
-    uint256 private _price = 0.002 ether;           //Current Price / Base Price
-    uint256 private _priceInterval = 0.0001 ether;  //Price Increments
+    uint256 private _price;           //Current Price / Base Price
+    uint256 private _priceInterval;  //Price Increments
 
     // Contract version
     uint256 public constant version = 1;
@@ -133,12 +133,16 @@ contract ForwardNFT is
         _hub = hub_;
         //Set URI
         _uri = uri_;
-        // _royaltyBPS = 1_000;    //Deafult to 10% royalties on seconday sales        //Redundant
         // _fundingRecipient = payable(owner_);
 
         artist.id = artistId_;
         artist.name = artistName_;
         artist.instagram = artistInstagram_;
+        
+        //Defaults
+        _royaltyBPS = 1_000;    //Deafult to 10% royalties on seconday sales
+        _price = 0.002 ether;           //Current Price / Base Price
+        _priceInterval = 0.0001 ether;  //Price Increments
     }
 
     //-- Token Price
@@ -146,7 +150,7 @@ contract ForwardNFT is
     /**
      * @dev Get the Current Token Price
      */
-    function price() public view returns (uint256) {
+    function price() external view returns (uint256) {
         return _price;
     }
     /**
