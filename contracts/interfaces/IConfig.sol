@@ -11,4 +11,6 @@ interface IConfig {
     function isAdmin(address account) external view returns (bool);
     /// Get Owner
     function owner() external view returns (address);
+    /// Transfers ownership of the contract to a new account (`newOwner`).
+    function transferOwnership(address) external;
 }
