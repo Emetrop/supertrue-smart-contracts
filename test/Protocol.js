@@ -3,7 +3,6 @@ const { use, expect } = require("chai");
 const { solidity } = require("ethereum-waffle");
 
 const utils = ethers.utils;
-const addressZero = '0x0000000000000000000000000000000000000000';
 
 use(solidity);
 
@@ -11,8 +10,10 @@ use(solidity);
  * 
  */
 describe("EntireProtocol", function () {
-  let factoryContract;
+  const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
+  const BASE_PRICE = '2000000000000000';
   let configContract;
+  let factoryContract;
   let artistContracts = [];
   let owner;
   let admin;
@@ -78,7 +79,7 @@ describe("EntireProtocol", function () {
             it("should hold treasury data", async function () {
                 //Defaults
                 let treasuryData = await configContract.getTreasuryData();
-                expect(treasuryData[0]).to.equal(addressZero);
+                expect(treasuryData[0]).to.equal(ZERO_ADDR);
                 expect(treasuryData[1]).to.equal(2000);
                 //New Values
                 let newTreasury = await ethers.getSigner(2);
@@ -119,8 +120,8 @@ describe("EntireProtocol", function () {
     describe("Factory", function () {
 
         it("Should have Config", async function () {
-            expect(await factoryContract.getConfig()).not.to.equal(addressZero);    //Starts With Defaults
-            // expect(await factoryContract.getConfig()).to.equal(addressZero);     //Starts Empty
+            expect(await factoryContract.getConfig()).not.to.equal(ZERO_ADDR);    //Starts With Defaults
+            // expect(await factoryContract.getConfig()).to.equal(ZERO_ADDR);     //Starts Empty
             // expect(await factoryContract.getConfig()).to.equal(configContract.address);
         });
 
@@ -184,7 +185,7 @@ describe("EntireProtocol", function () {
             
             // expect(artistContractAddr).to.equal(artistContracts[0].hash);
             
-            expect(artistContractAddr).not.to.equal(addressZero);
+            expect(artistContractAddr).not.to.equal(ZERO_ADDR);
         });
 
         it("Factory should be upgradable", async function () {
@@ -223,11 +224,9 @@ describe("EntireProtocol", function () {
             expect(await artistContract.isAdmin(admin.address)).to.equal(true);
         });
 
-
         it("Should have price", async function () {
             let price = await artistContract.price();
-            console.log("[TODO] Validate Price", price);
-            // expect(await artistContract.price()).to.equal(0.2);
+            expect(price).to.equal(BASE_PRICE);
         });
         
         it("Beacon should be upgradable", async function () {
