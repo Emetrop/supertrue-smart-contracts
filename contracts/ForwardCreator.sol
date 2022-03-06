@@ -45,7 +45,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
         // set up beacon with msg.sender as the owner
         UpgradeableBeacon _beacon = new UpgradeableBeacon(address(new ForwardNFT()));
-        _beacon.transferOwnership(msg.sender);
+        // _beacon.transferOwnership(msg.sender);   //Nope. Should be owned by this contract to make sure changes are tracked
         beaconAddress = address(_beacon);
         
         baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
@@ -66,10 +66,21 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         return IConfig(configContract).isAdmin(account);
     }
 
-    // Test Function
-    // function getConfRole(address _config) external view onlyOwner returns (string memory) {
-    //     return IConfig(_config).role();
-    // }
+
+    /**
+     * @dev Transfers ownership of all contract in protocol
+     * Can only be called by the current owner.
+     * TODO: Test / DEPRECATE & Inherit
+     */
+    function transferOwnership(address newOwner) public override onlyOwner {
+        //Transfer This Contract's Ownership
+        _transferOwnership(newOwner);
+        //Transfer Beacon's Ownership
+        // UpgradeableBeacon(beaconAddress).transferOwnership(newOwner);    //CANCELLED
+        //Config's (Protocol) Ownership
+        IConfig(_CONFIG).transferOwnership(newOwner);
+    }
+
 
     /**
      * Set Configurations Contract Address
@@ -81,15 +92,19 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         _CONFIG = _config;
     }
 
+    /** 
+     * Set Contract's Base URI
+     */
     function setBaseURI(string memory baseURI_) public {
         require(owner() == _msgSender() || isAdmin(_msgSender()), 'UNAUTHORIZED');
         baseURI = baseURI_;
     }
 
-
-    /// Creates a new artist contract
-    /// @param name Name of the artist
-    /// @param instagram Instagram of the artist
+    /** 
+     * Creates a new artist contract
+     * @param name Name of the artist
+     * @param instagram Instagram of the artist
+     */
     function createArtist(
         string memory name,
         string memory instagram
@@ -140,4 +155,11 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     /// Define Who Can Upgrade
     function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    /// Upgrade Beacon Implementation 
+    function upgradeBeacon(address _newImplementation) public onlyOwner {
+        UpgradeableBeacon(beaconAddress).upgradeTo(_newImplementation);
+        beaconAddress = _newImplementation;
+    }
+
 }
