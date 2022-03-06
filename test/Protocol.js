@@ -187,7 +187,20 @@ describe("EntireProtocol", function () {
             expect(artistContractAddr).not.to.equal(addressZero);
         });
 
+        it("Factory should be upgradable", async function () {
+            //Fetch New Implementation Contract
+            let NewImplementation = await ethers.getContractFactory("contracts/contracts-test/ForwardCreatorv2.sol:ForwardCreatorv2");
+            await upgrades.upgradeProxy(factoryContract, NewImplementation);
         
+            //Update Interface
+            const newFactoryContract = await NewImplementation.attach(factoryContract.address);
+            // console.log("Upgraded Facroty (Hub) at: "+ factoryContract.address, newFactoryContract);
+
+            //Validate Upgrade
+            let hasChanged = await newFactoryContract.hasChanged();
+            //Verify Upgrade
+            expect(hasChanged).to.equal(true);
+        });
 
     });
     
@@ -217,7 +230,6 @@ describe("EntireProtocol", function () {
             // expect(await artistContract.price()).to.equal(0.2);
         });
         
-
         it("Beacon should be upgradable", async function () {
             //New Implementation
             const NewImplementation = await ethers.getContractFactory("contracts/contracts-test/ForwardNFTv2.sol:ForwardNFTv2");
