@@ -10,19 +10,19 @@ use(solidity);
  * 
  */
 describe("EntireProtocol", function () {
-  const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
-  const BASE_PRICE = '2000000000000000';
-  let configContract;
-  let factoryContract;
-  let artistContracts = [];
-  let owner;
-  let admin;
-  let addrs;
+    const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
+    const PRICE_BASE = '2000000000000000';
+    const PRICE_INCREMENT = '100000000000000';        //TODO: Test Price Incemenets
+    let configContract;
+    let factoryContract;
+    let artistContracts = [];
+    let owner;
+    let admin;
+    let addrs;
 
-  // quick fix to let gas reporter fetch data from gas station & coinmarketcap
-  // before((done) => { setTimeout(done, 2000); });
-  
-    
+    // quick fix to let gas reporter fetch data from gas station & coinmarketcap
+    // before((done) => { setTimeout(done, 2000); });
+
     describe("Config Contract", function () {
 
         before(async function () {
@@ -225,11 +225,19 @@ describe("EntireProtocol", function () {
         });
 
         it("Should have price", async function () {
-            let price = await artistContract.price();
-            expect(price).to.equal(BASE_PRICE);
+            let result = await artistContract.price();
+            expect(result).to.equal(PRICE_BASE);
+        });
+        
+        
+        it("Should have Contract URI", async function () {
+            let result = await artistContract.contractURI();
+            expect(result).to.equal("https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/1/storefront");
         });
         
         it("Beacon should be upgradable", async function () {
+            //Current Implementation
+            const OldImplementation = await ethers.getContractFactory("ForwardNFT");
             //New Implementation
             const NewImplementation = await ethers.getContractFactory("contracts/contracts-test/ForwardNFTv2.sol:ForwardNFTv2");
             // const NewImplementation = await ethers.getContractFactory("contracts/contracts-test/ForwardNFTv3.sol:ForwardNFTv3");
@@ -238,6 +246,9 @@ describe("EntireProtocol", function () {
             //-- Prep
             //Fetch Beacon
             let BeaconAddress = await factoryContract.beaconAddress();
+            //Register Beacon
+            await upgrades.forceImport(BeaconAddress, OldImplementation);
+            //Validate Upgrade
             await upgrades.prepareUpgrade(BeaconAddress, NewImplementation);
                 
             //Upgrade

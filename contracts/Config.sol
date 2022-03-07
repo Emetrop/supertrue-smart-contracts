@@ -18,9 +18,8 @@ contract Config is Ownable {
     address private _treasury;
     //Admin
     mapping(address => bool) private _admins;   //Admins of this contract
-    //Base URI
-    string private _BaseURI;
-
+    //URI
+    string private _baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/"; //Default Base URI
 
     //-- Events --//
     event TreasurySet(address treasury);
@@ -29,10 +28,19 @@ contract Config is Ownable {
     event AdminRemoved(address admin);
     
 
+    //-- Modifiers --//
+
+    /**
+     * @dev Throws if called by any account other than the owner or admins.
+     */
+    modifier onlyOwnerOrAdmin() {
+        require(owner() == _msgSender() || isAdmin(_msgSender()), "Only admin or owner");
+        _;
+    }
+
     //-- Methods --//
     
     //-- Treasury
-
     /**
      * @dev Fetch Treasury Data
      */
@@ -87,5 +95,18 @@ contract Config is Ownable {
         return _admins[account];
     }
 
+    /** 
+     * @dev Set Protocol's Base URI
+     */
+    function setBaseURI(string memory baseURI_) external onlyOwnerOrAdmin {
+        _baseURI = baseURI_;
+    }
+
+    /**
+     * @dev Fetch Base URI
+     */
+    function getBaseURI() external view returns (string memory) {
+        return _baseURI;
+    }
 
 }

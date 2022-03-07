@@ -13,4 +13,6 @@ interface IConfig {
     function owner() external view returns (address);
     /// Transfers ownership of the contract to a new account (`newOwner`).
     function transferOwnership(address) external;
+    /// Fetch BaseURI
+    function getBaseURI() external view returns (string memory);
 }

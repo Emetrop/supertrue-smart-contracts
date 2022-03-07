@@ -51,7 +51,7 @@ contract ForwardNFT is
     CountersUpgradeable.Counter private _tokenIds;
 
     // json and contract base uri
-    string private _uri;
+    // string private _base_uri;
     address private _hub;   //Hub Contract
 
     // address => allowedToCallFunctions
@@ -122,8 +122,8 @@ contract ForwardNFT is
         string memory artistName_,
         string memory artistInstagram_,
         string memory name_,
-        string memory symbol_,
-        string memory uri_
+        string memory symbol_
+        // string memory uri_
     ) public initializer {
         __ERC721Pausable_init();
         __ERC721_init_unchained(name_, symbol_);
@@ -132,7 +132,7 @@ contract ForwardNFT is
         //Set Hub Address
         _hub = hub_;
         //Set URI
-        _uri = uri_;
+        // _base_uri = uri_;
         // _fundingRecipient = payable(owner_);
 
         artist.id = artistId_;
@@ -232,16 +232,17 @@ contract ForwardNFT is
     function unpause() public onlyOwnerOrAdmin {
         _unpause();
     }
-
-    function setBaseURI(string memory baseURI) public onlyOwnerOrAdmin {
-        _uri = baseURI;
-    }
-
+    
+    /// Get Total Supply
     function totalSupply() public view returns (uint256) {
         return _tokenIds.current();
     }
 
-
+    /* DEPRECATED - Moved to Config
+    function setBaseURI(string memory baseURI) public onlyOwnerOrAdmin {
+        _base_uri = baseURI;
+    }
+    */
 
    /**
      * @dev Mint Free NFTs
@@ -417,9 +418,7 @@ contract ForwardNFT is
      * @return royaltyAmount - the royalty payment amount for `salePrice`
      */
     function royaltyInfo(uint256, uint256 salePrice) public view override returns (address receiver, uint256 royaltyAmount) {
-        // if (_fundingRecipient == address(0x0)) {
-        //     return (_fundingRecipient, 0);
-        // }
+        // if (_fundingRecipient == address(0x0)) { return (_fundingRecipient, 0); }
         // return (_fundingRecipient, (salePrice * _royaltyBPS) / 10_000);
 
         //Using the contract to hold royalties
@@ -439,7 +438,6 @@ contract ForwardNFT is
      */
     function tokenURI(uint256 tokenId) public view override returns (string memory) {
         require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
-
         // .../json/tokenID
         return string(abi.encodePacked(_baseURI(), "json", "/", tokenId.toString()));
     }
@@ -450,6 +448,8 @@ contract ForwardNFT is
      * by default, can be overriden in child contracts.
      */
     function _baseURI() internal view override returns (string memory) {
-        return _uri;
+        // return _base_uri;
+        address configContract = IForwardCreator(_hub).getConfig();
+        return string(abi.encodePacked(IConfig(configContract).getBaseURI(), artist.id.toString(), "/"));
     }
 }

@@ -30,7 +30,6 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     
     // registry of created contracts
     mapping(uint256 => address) private artistContracts;
-    string public baseURI;
 
     // ============ Events ============
 
@@ -48,7 +47,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         // _beacon.transferOwnership(msg.sender);   //Nope. Should be owned by this contract to make sure changes are tracked
         beaconAddress = address(_beacon);
         
-        baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
+        // baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
     } 
 
     /**
@@ -93,14 +92,6 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     }
 
     /** 
-     * Set Contract's Base URI
-     */
-    function setBaseURI(string memory baseURI_) public {
-        require(owner() == _msgSender() || isAdmin(_msgSender()), 'UNAUTHORIZED');
-        baseURI = baseURI_;
-    }
-
-    /** 
      * Creates a new artist contract
      * @param name Name of the artist
      * @param instagram Instagram of the artist
@@ -119,9 +110,6 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string memory collectionName = string(abi.encodePacked(name, " Super True Fans"));
         string memory symbol = string(abi.encodePacked("ST", id.toString()));
 
-        //TODO: Centralize baseURI
-        string memory baseURI_ = string(abi.encodePacked(baseURI, id.toString(), "/"));
-
         //Deploy 
         BeaconProxy proxy = new BeaconProxy(
             beaconAddress,
@@ -134,8 +122,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
                 name,
                 instagram,
                 collectionName,
-                symbol,
-                baseURI_
+                symbol
             )
         );
 

@@ -23,7 +23,7 @@ describe("ForwardNFT", function () {
     const name = "Test";
     const symbol = "T";
     const url = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/1/";
-
+    /* Will no longer work without the Hub
     it("Should be able to initialize contract", async function () {
       const [owner] = await ethers.getSigners();
       const hub = owner.address;
@@ -31,8 +31,9 @@ describe("ForwardNFT", function () {
       const instagram = "ig";
       const artistName = "name";
 
-      // await ArtistContract.initialize(owner.address, hub, artistId, artistName, instagram, name, symbol, url);
-      await ArtistContract.initialize(hub, artistId, artistName, instagram, name, symbol, url);
+      // await ArtistContract.initialize(owner.address, hub, artistId, artistName, instagram, name, symbol, url); //Removed Owner
+      // await ArtistContract.initialize(hub, artistId, artistName, instagram, name, symbol, url);  //Removed URL
+      await ArtistContract.initialize(hub, artistId, artistName, instagram, name, symbol);
 
       expect(await ArtistContract.name()).to.equal(name);
       expect(await ArtistContract.symbol()).to.equal(symbol);
@@ -50,8 +51,9 @@ describe("ForwardNFT", function () {
       expect(artist.instagram).to.equal(instagram);
       
       expect(await ArtistContract.contractURI()).to.equal(url + "storefront");
-    });
-
+      });
+    */
+   
     /* MOVE TO PROTOCOL
     it("Should set up ownership to sender", async function () {
       const [owner] = await ethers.getSigners();
