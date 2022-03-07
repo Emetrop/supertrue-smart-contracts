@@ -19,6 +19,7 @@ describe("EntireProtocol", function () {
     let artistContracts = [];
     let owner;
     let admin;
+    let tester;
     let addrs;
 
     // quick fix to let gas reporter fetch data from gas station & coinmarketcap
@@ -31,7 +32,7 @@ describe("EntireProtocol", function () {
             const ConfigContract = await ethers.getContractFactory("Config");
             configContract = await ConfigContract.deploy();
             //Populate Accounts
-            [owner, admin, ...addrs] = await ethers.getSigners();
+            [owner, admin, tester, ...addrs] = await ethers.getSigners();
         })
 
         it("should be a SupertrueConfig", async function () {
@@ -115,7 +116,7 @@ describe("EntireProtocol", function () {
         await factoryContract.setConfig(mockConfigContract.address);
 
         //Populate Accounts
-        [owner, ...addrs] = await ethers.getSigners();
+        // [owner, ...addrs] = await ethers.getSigners();
     })
 
     describe("Factory", function () {
@@ -126,6 +127,12 @@ describe("EntireProtocol", function () {
             // expect(await factoryContract.getConfig()).to.equal(configContract.address);
         });
 
+        it("Should Secure Config", async function () {
+            //Secure
+            await expect(
+                factoryContract.connect(tester).setConfig(configContract.address)
+            ).to.be.revertedWith("Ownable: caller is not the owner");
+        });    
         it("Should change Config", async function () {
             //Deploy New Config
             // const ConfigContract = await ethers.getContractFactory("Config");
