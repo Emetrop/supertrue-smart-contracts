@@ -229,10 +229,29 @@ describe("EntireProtocol", function () {
             expect(result).to.equal(PRICE_BASE);
         });
         
-        
         it("Should have Contract URI", async function () {
             let result = await artistContract.contractURI();
             expect(result).to.equal("https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/1/storefront");
+        });
+
+        it("Can Change Contract URI", async function () {
+            let curBaseURI = await configContract.getBaseURI();
+            let newBaseURI = "https://test-domain.com/api/";
+            //Change
+            await configContract.setBaseURI(newBaseURI);
+
+            //Sleep
+            // await new Promise(resolve => setTimeout(resolve, 2000));
+            // let curArtistBaseURI = await artistContract.baseURI();
+            // console.log("curArtistBaseURI", curArtistBaseURI);   //V
+            //Check
+            expect(await configContract.getBaseURI()).to.equal(newBaseURI);
+            expect(await artistContract.contractURI()).to.equal(newBaseURI+"1/storefront");
+
+            //Change Back
+            await configContract.setBaseURI(curBaseURI);
+            //Check
+            expect(await configContract.getBaseURI()).to.equal(curBaseURI);
         });
         
         it("Beacon should be upgradable", async function () {
@@ -265,6 +284,7 @@ describe("EntireProtocol", function () {
             //Verify Upgrade
             expect(hasChanged).to.equal(true);
         });
+
 
     });
 })
