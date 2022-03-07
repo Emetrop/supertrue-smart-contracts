@@ -299,7 +299,18 @@ describe("EntireProtocol", function () {
                 let result = await artistContract.tokenURI(1);
                 expect(result).to.equal(tokenURI);
             });
-            
+            it("Can Change Token URI", async function () {
+                let newBaseURI = "https://test-domain.com/api/";
+                //Change
+                await configContract.setBaseURI(newBaseURI);
+                //Check
+                expect(await configContract.getBaseURI()).to.equal(newBaseURI);
+                expect(await artistContract.tokenURI(1)).to.equal(newBaseURI+"1/json/1");
+                //Change Back
+                await configContract.setBaseURI(BASE_URI);
+                //Check
+                expect(await configContract.getBaseURI()).to.equal(BASE_URI);
+            });
         });
     });
 })
