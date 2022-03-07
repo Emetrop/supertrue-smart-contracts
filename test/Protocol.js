@@ -285,7 +285,20 @@ describe("EntireProtocol", function () {
             expect(hasChanged).to.equal(true);
         });
 
-
+        describe("Tokens", function () {
+            it("Should Mint NFTokens", async function () {
+                let minting = await artistContract.mint(admin.address);
+                // console.log("minting", minting);
+                //Fetch Token
+                let result = await artistContract.ownerOf(1);
+                expect(result).to.equal(admin.address);
+            });
+            it("Should Have Token URI", async function () {
+                let tokenURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/1/json/1";
+                let result = await artistContract.tokenURI(1);
+                expect(result).to.equal(tokenURI);
+            });
+        });
     });
 })
 
