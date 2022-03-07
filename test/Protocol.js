@@ -13,6 +13,7 @@ describe("EntireProtocol", function () {
     const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
     const PRICE_BASE = '2000000000000000';
     const PRICE_INCREMENT = '100000000000000';        //TODO: Test Price Incemenets
+    const BASE_URI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/"; //Default Base URI
     let configContract;
     let factoryContract;
     let artistContracts = [];
@@ -231,7 +232,7 @@ describe("EntireProtocol", function () {
         
         it("Should have Contract URI", async function () {
             let result = await artistContract.contractURI();
-            expect(result).to.equal("https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/1/storefront");
+            expect(result).to.equal(BASE_URI + "1/storefront");
         });
 
         it("Can Change Contract URI", async function () {
@@ -287,14 +288,14 @@ describe("EntireProtocol", function () {
 
         describe("Tokens", function () {
             it("Should Mint NFTokens", async function () {
-                let minting = await artistContract.mint(admin.address);
-                // console.log("minting", minting);
+                let tx = await artistContract.mint(admin.address).then(trans => trans.wait());
+                // console.log("minting", tx);
                 //Fetch Token
                 let result = await artistContract.ownerOf(1);
                 expect(result).to.equal(admin.address);
             });
             it("Should Have Token URI", async function () {
-                let tokenURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/1/json/1";
+                let tokenURI = BASE_URI + "1/json/1";
                 let result = await artistContract.tokenURI(1);
                 expect(result).to.equal(tokenURI);
             });
