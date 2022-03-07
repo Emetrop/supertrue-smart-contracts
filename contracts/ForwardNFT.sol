@@ -244,23 +244,6 @@ contract ForwardNFT is
     }
     */
 
-   /**
-     * @dev Mint Free NFTs
-     */
-    function reserve() public onlyOwnerOrAdmin {
-        _tokenIds.increment();
-        _mint(address(this), _tokenIds.current());
-    }
-
-    /**
-     * @dev Transfer Free Minted NFTs
-     */
-    function transferReserved(address to, uint256 tokenId) public onlyOwnerOrAdmin {
-        _safeTransfer(address(this), to, tokenId, "");
-    }
-
-
-
     /**
      * @dev Buy New Token
      * Single token at a time
