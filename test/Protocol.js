@@ -14,6 +14,10 @@ describe("EntireProtocol", function () {
     const PRICE_BASE = '2000000000000000';
     const PRICE_INCREMENT = '100000000000000';        //TODO: Test Price Incemenets
     const BASE_URI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/"; //Default Base URI
+    const ARTISTS = [
+        {name: "name1", ig: "ig1",},
+        {name: "name2", ig: "ig2",},
+    ];
     let configContract;
     let factoryContract;
     let artistContracts = [];
@@ -158,11 +162,10 @@ describe("EntireProtocol", function () {
         });
         
         it("Should deploy child: ForwardNFT Contract", async function () {
-            const artistName = "name2";
-            const artistIG = "ig2";
+            const artistName = ARTISTS[1].name; //"name2";
+            const artistIG = ARTISTS[1].ig; //"ig2";
 
             //Deploy New Artist
-            
             // await factoryContract.createArtist(artistName, artistIG);       //TODO: How to get the id & address from that??
             let tx = await factoryContract.createArtist(artistName, artistIG).then(trans => trans.wait());
             // console.log("[TEST] Deployed Artist Contract:"+T1.address, tx);
