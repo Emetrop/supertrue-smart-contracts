@@ -22,8 +22,6 @@ import "./interfaces/IERC20.sol";
  * SuperTrue Forward NFT
  * Version 0.5.0
  * 
- * TODO: Centralized BASE URI
- * TODO: Allow artist to override ContractURI
  */
 contract ForwardNFT is 
         // OwnableUpgradeable, 
@@ -52,6 +50,7 @@ contract ForwardNFT is
 
     // json and contract base uri
     // string private _base_uri;
+    string private _contract_uri;
     address private _hub;   //Hub Contract
 
     // address => allowedToCallFunctions
@@ -66,14 +65,6 @@ contract ForwardNFT is
     Artist public artist;
     uint256 public _artistPending;
     mapping(address => uint256) private _artistPendingERC20;
-
-
-    /* DEPRECATED: Fetch from Main Config
-    // Treasury     
-    // uint256 private _treasuryFee;
-    // address private _treasury;
-    */
-
 
     // Settings
     uint256 private _price;           //Current Price / Base Price
@@ -90,6 +81,15 @@ contract ForwardNFT is
      */
     modifier onlyOwnerOrAdmin() {
         require(owner() == _msgSender() || isAdmin(_msgSender()), "Only admin or owner");
+        
+        _;
+    }
+
+    /**
+     * @dev Throws if called by any account other than the owner or admins.
+     */
+    modifier onlyOwnerOrAdminOrArtist() {
+        require(owner() == _msgSender() || isAdmin(_msgSender()) || _msgSender() == artist.account, "Only admin or artist");
         _;
     }
 
@@ -103,14 +103,9 @@ contract ForwardNFT is
 
     // ============ Events ============
 
-    
-    /**
-     * @dev Funds Withdrawal
-     */
+    /// Funds Withdrawal
     event Withdrawal(address indexed to, address indexed currency, uint256 amount);
-    /**
-     * @dev Claimed by Artist
-     */
+    /// @dev Claimed by Artist
     event ArtistClaimed(address artist);
 
     // ============ Methods ============
@@ -173,9 +168,7 @@ contract ForwardNFT is
     /**
      * @dev Claim Contract - Set Artist's Account
      */
-    function setArtistAccount(address account) public {
-        //Owner or Admin or Artist
-        require(owner() == _msgSender() || isAdmin(_msgSender()) || _msgSender() == artist.account, "Only admin or artist");
+    function setArtistAccount(address account) public onlyOwnerOrAdminOrArtist {
         artist.account = account;
         emit ArtistClaimed(account);
     }
@@ -409,9 +402,20 @@ contract ForwardNFT is
     }
 
     //-- URI Handling
-
-    // https://docs.opensea.io/docs/contract-level-metadata
+    
+    /**
+     * @dev Overrid Default Contract URI
+     */ 
+    function setContractURI(string memory uri_) external onlyOwnerOrAdminOrArtist {
+        _contract_uri = uri_;
+    }
+    
+    /**
+     * @dev Contract URI
+     *  https://docs.opensea.io/docs/contract-level-metadata
+     */ 
     function contractURI() public view returns (string memory) {
+        if(bytes(_contract_uri).length > 0) return _contract_uri;
         // .../storefront
         return string(abi.encodePacked(_baseURI(), 'storefront'));
     }
@@ -424,6 +428,11 @@ contract ForwardNFT is
         // .../json/tokenID
         return string(abi.encodePacked(_baseURI(), "json", "/", tokenId.toString()));
     }
+
+/// DEBUGGINB 
+// function baseURI() public view returns (string memory) {
+//     return _baseURI();
+// }
 
     /**
      * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each

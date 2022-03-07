@@ -134,21 +134,14 @@ describe("EntireProtocol", function () {
             ).to.be.revertedWith("Ownable: caller is not the owner");
         });    
         it("Should change Config", async function () {
-            //Deploy New Config
-            // const ConfigContract = await ethers.getContractFactory("Config");
-            // configContract = await ConfigContract.deploy();
-
             //Set Config
             await factoryContract.setConfig(configContract.address);
-
             //Check Config
             expect(await factoryContract.getConfig()).to.equal(configContract.address);
         });
 
         it("Should inherit Owner", async function () {
-            //Not Admin
             expect(await factoryContract.owner()).to.equal(owner.address);
-
         });
 
         it("Should inherit Admin", async function () {
@@ -260,6 +253,20 @@ describe("EntireProtocol", function () {
             await configContract.setBaseURI(BASE_URI);
             //Check
             expect(await configContract.getBaseURI()).to.equal(BASE_URI);
+        });
+
+        it("Can Override Contract URI", async function () {
+            let newContractURI = "https://test-domain.com/NEW-ARTIST-JSON-URI/";
+            //Change
+            await artistContract.setContractURI(newContractURI);
+            expect(await artistContract.contractURI()).to.equal(newContractURI);
+            //Fail
+            await expect(
+                artistContract.connect(tester).setContractURI("NO")
+            ).to.be.revertedWith("Only admin or artist");
+            //Undo (By Admin)
+            await artistContract.connect(admin).setContractURI("");
+            expect(await artistContract.contractURI()).to.equal(BASE_URI + "1/storefront");
         });
         
         it("Beacon should be upgradable", async function () {
