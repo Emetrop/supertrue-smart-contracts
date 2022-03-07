@@ -192,6 +192,17 @@ describe("EntireProtocol", function () {
             expect(artistContractAddr).not.to.equal(ZERO_ADDR);
         });
 
+        it("Should Not allow same artist to be deployed twice", async function () {
+            const artistName = ARTISTS[1].name; //"name2";
+            const artistIG = ARTISTS[1].ig; //"ig2";
+
+            await expect(
+                //Deploy New Artist
+                factoryContract.createArtist(artistName, artistIG)
+            ).to.be.revertedWith("SOME KIND OF ERROR");
+            
+        });
+
         it("Factory should be upgradable", async function () {
             //Fetch New Implementation Contract
             let NewImplementation = await ethers.getContractFactory("contracts/contracts-test/ForwardCreatorv2.sol:ForwardCreatorv2");
