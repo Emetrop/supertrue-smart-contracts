@@ -236,7 +236,7 @@ describe("EntireProtocol", function () {
         });
 
         it("Can Change Contract URI", async function () {
-            let curBaseURI = await configContract.getBaseURI();
+            // let curBaseURI = await configContract.getBaseURI();
             let newBaseURI = "https://test-domain.com/api/";
             //Change
             await configContract.setBaseURI(newBaseURI);
@@ -250,9 +250,9 @@ describe("EntireProtocol", function () {
             expect(await artistContract.contractURI()).to.equal(newBaseURI+"1/storefront");
 
             //Change Back
-            await configContract.setBaseURI(curBaseURI);
+            await configContract.setBaseURI(BASE_URI);
             //Check
-            expect(await configContract.getBaseURI()).to.equal(curBaseURI);
+            expect(await configContract.getBaseURI()).to.equal(BASE_URI);
         });
         
         it("Beacon should be upgradable", async function () {
@@ -299,6 +299,7 @@ describe("EntireProtocol", function () {
                 let result = await artistContract.tokenURI(1);
                 expect(result).to.equal(tokenURI);
             });
+            
         });
     });
 })
