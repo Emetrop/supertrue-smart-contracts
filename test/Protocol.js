@@ -7,7 +7,7 @@ const utils = ethers.utils;
 use(solidity);
 
 /**
- * 
+ * TODO: Test fund transfer / minting payments
  */
 describe("EntireProtocol", function () {
     const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
