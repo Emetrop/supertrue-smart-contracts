@@ -1,4 +1,4 @@
-// deploy/00_deploy_proxy.js
+// deploy/01_deploy_proxy.js
 
 const { ethers, upgrades } = require("hardhat");
 
