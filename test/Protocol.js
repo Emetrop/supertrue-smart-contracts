@@ -8,6 +8,8 @@ use(solidity);
 
 /**
  * TODO: Test fund transfer / minting payments
+ * TODO: Test Tips (with mint)
+ * TODO: Test Donations (send without mint)
  */
 describe("EntireProtocol", function () {
     const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
