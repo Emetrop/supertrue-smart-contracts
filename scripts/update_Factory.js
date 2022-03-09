@@ -8,12 +8,16 @@ async function main() {
 
     //Log
     // console.log("Deployer account:", deployer.address);
-    console.log("Update Factory Proxy:");
 
     //Config
     const ConfigContract = await ethers.getContractFactory("Config");
     //Deploy
     const configContract = await ConfigContract.deploy();
+    //Log
+    console.log("Config Deployed to:", configContract.address);
+
+
+    console.log("Update Factory Proxy:");
 
     //Fetch New Implementation Contract
     let NewImplementation = await ethers.getContractFactory("ForwardCreator");
