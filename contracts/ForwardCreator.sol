@@ -24,12 +24,14 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     CountersUpgradeable.Counter private atArtistId;
     // address used for signature verification, changeable by owner
-    // address public admin;
+    // address public admin;   //DEPRECATED
     address public beaconAddress;
     address private _CONFIG;    //Configuration Contract
     
+
     // registry of created contracts
     mapping(uint256 => address) private artistContracts;
+    mapping(bytes32 => address) private artistGUID;   //Index Unique Artist IDs
 
     // ============ Events ============
 
@@ -95,14 +97,17 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
      * Creates a new artist contract
      * @param name Name of the artist
      * @param instagram Instagram of the artist
+     * @param guid unique global identifier (Instagram ID)
      */
     function createArtist(
         string memory name,
-        string memory instagram
+        string memory instagram,
+        bytes32 guid
     ) public returns (address, uint256) {
         //Validate Input
         require(bytes(name).length > 0, "Empty name");
         require(bytes(instagram).length > 0, "Empty instagram");
+        require(artistGUID[guid] == address(0), "GUID already used");
 
         atArtistId.increment();
         uint256 id = atArtistId.current();
@@ -127,7 +132,8 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         );
 
         // add to registry
-        artistContracts[id] = address(proxy);    //Mapping
+        artistContracts[id] = address(proxy);
+        artistGUID[guid] = address(proxy);
 
         emit CreatedArtist(atArtistId.current(), name, symbol, address(proxy));
 
