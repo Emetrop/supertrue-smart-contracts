@@ -13,11 +13,23 @@ const sleep = (ms) =>
   );
 
 module.exports = async ({ chainId }) => {
+    
   const ForwardCreator = await ethers.getContractFactory("ForwardCreator");
 
   // deploying new proxy
   const proxy = await upgrades.deployProxy(ForwardCreator, { kind: "uups" });
   console.log("Super True Hub deployed to:", proxy.address);
+  
+  //Config
+  const ConfigContract = await ethers.getContractFactory("Config");
+  //Deploy
+  const configContract = await ConfigContract.deploy();
+  //Log
+  console.log("Config Deployed to:", configContract.address);
+
+  //Set Config
+  proxy.setConfig(configContract.address);
+
 
   // creating artist
   // getting existing proxy
