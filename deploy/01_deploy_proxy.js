@@ -47,11 +47,19 @@ module.exports = async ({ chainId }) => {
     // wait for etherscan to be ready to verify
     console.log("Start code verification on etherscan");
     await sleep(15000);
+    //Verify Proxy
     await run("verify:verify", {
       address: proxy.address,
       contract: "contracts/ForwardCreator.sol:ForwardCreator",
       contractArguments: [],
     });
+    //Verify Config
+    await run("verify:verify", {
+      address: configContract.address,
+      contract: "Config",
+      contractArguments: [],
+    });
+    
     console.log("End code verification on etherscan");
   }
   
