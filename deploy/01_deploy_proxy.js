@@ -19,13 +19,13 @@ module.exports = async ({ chainId }) => {
   const proxy = await upgrades.deployProxy(ForwardCreator, { kind: "uups" });
   console.log("Super True Hub deployed to:", proxy.address);
 
-  // // creating artist
-  // // getting existing proxy
+  // creating artist
+  // getting existing proxy
   // const proxy = await ForwardCreator.attach(
   //   "0x5933e81E1EbF73E07445E6FF480B6044453AE372"
   // );
   
-  // // Creating artist
+  // Creating artist
   // const artist = await proxy.createArtist("Kanye West", "kanyewest").then(trans => trans.wait());
   // console.log("Artist deployed to:", artist);
 
@@ -42,5 +42,6 @@ module.exports = async ({ chainId }) => {
     });
     console.log("End code verification on etherscan");
   }
+  
 };
 module.exports.tags = ["Forward", "ForwardCreator"];
