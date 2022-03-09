@@ -15,4 +15,8 @@ interface IConfig {
     function transferOwnership(address) external;
     /// Fetch BaseURI
     function getBaseURI() external view returns (string memory);
+    /// Get Signer 1 Address
+    function signer1() external view returns (address);
+    /// Get Signer 2 Address
+    function signer2() external view returns (address);
 }

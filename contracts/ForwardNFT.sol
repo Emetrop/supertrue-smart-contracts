@@ -7,10 +7,12 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Pausab
 // import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 // import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";  //DEPRECATED - Using Config's Owner
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
-
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+
+import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
 
 //Interfaces
 import "./interfaces/IForwardCreator.sol";
@@ -21,13 +23,14 @@ import "./interfaces/IERC20.sol";
 /**
  * SuperTrue Forward NFT
  * Version 0.5.0
- * 
+ *
  */
-contract ForwardNFT is 
-        // OwnableUpgradeable, 
-        ERC721PausableUpgradeable, 
-        IERC2981Upgradeable
-        // IERC721ReceiverUpgradeable 
+contract ForwardNFT is
+        // OwnableUpgradeable,
+        ERC721PausableUpgradeable,
+        IERC2981Upgradeable,
+        EIP712Upgradeable
+        // IERC721ReceiverUpgradeable
         {
 
     using AddressUpgradeable for address;
@@ -71,7 +74,7 @@ contract ForwardNFT is
     uint256 private _priceInterval;  //Price Increments
 
     // Contract version
-    uint256 public constant version = 1;
+    string public constant version = "1";
 
 
     // ============ Modifiers ============
@@ -81,7 +84,7 @@ contract ForwardNFT is
      */
     modifier onlyOwnerOrAdmin() {
         require(owner() == _msgSender() || isAdmin(_msgSender()), "Only admin or owner");
-        
+
         _;
     }
 
@@ -122,6 +125,7 @@ contract ForwardNFT is
     ) public initializer {
         __ERC721Pausable_init();
         __ERC721_init_unchained(name_, symbol_);
+        __EIP712_init("Supertrue", version);
         //Set Owner Account
         // _transferOwnership(owner_);
         //Set Hub Address
@@ -133,7 +137,7 @@ contract ForwardNFT is
         artist.id = artistId_;
         artist.name = artistName_;
         artist.instagram = artistInstagram_;
-        
+
         //Defaults
         _royaltyBPS = 1_000;    //Deafult to 10% royalties on seconday sales
         _price = 0.002 ether;           //Current Price / Base Price
@@ -141,7 +145,7 @@ contract ForwardNFT is
     }
 
     //-- Token Price
-    
+
     /**
      * @dev Get the Current Token Price
      */
@@ -168,9 +172,39 @@ contract ForwardNFT is
     /**
      * @dev Claim Contract - Set Artist's Account
      */
-    function setArtistAccount(address account) public onlyOwnerOrAdminOrArtist {
+    function setArtistAccount(address account) public onlyOwnerOrAdmin {
         artist.account = account;
         emit ArtistClaimed(account);
+    }
+
+    /**
+     * @dev Get account address which signature is signed with
+     */
+    function getSigner(bytes calldata signature, uint256 signer) public view returns (address) {
+        bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(
+                keccak256("Message(uint256 signer,address account,string instagram,uint256 artistId)"),
+                signer,
+                address(_msgSender()),
+                keccak256(bytes(artist.instagram)),
+                artist.id
+            )));
+        return ECDSA.recover(digest, signature);
+    }
+
+    /**
+     * @dev Claim Contract - Set Artist's Account
+     */
+    function claim(
+        bytes calldata signature1,
+        bytes calldata signature2
+    ) public {
+        address configContract = IForwardCreator(_hub).getConfig();
+
+        require((getSigner(signature1, 1) == IConfig(configContract).signer1()), "invalid signature1");
+        require((getSigner(signature2, 2) == IConfig(configContract).signer2()), "invalid signature2");
+
+        artist.account = _msgSender();
+        emit ArtistClaimed(_msgSender());
     }
 
     /**
@@ -225,7 +259,7 @@ contract ForwardNFT is
     function unpause() public onlyOwnerOrAdmin {
         _unpause();
     }
-    
+
     /// Get Total Supply
     function totalSupply() public view returns (uint256) {
         return _tokenIds.current();
@@ -242,14 +276,14 @@ contract ForwardNFT is
      * Single token at a time
      */
     // function mint(uint256 amount, address to) public payable whenNotPaused {
-    function mint(address to) public payable whenNotPaused { 
+    function mint(address to) public payable whenNotPaused {
         //Validate Amount
         require(_price >= msg.value, "Insuficient Payment");
         //Handle Payment
         _handlePaymentNative(msg.value);
-        //Increment Token ID    
+        //Increment Token ID
         _tokenIds.increment();  //We just put this first so that we's start with 1
-        //Mint    
+        //Mint
         _safeMint(to, _tokenIds.current());
         //Update Price
         _updatePrice();
@@ -318,7 +352,7 @@ contract ForwardNFT is
     /**
      * @dev Withdraw Additional Funds (Not from minting)
      */
-    function withdraw() external whenNotPaused {
+    function withdraw() external whenNotPaused onlyOwnerOrAdmin {
         require(address(this).balance > _artistPending, "No Available Balance");
         uint256 _balanceAvailable = address(this).balance - _artistPending;
         require(_balanceAvailable > 0, "No Available Balance");
@@ -329,7 +363,7 @@ contract ForwardNFT is
     /**
      * @dev Send All Funds From Contract to Owner
      */
-    function withdrawERC20(address currency) external whenNotPaused {
+    function withdrawERC20(address currency) external whenNotPaused onlyOwnerOrAdmin {
         require(currency != address(0), "Currency Address Not Set");
         uint256 balance = IERC20(currency).balanceOf(address(this));
         uint256 _balanceAvailable = balance - _artistPendingERC20[currency];
@@ -341,7 +375,7 @@ contract ForwardNFT is
     /**
      * @dev Artist Withdraw Pending Balance of Native Tokens
      */
-    function artistWithdrawPending() external whenNotPaused {
+    function artistWithdrawPending() external whenNotPaused onlyOwnerOrAdminOrArtist {
         //Validate
         require(artist.account != address(0), "Artist Account Not Set");
         require(_artistPending > 0, "No Artist Pending Balance");
@@ -355,7 +389,7 @@ contract ForwardNFT is
     /**
      * @dev Artist Withdraw Pending Balance of ERC20 Token
      */
-    function artistWithdrawPendingERC20(address currency) external whenNotPaused {
+    function artistWithdrawPendingERC20(address currency) external whenNotPaused onlyOwnerOrAdminOrArtist {
         //Validate
         require(artist.account != address(0), "Artist Account Not Set");
         require(_artistPendingERC20[currency] > 0, "No Artist Pending Balance");
@@ -366,8 +400,8 @@ contract ForwardNFT is
         _artistPendingERC20[currency] = 0;
     }
 
-    
-    
+
+
 /* Why receive ERC721? What happens with these tokens after they are received? Can they be extracted?
 
     // function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
@@ -402,18 +436,18 @@ contract ForwardNFT is
     }
 
     //-- URI Handling
-    
+
     /**
      * @dev Overrid Default Contract URI
-     */ 
+     */
     function setContractURI(string memory uri_) external onlyOwnerOrAdminOrArtist {
         _contract_uri = uri_;
     }
-    
+
     /**
      * @dev Contract URI
      *  https://docs.opensea.io/docs/contract-level-metadata
-     */ 
+     */
     function contractURI() public view returns (string memory) {
         if(bytes(_contract_uri).length > 0) return _contract_uri;
         // .../storefront
@@ -429,7 +463,7 @@ contract ForwardNFT is
         return string(abi.encodePacked(_baseURI(), "json", "/", tokenId.toString()));
     }
 
-/// DEBUGGINB 
+/// DEBUGGINB
 // function baseURI() public view returns (string memory) {
 //     return _baseURI();
 // }

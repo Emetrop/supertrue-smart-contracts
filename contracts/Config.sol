@@ -20,13 +20,16 @@ contract Config is Ownable {
     mapping(address => bool) private _admins;   //Admins of this contract
     //URI
     string private _baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/"; //Default Base URI
+    //Signers addresses
+    address private _signer1;
+    address private _signer2;
 
     //-- Events --//
     event TreasurySet(address treasury);
     event TreasuryFeeSet(uint256 treasuryFee);
     event AdminAdded(address admin);
     event AdminRemoved(address admin);
-    
+    event SignersSet(address signer1, address signer2);
 
     //-- Modifiers --//
 
@@ -39,7 +42,30 @@ contract Config is Ownable {
     }
 
     //-- Methods --//
-    
+
+    /**
+     * @dev Get Signers Storage Contract Address
+     */
+    function signer1() public view returns (address) {
+        return _signer1;
+    }
+
+    /**
+     * @dev Get Signers Storage Contract Address
+     */
+    function signer2() public view returns (address) {
+        return _signer2;
+    }
+
+    /**
+     * @dev Set Signers Storage Contract Address
+     */
+    function setSigners(address signer1, address signer2) public onlyOwner {
+        _signer1 = signer1;
+        _signer2 = signer2;
+        emit SignersSet(signer1, signer2);
+    }
+
     //-- Treasury
     /**
      * @dev Fetch Treasury Data
@@ -67,7 +93,7 @@ contract Config is Ownable {
         _treasuryFee = newTreasuryFee;
         emit TreasuryFeeSet(newTreasuryFee);
     }
-        
+
     //-- Admin Management
 
     /**
@@ -95,7 +121,7 @@ contract Config is Ownable {
         return _admins[account];
     }
 
-    /** 
+    /**
      * @dev Set Protocol's Base URI
      */
     function setBaseURI(string memory baseURI_) external onlyOwnerOrAdmin {
@@ -108,5 +134,4 @@ contract Config is Ownable {
     function getBaseURI() external view returns (string memory) {
         return _baseURI;
     }
-
 }

@@ -27,7 +27,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // address public admin;
     address public beaconAddress;
     address private _CONFIG;    //Configuration Contract
-    
+
     // registry of created contracts
     mapping(uint256 => address) private artistContracts;
 
@@ -44,11 +44,12 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
         // set up beacon with msg.sender as the owner
         UpgradeableBeacon _beacon = new UpgradeableBeacon(address(new ForwardNFT()));
+        // how will be updated this bacon if it has to be done from this contract??
         // _beacon.transferOwnership(msg.sender);   //Nope. Should be owned by this contract to make sure changes are tracked
         beaconAddress = address(_beacon);
-        
+
         // baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
-    } 
+    }
 
     /**
      * Get Configurations Contract Address
@@ -91,7 +92,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         _CONFIG = _config;
     }
 
-    /** 
+    /**
      * Creates a new artist contract
      * @param name Name of the artist
      * @param instagram Instagram of the artist
@@ -110,7 +111,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         string memory collectionName = string(abi.encodePacked(name, " Super True Fans"));
         string memory symbol = string(abi.encodePacked("ST", id.toString()));
 
-        //Deploy 
+        //Deploy
         BeaconProxy proxy = new BeaconProxy(
             beaconAddress,
             abi.encodeWithSelector(
@@ -143,7 +144,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     /// Define Who Can Upgrade
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
-    /// Upgrade Beacon Implementation 
+    /// Upgrade Beacon Implementation
     function upgradeBeacon(address _newImplementation) public onlyOwner {
         UpgradeableBeacon(beaconAddress).upgradeTo(_newImplementation);
         beaconAddress = _newImplementation;
