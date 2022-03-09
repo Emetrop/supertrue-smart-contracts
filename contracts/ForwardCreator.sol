@@ -14,7 +14,9 @@ import './ForwardNFT.sol';
 import "./interfaces/IConfig.sol";
 
 // import "hardhat/console.sol";
-
+/**
+ * @dev Beacon Proxy Factory
+ */
 contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using ECDSAUpgradeable for bytes32;
@@ -41,15 +43,18 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // ============ Functions ============
 
     /// Initializes factory
-    function initialize() public initializer {
-        __Ownable_init_unchained();
+    function initialize(address config) public initializer {
+        //Set Config Address
+        _CONFIG = config;
 
-        // set up beacon with msg.sender as the owner
-        UpgradeableBeacon _beacon = new UpgradeableBeacon(address(new ForwardNFT()));
-        // _beacon.transferOwnership(msg.sender);   //Nope. Should be owned by this contract to make sure changes are tracked
-        beaconAddress = address(_beacon);
-        
+        // __Ownable_init_unchained();  //Set Ownership to Sender   //No Longer Necessary - Owner Forward to Config
         // baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
+        
+        //init beacon
+        UpgradeableBeacon _beacon = new UpgradeableBeacon(address(new ForwardNFT()));
+        beaconAddress = address(_beacon);
+        // _beacon.transferOwnership(msg.sender);   //Should actually be owned by this contract to make sure changes are tracked
+        
     } 
 
     /**
@@ -67,19 +72,25 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         return IConfig(configContract).isAdmin(account);
     }
 
-
     /**
      * @dev Transfers ownership of all contract in protocol
      * Can only be called by the current owner.
-     * TODO: Test / DEPRECATE & Inherit
-     */
+     * TODO: DEPRECATE & Inherit
+    
     function transferOwnership(address newOwner) public override onlyOwner {
         //Transfer This Contract's Ownership
         _transferOwnership(newOwner);
-        //Transfer Beacon's Ownership
-        // UpgradeableBeacon(beaconAddress).transferOwnership(newOwner);    //CANCELLED
         //Config's (Protocol) Ownership
         IConfig(_CONFIG).transferOwnership(newOwner);
+    }
+    */
+
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view override returns (address) {
+        address configContract = getConfig();
+        return IConfig(configContract).owner();
     }
 
 
