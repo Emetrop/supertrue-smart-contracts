@@ -30,17 +30,6 @@ module.exports = async ({ chainId }) => {
   //Set Config
   proxy.setConfig(configContract.address);
 
-
-  // creating artist
-  // getting existing proxy
-  // const proxy = await ForwardCreator.attach(
-  //   "0x5933e81E1EbF73E07445E6FF480B6044453AE372"
-  // );
-  
-  // Creating artist
-  // const artist = await proxy.createArtist("Kanye West", "kanyewest").then(trans => trans.wait());
-  // console.log("Artist deployed to:", artist);
-
   // Verify your contracts with Etherscan
   // You don't want to verify on localhost
   if (chainId !== localChainId) {
