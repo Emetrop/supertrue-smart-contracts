@@ -11,9 +11,9 @@ async function main() {
     console.log("Update Factory Proxy:");
 
     //Config
-    // const contract = await ethers.getContractFactory("Config");
+    const ConfigContract = await ethers.getContractFactory("Config");
     //Deploy
-    // const instance = await contract.deploy();
+    const configContract = await ConfigContract.deploy();
 
     //Fetch New Implementation Contract
     let NewImplementation = await ethers.getContractFactory("ForwardCreator");
@@ -31,8 +31,8 @@ async function main() {
     //Attach
     const newFactoryContract = await NewImplementation.attach(factoryContract.address);
     //Set Config
-    // newFactoryContract.setConfig(configContract.address);
-    
+    newFactoryContract.setConfig(configContract.address);
+
     //Log
     console.log("ForwardCreator Contract Updated");
 }
