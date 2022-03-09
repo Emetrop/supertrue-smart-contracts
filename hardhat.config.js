@@ -79,28 +79,28 @@ module.exports = {
     },
 
     polygon: {
-      // url: `https://polygon-mainnet.infura.io/v3/${process.env.POLYGON_INFURA_KEY}`,
+      // url: `https://polygon-mainnet.infura.io/v3/${process.env.INFURA_KEY}`,
       url: `https://polygon-mainnet.g.alchemy.com/v2/fhZux9rES-s4VyU-G58IdvfbeqeXYcor`,
       accounts: [`${process.env.POLYGON_DEPLOYER_PRIV_KEY}`],
       chainId: 137,
       gasPrice: 1000000000
     },
     mumbai: {
-      url: `https://polygon-mumbai.infura.io/v3/${process.env.MUMBAI_INFURA_KEY}`,
+      url: `https://polygon-mumbai.infura.io/v3/${process.env.INFURA_KEY}`,
       accounts: [`${process.env.MUMBAI_DEPLOYER_PRIV_KEY}`],
       chainId: 80001,
       gasPrice: 1000000000
     },
     rinkeby: {
-      url: `https://rinkeby.infura.io/v3/${process.env.RINKEBY_INFURA_KEY}`,
+      url: `https://rinkeby.infura.io/v3/${process.env.INFURA_KEY}`,
       accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
     },
     ropsten: {
-      url: `https://ropsten.infura.io/v3/${process.env.ROPSTEN_INFURA_KEY}`,
+      url: `https://ropsten.infura.io/v3/${process.env.INFURA_KEY}`,
       accounts: [`${process.env.ROPSTEN_DEPLOYER_PRIV_KEY}`],
     },
     // mainnet: {
-    //   url: `https://mainnet.infura.io/v3/${process.env.MAINNET_INFURA_KEY}`,
+    //   url: `https://mainnet.infura.io/v3/${process.env.INFURA_KEY}`,
     //   accounts: [`${process.env.MAINNET_DEPLOYER_PRIV_KEY}`],
     // },
 

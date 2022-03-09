@@ -1,4 +1,4 @@
-// deploy/00_deploy_proxy.js
+// deploy/01_deploy_proxy.js
 
 const { ethers, upgrades } = require("hardhat");
 
@@ -13,21 +13,22 @@ const sleep = (ms) =>
   );
 
 module.exports = async ({ chainId }) => {
+    
   const ForwardCreator = await ethers.getContractFactory("ForwardCreator");
 
   // deploying new proxy
   const proxy = await upgrades.deployProxy(ForwardCreator, { kind: "uups" });
   console.log("Super True Hub deployed to:", proxy.address);
-
-  // // creating artist
-  // // getting existing proxy
-  // const proxy = await ForwardCreator.attach(
-  //   "0x5933e81E1EbF73E07445E6FF480B6044453AE372"
-  // );
   
-  // // Creating artist
-  // const artist = await proxy.createArtist("Kanye West", "kanyewest").then(trans => trans.wait());
-  // console.log("Artist deployed to:", artist);
+  //Config
+  const ConfigContract = await ethers.getContractFactory("Config");
+  //Deploy
+  const configContract = await ConfigContract.deploy();
+  //Log
+  console.log("Config Deployed to:", configContract.address);
+
+  //Set Config
+  proxy.setConfig(configContract.address);
 
   // Verify your contracts with Etherscan
   // You don't want to verify on localhost
@@ -35,12 +36,21 @@ module.exports = async ({ chainId }) => {
     // wait for etherscan to be ready to verify
     console.log("Start code verification on etherscan");
     await sleep(15000);
+    //Verify Proxy
     await run("verify:verify", {
       address: proxy.address,
       contract: "contracts/ForwardCreator.sol:ForwardCreator",
       contractArguments: [],
     });
+    //Verify Config
+    await run("verify:verify", {
+      address: configContract.address,
+      contract: "Config",
+      contractArguments: [],
+    });
+    
     console.log("End code verification on etherscan");
   }
+  
 };
 module.exports.tags = ["Forward", "ForwardCreator"];

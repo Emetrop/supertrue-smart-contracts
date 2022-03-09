@@ -14,7 +14,9 @@ import './ForwardNFT.sol';
 import "./interfaces/IConfig.sol";
 
 // import "hardhat/console.sol";
-
+/**
+ * @dev Beacon Proxy Factory
+ */
 contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using ECDSAUpgradeable for bytes32;
@@ -24,12 +26,14 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     CountersUpgradeable.Counter private atArtistId;
     // address used for signature verification, changeable by owner
-    // address public admin;
+    // address public admin;   //DEPRECATED
     address public beaconAddress;
     address private _CONFIG;    //Configuration Contract
 
+
     // registry of created contracts
     mapping(uint256 => address) private artistContracts;
+    mapping(bytes32 => address) private artistGUID;   //Index Unique Artist IDs
 
     // ============ Events ============
 
@@ -39,16 +43,18 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // ============ Functions ============
 
     /// Initializes factory
-    function initialize() public initializer {
-        __Ownable_init_unchained();
+    function initialize(address config) public initializer {
+        //Set Config Address
+        _CONFIG = config;
 
-        // set up beacon with msg.sender as the owner
-        UpgradeableBeacon _beacon = new UpgradeableBeacon(address(new ForwardNFT()));
-        // how will be updated this bacon if it has to be done from this contract??
-        // _beacon.transferOwnership(msg.sender);   //Nope. Should be owned by this contract to make sure changes are tracked
-        beaconAddress = address(_beacon);
-
+        // __Ownable_init_unchained();  //Set Ownership to Sender   //No Longer Necessary - Owner Forward to Config
         // baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
+
+        //init beacon
+        UpgradeableBeacon _beacon = new UpgradeableBeacon(address(new ForwardNFT()));
+        beaconAddress = address(_beacon);
+        // _beacon.transferOwnership(msg.sender);   //Should actually be owned by this contract to make sure changes are tracked
+
     }
 
     /**
@@ -66,19 +72,25 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         return IConfig(configContract).isAdmin(account);
     }
 
-
     /**
      * @dev Transfers ownership of all contract in protocol
      * Can only be called by the current owner.
-     * TODO: Test / DEPRECATE & Inherit
-     */
+     * TODO: DEPRECATE & Inherit
+
     function transferOwnership(address newOwner) public override onlyOwner {
         //Transfer This Contract's Ownership
         _transferOwnership(newOwner);
-        //Transfer Beacon's Ownership
-        // UpgradeableBeacon(beaconAddress).transferOwnership(newOwner);    //CANCELLED
         //Config's (Protocol) Ownership
         IConfig(_CONFIG).transferOwnership(newOwner);
+    }
+    */
+
+    /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view override returns (address) {
+        address configContract = getConfig();
+        return IConfig(configContract).owner();
     }
 
 
@@ -96,14 +108,17 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
      * Creates a new artist contract
      * @param name Name of the artist
      * @param instagram Instagram of the artist
+     * @param guid unique global identifier (Instagram ID)
      */
     function createArtist(
         string memory name,
-        string memory instagram
+        string memory instagram,
+        bytes32 guid
     ) public returns (address, uint256) {
         //Validate Input
         require(bytes(name).length > 0, "Empty name");
         require(bytes(instagram).length > 0, "Empty instagram");
+        require(artistGUID[guid] == address(0), "GUID already used");
 
         atArtistId.increment();
         uint256 id = atArtistId.current();
@@ -128,7 +143,8 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         );
 
         // add to registry
-        artistContracts[id] = address(proxy);    //Mapping
+        artistContracts[id] = address(proxy);
+        artistGUID[guid] = address(proxy);
 
         emit CreatedArtist(atArtistId.current(), name, symbol, address(proxy));
 
