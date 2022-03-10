@@ -46,7 +46,7 @@ module.exports = async ({ chainId }) => {
     //Verify Config
     await run("verify:verify", {
       address: configContract.address,
-      contract: "Config",
+      contract: "contracts/Config.sol:Config",
       contractArguments: [],
     });
     
