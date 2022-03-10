@@ -33,7 +33,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     // registry of created contracts
     mapping(uint256 => address) private artistContracts;
-    mapping(bytes32 => address) private artistGUID;   //Index Unique Artist IDs
+    mapping(bytes32 => uint256) private artistGUID;   //Index Unique Artist IDs
 
     // ============ Events ============
 
@@ -113,12 +113,13 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     function createArtist(
         string memory name,
         string memory instagram,
-        bytes32 guid
+        string calldata guid
     ) public returns (address, uint256) {
         //Validate Input
         require(bytes(name).length > 0, "Empty name");
         require(bytes(instagram).length > 0, "Empty instagram");
-        require(artistGUID[guid] == address(0), "GUID already used");
+        bytes32 guidHash = keccak256(bytes(guid));
+        require(artistGUID[guidHash] == 0, "GUID already used");
 
         atArtistId.increment();
         uint256 id = atArtistId.current();
@@ -144,7 +145,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
         // add to registry
         artistContracts[id] = address(proxy);
-        artistGUID[guid] = address(proxy);
+        artistGUID[guidHash] = id;
 
         emit CreatedArtist(atArtistId.current(), name, symbol, address(proxy));
 
@@ -153,6 +154,10 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
 
     /// Get Artist's Contract Address by ID
     function getArtistContract(uint256 artistId) external view returns(address) {
+        require(artistContracts[artistId] != address(0), "Non-Existent Artist");
+        return artistContracts[artistId];
+    }
+    function getArtistContractByGUID(uint256 artistId) external view returns(address) {
         require(artistContracts[artistId] != address(0), "Non-Existent Artist");
         return artistContracts[artistId];
     }
