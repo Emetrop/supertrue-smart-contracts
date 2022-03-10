@@ -463,11 +463,6 @@ contract ForwardNFT is
         return string(abi.encodePacked(_baseURI(), "json", "/", tokenId.toString()));
     }
 
-/// DEBUGGINB
-// function baseURI() public view returns (string memory) {
-//     return _baseURI();
-// }
-
     /**
      * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
      * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
