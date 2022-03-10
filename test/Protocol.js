@@ -17,8 +17,8 @@ describe("EntireProtocol", function () {
     const PRICE_INCREMENT = '100000000000000';        //TODO: Test Price Incemenets
     const BASE_URI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/"; //Default Base URI
     const ARTISTS = [
-        {name: "name1", ig: "ig1",},
-        {name: "name2", ig: "ig2",},
+        {name: "name1", ig: "ig_name1", guid:'ig:id1'},
+        {name: "name2", ig: "ig_name2", guid:'ig:id2'},
     ];
     let configContract;
     let factoryContract;
@@ -110,16 +110,20 @@ describe("EntireProtocol", function () {
 
   before(async function () {
 
-        //Deploy Factory
-        const ForwardCreator = await ethers.getContractFactory("ForwardCreator");
-        // deploying new proxy
-        factoryContract = await upgrades.deployProxy(ForwardCreator, { kind: "uups" });
-        console.log("Factory deployed to:", factoryContract.address);  
-
         //Mock Config
         const ConfigContract = await ethers.getContractFactory("Config");
         let mockConfigContract = await ConfigContract.deploy();
-        await factoryContract.setConfig(mockConfigContract.address);
+        
+
+        //Deploy Factory
+        const ForwardCreator = await ethers.getContractFactory("ForwardCreator");
+        // deploying new proxy
+        // factoryContract = await upgrades.deployProxy(ForwardCreator, { kind: "uups" });
+        factoryContract = await upgrades.deployProxy(ForwardCreator, [mockConfigContract.address], { kind: "uups" });
+        console.log("Factory deployed to:", factoryContract.address);  
+
+        //Set Config
+        // await factoryContract.setConfig(mockConfigContract.address);
 
         //Populate Accounts
         // [owner, ...addrs] = await ethers.getSigners();
@@ -166,10 +170,13 @@ describe("EntireProtocol", function () {
         it("Should deploy child: ForwardNFT Contract", async function () {
             const artistName = ARTISTS[1].name; //"name2";
             const artistIG = ARTISTS[1].ig; //"ig2";
+            const artistGUID = ARTISTS[1].guid; 
+
+            console.log("Deploy Artist 1:"+artistGUID, ARTISTS[1]);
 
             //Deploy New Artist
             // await factoryContract.createArtist(artistName, artistIG);       //TODO: How to get the id & address from that??
-            let tx = await factoryContract.createArtist(artistName, artistIG).then(trans => trans.wait());
+            let tx = await factoryContract.createArtist(artistName, artistIG, artistGUID).then(trans => trans.wait());
             // console.log("[TEST] Deployed Artist Contract:"+T1.address, tx);
             // let dep = await tx.wait();
             // console.log("Deployed Artist Contract:", dep);
@@ -183,7 +190,6 @@ describe("EntireProtocol", function () {
             //Keep
             artistContracts.push(newArtistContract);
 
-            
             // let t1 = await newArtistContract.owner();
             // console.log("Deployed Artist Contract to:"+artistContractAddr, newArtistContract, t1);
             // console.log("Deployed Artist Contract:", artistContracts[0]);
@@ -195,13 +201,10 @@ describe("EntireProtocol", function () {
         });
 
         it("Should Not allow same artist to be deployed twice", async function () {
-            const artistName = ARTISTS[1].name; //"name2";
-            const artistIG = ARTISTS[1].ig; //"ig2";
-
             await expect(
                 //Deploy New Artist
-                factoryContract.createArtist(artistName, artistIG)
-            ).to.be.revertedWith("SOME KIND OF ERROR");
+                factoryContract.createArtist(ARTISTS[1].name, ARTISTS[1].ig, ARTISTS[1].guid)
+            ).to.be.revertedWith("GUID already used");
             
         });
 
