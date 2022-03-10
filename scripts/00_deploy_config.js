@@ -21,7 +21,7 @@ async function main() {
 
     //Log
     console.log("Super True Config deployed to:", instance.address);
-
+    /*
     try{
         // Verify your contracts with Etherscan
         // if (chainId && chainId !== localChainId) {// not on localhost
@@ -39,7 +39,7 @@ async function main() {
     catch(error){
         console.error("Faild Etherscan Verification", error);
     }
-
+    */
 }
   
 main()
