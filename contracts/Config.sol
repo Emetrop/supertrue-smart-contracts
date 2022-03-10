@@ -60,10 +60,10 @@ contract Config is Ownable {
     /**
      * @dev Set Signers Storage Contract Address
      */
-    function setSigners(address signer1, address signer2) public onlyOwner {
-        _signer1 = signer1;
-        _signer2 = signer2;
-        emit SignersSet(signer1, signer2);
+    function setSigners(address signer1_, address signer2_) public onlyOwner {
+        _signer1 = signer1_;
+        _signer2 = signer2_;
+        emit SignersSet(signer1_, signer2_);
     }
 
     //-- Treasury
