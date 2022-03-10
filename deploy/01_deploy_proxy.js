@@ -16,10 +16,6 @@ module.exports = async ({ chainId }) => {
     
   const ForwardCreator = await ethers.getContractFactory("ForwardCreator");
 
-  // deploying new proxy
-  const proxy = await upgrades.deployProxy(ForwardCreator, { kind: "uups" });
-  console.log("Super True Hub deployed to:", proxy.address);
-  
   //Config
   const ConfigContract = await ethers.getContractFactory("Config");
   //Deploy
@@ -27,8 +23,13 @@ module.exports = async ({ chainId }) => {
   //Log
   console.log("Config Deployed to:", configContract.address);
 
+  // deploying new proxy
+  // const proxy = await upgrades.deployProxy(ForwardCreator, { kind: "uups" });
+  const proxy = await upgrades.deployProxy(ForwardCreator, [configContract.address], { kind: "uups" });
+  console.log("Super True Hub deployed to:", proxy.address);
+  
   //Set Config
-  proxy.setConfig(configContract.address);
+  // proxy.setConfig(configContract.address);
 
   // Verify your contracts with Etherscan
   // You don't want to verify on localhost
