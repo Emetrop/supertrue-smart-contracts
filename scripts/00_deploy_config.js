@@ -29,9 +29,9 @@ async function main() {
             console.log("Start code verification on etherscan");
             // await sleep(15000);
             await run("verify:verify", {
-                address: contract.address,
+                address: instance.address,
                 contract: "Config",
-                // contractArguments: [],
+                contractArguments: [],
             });
             console.log("End code verification on etherscan");
         // }

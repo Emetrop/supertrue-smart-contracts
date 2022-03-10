@@ -25,7 +25,7 @@ module.exports = async ({ chainId }) => {
 
   // deploying new proxy
   // const proxy = await upgrades.deployProxy(ForwardCreator, { kind: "uups" });
-  const proxy = await upgrades.deployProxy(ForwardCreator, [configContract.address], { kind: "uups" });
+  const proxy = await upgrades.deployProxy(ForwardCreator, [configContract.address], { kind: "uups", timeout:120000 }); //https://docs.openzeppelin.com/upgrades-plugins/1.x/api-hardhat-upgrades#common-options
   console.log("Super True Hub deployed to:", proxy.address);
   
   //Set Config
@@ -41,7 +41,7 @@ module.exports = async ({ chainId }) => {
     await run("verify:verify", {
       address: proxy.address,
       contract: "contracts/ForwardCreator.sol:ForwardCreator",
-      contractArguments: [],
+      contractArguments: [configContract.address],
     });
     //Verify Config
     await run("verify:verify", {

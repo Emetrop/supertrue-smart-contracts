@@ -29,18 +29,21 @@ const { isAddress, getAddress, formatUnits, parseUnits } = utils;
 // Select the network you want to deploy to here:
 //
 // const defaultNetwork = "localhost";
-const defaultNetwork =  "hardhat";
+// const defaultNetwork =  "hardhat";
+// const defaultNetwork =  "mumbai";
+const defaultNetwork =  "rinkeby";
 
 const mainnetGwei = 21;
 
 function mnemonic() {
+  
+  return '';  //DISABLED FOR NOW
+
   try {
     return fs.readFileSync("./mnemonic.txt").toString().trim();
   } catch (e) {
     if (defaultNetwork !== "localhost") {
-      console.log(
-        "☢️ WARNING: No mnemonic file created for a deploy account. Try `yarn run generate` and then `yarn run account`."
-      );
+      console.log("☢️ WARNING: No mnemonic file created for a deploy account. Try `yarn run generate` and then `yarn run account`.");
     }
   }
   return "";
@@ -86,14 +89,27 @@ module.exports = {
       gasPrice: 1000000000
     },
     mumbai: {
-      url: `https://polygon-mumbai.infura.io/v3/${process.env.INFURA_KEY}`,
-      accounts: [`${process.env.MUMBAI_DEPLOYER_PRIV_KEY}`],
+      // url: `https://polygon-mumbai.infura.io/v3/${process.env.INFURA_KEY}`,
+      url: process.env.ALCHEMY_MUMBAI_URL,
+      accounts: [process.env.MUMBAI_DEPLOYER_PRIV_KEY],
       chainId: 80001,
-      gasPrice: 1000000000
+      // gasPrice: 1000000000,
+      // gasPrice: 8000000000, // default is 'auto' which breaks chains without the london hardfork
+      gasPrice: 10000000000,
+
+      gas: 2100000,
+      // gasPrice: 8000000000
+
     },
     rinkeby: {
       url: `https://rinkeby.infura.io/v3/${process.env.INFURA_KEY}`,
       accounts: [`${process.env.RINKEBY_DEPLOYER_PRIV_KEY}`],
+
+      gas: 2100000,
+      gasPrice: 8000000000
+      // gasPrice: 10000000000,
+
+      
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.INFURA_KEY}`,
