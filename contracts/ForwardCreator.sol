@@ -6,7 +6,7 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol';
+// import '@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol';
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import '@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol';
 import '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
@@ -19,7 +19,7 @@ import "./interfaces/IConfig.sol";
  */
 contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     using CountersUpgradeable for CountersUpgradeable.Counter;
-    using ECDSAUpgradeable for bytes32;
+    // using ECDSAUpgradeable for bytes32;
     using StringsUpgradeable for uint256;
 
     // ============ Storage ============
@@ -53,8 +53,6 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         //init beacon
         UpgradeableBeacon _beacon = new UpgradeableBeacon(address(new ForwardNFT()));
         beaconAddress = address(_beacon);
-        // _beacon.transferOwnership(msg.sender);   //Should actually be owned by this contract to make sure changes are tracked
-
     }
 
     /**
