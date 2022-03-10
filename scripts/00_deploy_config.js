@@ -30,7 +30,7 @@ async function main() {
             // await sleep(15000);
             await run("verify:verify", {
                 address: instance.address,
-                contract: "Config",
+                contract: "contracts/Config.sol:Config",
                 contractArguments: [],
             });
             console.log("End code verification on etherscan");
