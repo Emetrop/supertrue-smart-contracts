@@ -20,14 +20,18 @@ module.exports = async ({ chainId }) => {
   const ConfigContract = await ethers.getContractFactory("Config");
   //Deploy
   const configContract = await ConfigContract.deploy();
+  //Wait
+  await configContract.deployed();
   //Log
   console.log("Config Deployed to:", configContract.address);
 
   // deploying new proxy
   // const proxy = await upgrades.deployProxy(ForwardCreator, { kind: "uups" });
   const proxy = await upgrades.deployProxy(ForwardCreator, [configContract.address], { kind: "uups", timeout:120000 }); //https://docs.openzeppelin.com/upgrades-plugins/1.x/api-hardhat-upgrades#common-options
+  //Wait
+  await proxy.deployed();
   console.log("Super True Hub deployed to:", proxy.address);
-  
+
   //Set Config
   // proxy.setConfig(configContract.address);
 
