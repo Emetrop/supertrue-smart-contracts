@@ -2,14 +2,13 @@
 /**
  * Forward Creator is actually ERC1967Proxy 
  */
-async function main() {
+ async function main() {
     try{
         // Verify your contracts with Etherscan
         console.log("Start code verification on etherscan");
         await run("verify:verify", {
             address: "0x570f9C6D48De0E9366072CaF963f8CBCD68d83ed",
-            contract: "contracts/ForwardCreator.sol:ForwardCreator",
-            // contractArguments: ["0x98B28D02AF16600790aAE38d8F587eA99585BBb2"],
+            contract: "contracts/ForwardNFT.sol:ForwardNFT",
             contractArguments: [],
         });
         console.log("End code verification on etherscan");
