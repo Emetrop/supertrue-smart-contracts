@@ -7,7 +7,7 @@ import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721Pausab
 // import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
 // import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";  //DEPRECATED - Using Config's Owner
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
-// import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
@@ -22,14 +22,14 @@ import "./interfaces/IERC20.sol";
 
 /**
  * SuperTrue Forward NFT
- * Version 0.5.0
+ * Version 0.6.0
  *
  */
 contract ForwardNFT is
         // OwnableUpgradeable,
         ERC721PausableUpgradeable,
-        IERC2981Upgradeable
-        // EIP712Upgradeable
+        IERC2981Upgradeable,
+        EIP712Upgradeable
         // IERC721ReceiverUpgradeable
         {
 
@@ -125,7 +125,7 @@ contract ForwardNFT is
     ) public initializer {
         __ERC721Pausable_init();
         __ERC721_init_unchained(name_, symbol_);
-        // __EIP712_init("Supertrue", version);
+        __EIP712_init("Supertrue", version);
 
         //Set Owner Account
         // _transferOwnership(owner_);
@@ -180,7 +180,7 @@ contract ForwardNFT is
 
     /**
      * @dev Get account address which signature is signed with
-     
+     */ 
     function getSigner(bytes calldata signature, uint256 signer) public view returns (address) {
         bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(
                 keccak256("Message(uint256 signer,address account,string instagram,uint256 artistId)"),
@@ -191,10 +191,10 @@ contract ForwardNFT is
             )));
         return ECDSA.recover(digest, signature);
     }
-    */
+    
     /**
      * @dev Claim Contract - Set Artist's Account
-    
+     */
     function claim(
         bytes calldata signature1,
         bytes calldata signature2
@@ -207,7 +207,6 @@ contract ForwardNFT is
         artist.account = _msgSender();
         emit ArtistClaimed(_msgSender());
     }
-    */
 
     /**
      * @dev Returns the address of the current owner.
