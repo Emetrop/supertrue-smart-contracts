@@ -14,12 +14,12 @@ contract Config is Ownable {
 
     //-- Storage --//
     //Treasury
-    uint256 private _treasuryFee = 2000;   //Default to 20%
+    uint256 private _treasuryFee;
     address private _treasury;
     //Admin
     mapping(address => bool) private _admins;   //Admins of this contract
     //URI
-    string private _baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/"; //Default Base URI
+    string private _baseURI;
     //Signers addresses
     address private _signer1;
     address private _signer2;
@@ -42,6 +42,17 @@ contract Config is Ownable {
     }
 
     //-- Methods --//
+
+
+    constructor() {
+        //Default Base URI
+        _baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
+        //Default Treasury Fee
+        _treasuryFee = 2000;  //20% 
+        //Init Signers
+        _signer1 = 0x8eC13C4982a5Fb8b914F0927C358E14f8d657133;
+        _signer2 = 0xb9fAfb1De9083eAa09Fd7D058784a0316a2960B1;
+    }
 
     /**
      * @dev Get Signers Storage Contract Address
