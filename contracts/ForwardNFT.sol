@@ -2,23 +2,16 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
-//import "hardhat/console.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
-// import "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
-// import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";  //DEPRECATED - Using Config's Owner
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
-import "@openzeppelin/contracts/utils/cryptography/draft-EIP712.sol";
-
-//Interfaces
 import "./interfaces/IForwardCreator.sol";
 import "./interfaces/IConfig.sol";
 import "./interfaces/IERC20.sol";
-
 
 /**
  * SuperTrue Forward NFT
@@ -189,7 +182,7 @@ contract ForwardNFT is
                 keccak256(bytes(artist.instagram)),
                 artist.id
             )));
-        return ECDSA.recover(digest, signature);
+        return ECDSAUpgradeable.recover(digest, signature);
     }
     
     /**
