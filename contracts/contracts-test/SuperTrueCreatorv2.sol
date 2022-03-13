@@ -2,12 +2,12 @@
 
 pragma solidity >=0.8.0 <0.9.0;
 
-import "../ForwardNFT.sol";
+import "../SuperTrueCreator.sol";
 
 /**
- * ForwardNFT for Testing Purposes
+ * SuperTrueCreator for Testing Purposes
  */
-contract ForwardNFTv2 is ForwardNFT {
+contract SuperTrueCreatorv2 is SuperTrueCreator {
 
     // string private yoyo = 'to';  //TESTING: Not Upgrade Safe
 

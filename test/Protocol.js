@@ -63,7 +63,7 @@ describe("EntireProtocol", function () {
                 await expect(
                     configContract.connect(admin).addAdmin(admin.address)
                 ).to.be.revertedWith("Ownable: caller is not the owner");
-                
+
                 await expect(
                     configContract.connect(admin).removeAdmin(owner.address)
                 ).to.be.revertedWith("Ownable: caller is not the owner");
@@ -95,7 +95,7 @@ describe("EntireProtocol", function () {
                 //Set
                 let tx = await configContract.setTreasury(newTreasury.address);
                 await expect(tx).to.emit(configContract, 'TreasurySet').withArgs(newTreasury.address);
-                
+
                 tx = await configContract.setTreasuryFee(newTreasuryAmount);
                 await expect(tx).to.emit(configContract, 'TreasuryFeeSet').withArgs(newTreasuryAmount);
 
@@ -113,14 +113,16 @@ describe("EntireProtocol", function () {
         //Mock Config
         const ConfigContract = await ethers.getContractFactory("Config");
         let mockConfigContract = await ConfigContract.deploy();
-        
+
 
         //Deploy Factory
-        const ForwardCreator = await ethers.getContractFactory("ForwardCreator");
+        const SuperTrueCreator = await ethers.getContractFactory("SuperTrueCreator");
+        const SuperTrueNFT = await ethers.getContractFactory("SuperTrueNFT");
+        const superTrueNFT = await SuperTrueNFT.deploy();
         // deploying new proxy
-        // factoryContract = await upgrades.deployProxy(ForwardCreator, { kind: "uups" });
-        factoryContract = await upgrades.deployProxy(ForwardCreator, [mockConfigContract.address], { kind: "uups" });
-        console.log("Factory deployed to:", factoryContract.address);  
+        // factoryContract = await upgrades.deployProxy(SuperTrueCreator, { kind: "uups" });
+        factoryContract = await upgrades.deployProxy(SuperTrueCreator, [mockConfigContract.address, superTrueNFT.address], { kind: "uups" });
+        console.log("Factory deployed to:", factoryContract.address);
 
         //Set Config
         // await factoryContract.setConfig(mockConfigContract.address);
@@ -142,7 +144,7 @@ describe("EntireProtocol", function () {
             await expect(
                 factoryContract.connect(tester).setConfig(configContract.address)
             ).to.be.revertedWith("Ownable: caller is not the owner");
-        });    
+        });
         it("Should change Config", async function () {
             //Set Config
             await factoryContract.setConfig(configContract.address);
@@ -166,11 +168,11 @@ describe("EntireProtocol", function () {
                 factoryContract.getArtistContract(1)
             ).to.be.revertedWith("Non-Existent Artist");
         });
-        
-        it("Should deploy child: ForwardNFT Contract", async function () {
+
+        it("Should deploy child: SuperTrueNFT Contract", async function () {
             const artistName = ARTISTS[1].name; //"name2";
             const artistIG = ARTISTS[1].ig; //"ig2";
-            const artistGUID = ARTISTS[1].guid; 
+            const artistGUID = ARTISTS[1].guid;
 
             console.log("Deploy Artist 1:"+artistGUID, ARTISTS[1]);
 
@@ -184,9 +186,9 @@ describe("EntireProtocol", function () {
             //Fetch New Artist Contract Address
             const artistContractAddr = await factoryContract.getArtistContract(1);
 
-            //Attach 
-            const ForwardNFT = await ethers.getContractFactory("ForwardNFT");
-            const newArtistContract = await ForwardNFT.attach(artistContractAddr);
+            //Attach
+            const SuperTrueNFT = await ethers.getContractFactory("SuperTrueNFT");
+            const newArtistContract = await SuperTrueNFT.attach(artistContractAddr);
             //Keep
             artistContracts.push(newArtistContract);
 
@@ -194,9 +196,9 @@ describe("EntireProtocol", function () {
             // console.log("Deployed Artist Contract to:"+artistContractAddr, newArtistContract, t1);
             // console.log("Deployed Artist Contract:", artistContracts[0]);
             // console.log("Deployed Artist Contract Addr", artistContracts[0].hash);
-            
+
             // expect(artistContractAddr).to.equal(artistContracts[0].hash);
-            
+
             expect(artistContractAddr).not.to.equal(ZERO_ADDR);
         });
 
@@ -205,14 +207,14 @@ describe("EntireProtocol", function () {
                 //Deploy New Artist
                 factoryContract.createArtist(ARTISTS[1].name, ARTISTS[1].ig, ARTISTS[1].guid)
             ).to.be.revertedWith("GUID already used");
-            
+
         });
 
         it("Factory should be upgradable", async function () {
             //Fetch New Implementation Contract
-            let NewImplementation = await ethers.getContractFactory("contracts/contracts-test/ForwardCreatorv2.sol:ForwardCreatorv2");
+            let NewImplementation = await ethers.getContractFactory("contracts/contracts-test/SuperTrueCreatorv2.sol:SuperTrueCreatorv2");
             await upgrades.upgradeProxy(factoryContract, NewImplementation);
-        
+
             //Update Interface
             const newFactoryContract = await NewImplementation.attach(factoryContract.address);
             // console.log("Upgraded Facroty (Hub) at: "+ factoryContract.address, newFactoryContract);
@@ -224,14 +226,14 @@ describe("EntireProtocol", function () {
         });
 
     });
-    
+
     describe("Artist NFT", function () {
         let artistContract;
 
         before(async function () {
             artistContract = artistContracts[0];
         });
-        
+
         it("Should inherit Owner", async function () {
             //Not Admin
             expect(await artistContract.owner()).to.equal(owner.address);
@@ -248,7 +250,7 @@ describe("EntireProtocol", function () {
             let result = await artistContract.price();
             expect(result).to.equal(PRICE_BASE);
         });
-        
+
         it("Should have Contract URI", async function () {
             let result = await artistContract.contractURI();
             expect(result).to.equal(BASE_URI + "1/storefront");
@@ -287,13 +289,12 @@ describe("EntireProtocol", function () {
             await artistContract.connect(admin).setContractURI("");
             expect(await artistContract.contractURI()).to.equal(BASE_URI + "1/storefront");
         });
-        
+
         it("Beacon should be upgradable", async function () {
             //Current Implementation
-            const OldImplementation = await ethers.getContractFactory("ForwardNFT");
+            const OldImplementation = await ethers.getContractFactory("SuperTrueNFT");
             //New Implementation
-            const NewImplementation = await ethers.getContractFactory("contracts/contracts-test/ForwardNFTv2.sol:ForwardNFTv2");
-            // const NewImplementation = await ethers.getContractFactory("contracts/contracts-test/ForwardNFTv3.sol:ForwardNFTv3");
+            const NewImplementation = await ethers.getContractFactory("contracts/contracts-test/SuperTrueNFTv2.sol:SuperTrueNFTv2");
             let newImplementation = await NewImplementation.deploy();
 
             //-- Prep
@@ -303,7 +304,7 @@ describe("EntireProtocol", function () {
             await upgrades.forceImport(BeaconAddress, OldImplementation);
             //Validate Upgrade
             await upgrades.prepareUpgrade(BeaconAddress, NewImplementation);
-                
+
             //Upgrade
             factoryContract.upgradeBeacon(newImplementation.address);
 

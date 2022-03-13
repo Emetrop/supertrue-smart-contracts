@@ -13,22 +13,25 @@ const sleep = (ms) =>
   );
 
 module.exports = async ({ chainId }) => {
-    
-  const ForwardCreator = await ethers.getContractFactory("ForwardCreator");
-
-  //Config
   const ConfigContract = await ethers.getContractFactory("Config");
-  //Deploy
   const configContract = await ConfigContract.deploy();
-  //Wait
   await configContract.deployed();
-  //Log
   console.log("Config Deployed to:", configContract.address);
 
+  const SuperTrueNFTContract = await ethers.getContractFactory("SuperTrueNFT");
+  const superTrueNFTContract = await SuperTrueNFTContract.deploy();
+  await superTrueNFTContract.deployed();
+  console.log("SuperTrueNFT Deployed to:", configContract.address);
+
+  const SuperTrueCreator = await ethers.getContractFactory("SuperTrueCreator");
+
   // deploying new proxy
-  // const proxy = await upgrades.deployProxy(ForwardCreator, { kind: "uups" });
-  const proxy = await upgrades.deployProxy(ForwardCreator, [configContract.address], { kind: "uups", timeout:120000 }); //https://docs.openzeppelin.com/upgrades-plugins/1.x/api-hardhat-upgrades#common-options
-  //Wait
+  const proxy = await upgrades.deployProxy(SuperTrueCreator,
+    [configContract.address, superTrueNFTContract.address],{
+    // https://docs.openzeppelin.com/upgrades-plugins/1.x/api-hardhat-upgrades#common-options
+    kind: "uups",
+    timeout:120000
+  });
   await proxy.deployed();
   console.log("Super True Hub deployed to:", proxy.address);
 
@@ -44,7 +47,7 @@ module.exports = async ({ chainId }) => {
     //Verify Proxy
     await run("verify:verify", {
       address: proxy.address,
-      contract: "contracts/ForwardCreator.sol:ForwardCreator",
+      contract: "contracts/SuperTrueCreator.sol:SuperTrueCreator",
       contractArguments: [configContract.address],
     });
     //Verify Config
@@ -53,9 +56,9 @@ module.exports = async ({ chainId }) => {
       contract: "contracts/Config.sol:Config",
       contractArguments: [],
     });
-    
+
     console.log("End code verification on etherscan");
   }
-  
+
 };
-module.exports.tags = ["Forward", "ForwardCreator"];
+module.exports.tags = ["Supertrue", "SuperTrueCreator"];

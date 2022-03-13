@@ -6,20 +6,18 @@ import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
 import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
 import '@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol';
-// import '@openzeppelin/contracts-upgradeable/utils/cryptography/ECDSAUpgradeable.sol';
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import '@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol';
 import '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
-import './ForwardNFT.sol';
+
+import './SuperTrueNFT.sol';
 import "./interfaces/IConfig.sol";
 
-// import "hardhat/console.sol";
 /**
  * @dev Beacon Proxy Factory
  */
-contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
+contract SuperTrueCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     using CountersUpgradeable for CountersUpgradeable.Counter;
-    // using ECDSAUpgradeable for bytes32;
     using StringsUpgradeable for uint256;
 
     // ============ Storage ============
@@ -43,7 +41,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
     // ============ Functions ============
 
     /// Initializes factory
-    function initialize(address config) public initializer {
+    function initialize(address config, address nftContract) public initializer {
         //Set Config Address
         _CONFIG = config;
 
@@ -51,7 +49,7 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         // baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
 
         //init beacon
-        UpgradeableBeacon _beacon = new UpgradeableBeacon(address(new ForwardNFT()));
+        UpgradeableBeacon _beacon = new UpgradeableBeacon(nftContract);
         beaconAddress = address(_beacon);
     }
 
@@ -122,16 +120,15 @@ contract ForwardCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
         atArtistId.increment();
         uint256 id = atArtistId.current();
         // string memory collectionName = string(abi.encodePacked("SuperTrue ", id.toString()));
-        string memory collectionName = string(abi.encodePacked(name, " Super True Fans"));
+        string memory collectionName = string(abi.encodePacked(name, " SuperTrue Fans"));
         string memory symbol = string(abi.encodePacked("ST", id.toString()));
 
         //Deploy
         BeaconProxy proxy = new BeaconProxy(
             beaconAddress,
             abi.encodeWithSelector(
-                ForwardNFT( payable(address(0)) ).initialize.selector,
-                // admin,
-                address(this),
+                SuperTrueNFT( payable(address(0)) ).initialize.selector,
+                address(this), // admin,
                 // 12, "SuperTrue 12", SP12, https://supertrue.fans/
                 id,
                 name,

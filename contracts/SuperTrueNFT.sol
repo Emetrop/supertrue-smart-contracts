@@ -9,16 +9,16 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
-import "./interfaces/IForwardCreator.sol";
+import "./interfaces/ISuperTrueCreator.sol";
 import "./interfaces/IConfig.sol";
 import "./interfaces/IERC20.sol";
 
 /**
- * SuperTrue Forward NFT
+ * SuperTrue NFT
  * Version 0.6.0
  *
  */
-contract ForwardNFT is
+contract SuperTrueNFT is
         // OwnableUpgradeable,
         ERC721PausableUpgradeable,
         IERC2981Upgradeable,
@@ -173,7 +173,7 @@ contract ForwardNFT is
 
     /**
      * @dev Get account address which signature is signed with
-     */ 
+     */
     function getSigner(bytes calldata signature, uint256 signer) public view returns (address) {
         bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(
                 keccak256("Message(uint256 signer,address account,string instagram,uint256 artistId)"),
@@ -184,7 +184,7 @@ contract ForwardNFT is
             )));
         return ECDSAUpgradeable.recover(digest, signature);
     }
-    
+
     /**
      * @dev Claim Contract - Set Artist's Account
      */
@@ -192,7 +192,7 @@ contract ForwardNFT is
         bytes calldata signature1,
         bytes calldata signature2
     ) public {
-        address configContract = IForwardCreator(_hub).getConfig();
+        address configContract = ISuperTrueCreator(_hub).getConfig();
 
         require((getSigner(signature1, 1) == IConfig(configContract).signer1()), "invalid signature1");
         require((getSigner(signature2, 2) == IConfig(configContract).signer2()), "invalid signature2");
@@ -205,7 +205,7 @@ contract ForwardNFT is
      * @dev Returns the address of the current owner.
      */
     function owner() public view virtual returns (address) {
-        address configContract = IForwardCreator(_hub).getConfig();
+        address configContract = ISuperTrueCreator(_hub).getConfig();
         return IConfig(configContract).owner();
     }
 
@@ -213,7 +213,7 @@ contract ForwardNFT is
      * @dev Function to check if address is admin
      */
     function isAdmin(address account) public view returns (bool) {
-        address configContract = IForwardCreator(_hub).getConfig();
+        address configContract = ISuperTrueCreator(_hub).getConfig();
         return IConfig(configContract).isAdmin(account);
     }
 
@@ -222,7 +222,7 @@ contract ForwardNFT is
      * Centralized Treasury Settings for all Artist Contracts
      */
     function _getTreasuryData() internal view returns (address, uint256) {
-        address configContract = IForwardCreator(_hub).getConfig();
+        address configContract = ISuperTrueCreator(_hub).getConfig();
         (address treasury, uint256 treasuryFee) = IConfig(configContract).getTreasuryData();
         //Validate (Don't Burn Assets)
         require(treasuryFee == 0 || treasury != address(0), "Treasury Misconfigured");
@@ -464,7 +464,7 @@ contract ForwardNFT is
      */
     function _baseURI() internal view override returns (string memory) {
         // return _base_uri;
-        address configContract = IForwardCreator(_hub).getConfig();
+        address configContract = ISuperTrueCreator(_hub).getConfig();
         return string(abi.encodePacked(IConfig(configContract).getBaseURI(), artist.id.toString(), "/"));
     }
 }
