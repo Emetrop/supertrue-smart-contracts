@@ -119,8 +119,7 @@ contract SuperTrueCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable 
 
         atArtistId.increment();
         uint256 id = atArtistId.current();
-        // string memory collectionName = string(abi.encodePacked("SuperTrue ", id.toString()));
-        string memory collectionName = string(abi.encodePacked(name, " SuperTrue Fans"));
+        string memory collectionName = string(abi.encodePacked("SuperTrue ", id.toString()));
         string memory symbol = string(abi.encodePacked("ST", id.toString()));
 
         //Deploy
