@@ -118,7 +118,7 @@ contract SuperTrueNFT is
     ) public initializer {
         __ERC721Pausable_init();
         __ERC721_init_unchained(name_, symbol_);
-        __EIP712_init("Supertrue", version);
+        __EIP712_init("SuperTrue", version);
 
         //Set Owner Account
         // _transferOwnership(owner_);

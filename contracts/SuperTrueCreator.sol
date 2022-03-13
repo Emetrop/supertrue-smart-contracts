@@ -36,7 +36,7 @@ contract SuperTrueCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable 
     // ============ Events ============
 
     /// Emitted when an Artist is created
-    event CreatedArtist(uint256 artistId, string name, string symbol, address indexed artistAddress);
+    event ArtistCreated(uint256 artistId, string name, string symbol, address indexed artistAddress);
 
     // ============ Functions ============
 
@@ -95,7 +95,7 @@ contract SuperTrueCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable 
      */
     function setConfig(address _config) public onlyOwner {
         //String Match - Validate Contract's Designation
-        require(keccak256(abi.encodePacked(IConfig(_config).role())) == keccak256(abi.encodePacked("SupertrueConfig")), "Invalid Config Contract");
+        require(keccak256(abi.encodePacked(IConfig(_config).role())) == keccak256(abi.encodePacked("SuperTrueConfig")), "Invalid Config Contract");
         //Set
         _CONFIG = _config;
     }
@@ -141,7 +141,7 @@ contract SuperTrueCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable 
         artistContracts[id] = address(proxy);
         artistGUID[guidHash] = id;
 
-        emit CreatedArtist(atArtistId.current(), name, symbol, address(proxy));
+        emit ArtistCreated(atArtistId.current(), name, symbol, address(proxy));
 
         return (address(proxy), id);
     }
@@ -164,5 +164,4 @@ contract SuperTrueCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable 
         UpgradeableBeacon(beaconAddress).upgradeTo(_newImplementation);
         beaconAddress = _newImplementation;
     }
-
 }

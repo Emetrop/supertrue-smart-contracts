@@ -42,8 +42,8 @@ describe("EntireProtocol", function () {
             [owner, admin, tester, ...addrs] = await ethers.getSigners();
         })
 
-        it("should be a SupertrueConfig", async function () {
-            expect(await configContract.role()).to.equal("SupertrueConfig");
+        it("should be a SuperTrueConfig", async function () {
+            expect(await configContract.role()).to.equal("SuperTrueConfig");
         });
 
         describe("Permissions", function () {
@@ -390,7 +390,7 @@ describe("EntireProtocol", function () {
                     types,
                     primaryType: "Message",
                     domain: {
-                        name: "Supertrue",
+                        name: "SuperTrue",
                         version: "1",
                         chainId: 31337,
                         verifyingContract: artistContract.address
@@ -416,7 +416,7 @@ describe("EntireProtocol", function () {
                     types,
                     primaryType: "Message",
                     domain: {
-                        name: "Supertrue",
+                        name: "SuperTrue",
                         version: "1",
                         chainId: 31337,
                         verifyingContract: artistContract.address
@@ -433,7 +433,7 @@ describe("EntireProtocol", function () {
                     types,
                     primaryType: "Message",
                     domain: {
-                        name: "Supertrue",
+                        name: "SuperTrue",
                         version: "1",
                         chainId: 31337,
                         verifyingContract: artistContract.address

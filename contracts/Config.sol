@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract Config is Ownable {
 
     // Arbitrary contract designation signature
-    string public constant role = "SupertrueConfig";
+    string public constant role = "SuperTrueConfig";
 
     //-- Storage --//
     //Treasury
