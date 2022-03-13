@@ -1,6 +1,6 @@
-//SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 
-pragma solidity >=0.8.0 <0.9.0;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -48,7 +48,7 @@ contract Config is Ownable {
         //Default Base URI
         _baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
         //Default Treasury Fee
-        _treasuryFee = 2000;  //20% 
+        _treasuryFee = 2000;  //20%
         //Init Signers
         _signer1 = 0x8eC13C4982a5Fb8b914F0927C358E14f8d657133;
         _signer2 = 0xb9fAfb1De9083eAa09Fd7D058784a0316a2960B1;

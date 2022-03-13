@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts v4.4.1 (proxy/beacon/UpgradeableBeacon.sol)
 
 pragma solidity ^0.8.0;
 
+// OpenZeppelin Contracts v4.4.1 (proxy/beacon/UpgradeableBeacon.sol)
 import '@openzeppelin/contracts/proxy/beacon/IBeacon.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/utils/Address.sol';
