@@ -178,8 +178,12 @@ describe("EntireProtocol", function () {
             console.log("Deploy Artist 1:"+artistGUID, ARTISTS[1]);
 
             //Deploy New Artist
-            // await factoryContract.createArtist(artistName, artistIG);       //TODO: How to get the id & address from that??
-            let tx = await factoryContract.createArtist(artistName, artistIG, artistGUID).then(trans => trans.wait());
+            //TODO: How to get the id & address from that??
+            let tx = await factoryContract.createArtist(artistName, artistIG, artistGUID);
+            await expect(tx).to.emit(factoryContract, 'ArtistCreated');
+
+            await tx.wait();
+
             // console.log("[TEST] Deployed Artist Contract:"+T1.address, tx);
             // let dep = await tx.wait();
             // console.log("Deployed Artist Contract:", dep);

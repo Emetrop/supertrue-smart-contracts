@@ -36,7 +36,7 @@ contract SuperTrueCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable 
     // ============ Events ============
 
     /// Emitted when an Artist is created
-    event ArtistCreated(uint256 artistId, string name, string symbol, address indexed artistAddress);
+    event ArtistCreated(uint256 artistId, string symbol, string name, string instagram, address indexed artistAddress);
 
     // ============ Functions ============
 
@@ -141,7 +141,7 @@ contract SuperTrueCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable 
         artistContracts[id] = address(proxy);
         artistGUID[guidHash] = id;
 
-        emit ArtistCreated(atArtistId.current(), name, symbol, address(proxy));
+        emit ArtistCreated(atArtistId.current(), symbol, name, instagram, address(proxy));
 
         return (address(proxy), id);
     }
