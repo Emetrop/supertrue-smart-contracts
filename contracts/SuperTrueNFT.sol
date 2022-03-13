@@ -178,7 +178,7 @@ contract SuperTrueNFT is
         bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(
                 keccak256("Message(uint256 signer,address account,string instagram,uint256 artistId)"),
                 signer,
-                address(_msgSender()),
+                _msgSender(),
                 keccak256(bytes(artist.instagram)),
                 artist.id
             )));

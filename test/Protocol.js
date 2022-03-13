@@ -1,6 +1,7 @@
 const { ethers } = require("hardhat");
 const { use, expect } = require("chai");
 const { solidity } = require("ethereum-waffle");
+const { signTypedData, SignTypedDataVersion } = require('@metamask/eth-sig-util');
 
 const utils = ethers.utils;
 
@@ -344,6 +345,114 @@ describe("EntireProtocol", function () {
                 await configContract.setBaseURI(BASE_URI);
                 //Check
                 expect(await configContract.getBaseURI()).to.equal(BASE_URI);
+            });
+        });
+
+        describe("Claim", function () {
+            const signer1 = "0x8eC13C4982a5Fb8b914F0927C358E14f8d657133";
+            const signer2 = "0xb9fAfb1De9083eAa09Fd7D058784a0316a2960B1";
+            const signer1PrivateKey = Buffer.from(
+              'e3126708c26c5312d95395c6fb53329166484e57375b0493e3713b0cccfdf792',
+              'hex',
+            );
+            const signer2PrivateKey = Buffer.from(
+              '8b38a7dfbdfd6d05f27ec2223d91f8a30026a4f1add7507a296a5cc177513733',
+              'hex',
+            );
+            const types = {
+                EIP712Domain: [
+                    { name: 'name', type: 'string' },
+                    { name: 'version', type: 'string' },
+                    { name: 'chainId', type: 'uint256' },
+                    { name: 'verifyingContract', type: 'address' },
+                ],
+                Message: [
+                    { name: 'signer', type: 'uint256' },
+                    { name: 'account', type: 'address' },
+                    { name: 'instagram', type: 'string' },
+                    { name: 'artistId', type: 'uint256' },
+                ]
+            };
+
+            before(async function () {
+                await configContract.setSigners(signer1, signer2);
+            });
+
+            it("Signers are correctly set up", async function () {
+                expect(await configContract.signer1()).to.equal(signer1);
+                expect(await configContract.signer2()).to.equal(signer2);
+            });
+
+            it("Should get correct signer address", async function () {
+                const artist = await artistContract.artist();
+
+                const typedData = {
+                    types,
+                    primaryType: "Message",
+                    domain: {
+                        name: "Supertrue",
+                        version: "1",
+                        chainId: 31337,
+                        verifyingContract: artistContract.address
+                    },
+                    message: {
+                        signer: 1,
+                        account: owner.address,
+                        instagram: artist.instagram,
+                        artistId: 1
+                    }
+                };
+
+                const signature = signTypedData({privateKey: signer1PrivateKey, data: typedData, version: SignTypedDataVersion.V4});
+
+                expect(await artistContract.getSigner(signature, 1)).to.equal(signer1);
+            });
+
+            it("Should claim account", async function () {
+                const artist = await artistContract.artist();
+                const artistAccount = owner.address;
+
+                const typedData1 = {
+                    types,
+                    primaryType: "Message",
+                    domain: {
+                        name: "Supertrue",
+                        version: "1",
+                        chainId: 31337,
+                        verifyingContract: artistContract.address
+                    },
+                    message: {
+                        signer: 1,
+                        account: artistAccount,
+                        instagram: artist.instagram,
+                        artistId: Number(artist.id)
+                    }
+                };
+
+                const typedData2 = {
+                    types,
+                    primaryType: "Message",
+                    domain: {
+                        name: "Supertrue",
+                        version: "1",
+                        chainId: 31337,
+                        verifyingContract: artistContract.address
+                    },
+                    message: {
+                        signer: 2,
+                        account: artistAccount,
+                        instagram: artist.instagram,
+                        artistId: Number(artist.id)
+                    }
+                };
+
+                const signature1 = signTypedData({privateKey: signer1PrivateKey, data: typedData1, version: SignTypedDataVersion.V4});
+                const signature2 = signTypedData({privateKey: signer2PrivateKey, data: typedData2, version: SignTypedDataVersion.V4});
+
+                const tx = await artistContract.claim(signature1, signature2);
+
+                await expect(tx).to.emit(artistContract, 'ArtistClaimed').withArgs(artistAccount);
+                expect((await artistContract.artist()).account).to.equal(artistAccount);
             });
         });
     });
