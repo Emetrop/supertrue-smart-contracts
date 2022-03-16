@@ -104,6 +104,8 @@ contract SuperTrueNFT is
     event ArtistClaimed(address artist);
     /// @dev Artist Updated
     event ArtistUpdated(string name, string instagram, address account);
+    /// @dev Price Updated
+    event PriceUpdated(uint256 oldPrice, uint256 newPrice);
 
     // ============ Methods ============
 
@@ -146,7 +148,9 @@ contract SuperTrueNFT is
      * @dev Update Token Price
      */
     function _updatePrice() private {
+        uint256 oldPrice = _price;
         _price += _priceInterval;
+        emit PriceUpdated(oldPrice, _price);
     }
 
     //-- Artist Data
