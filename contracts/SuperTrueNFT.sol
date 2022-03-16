@@ -19,7 +19,6 @@ import "./interfaces/IERC20.sol";
  *
  */
 contract SuperTrueNFT is
-        // OwnableUpgradeable,
         ERC721PausableUpgradeable,
         IERC2981Upgradeable,
         EIP712Upgradeable
@@ -59,7 +58,7 @@ contract SuperTrueNFT is
 
     // Artist Data
     Artist public artist;
-    uint256 public _artistPending;
+    uint256 private _artistPending;
     mapping(address => uint256) private _artistPendingERC20;
 
     // Settings
@@ -103,6 +102,8 @@ contract SuperTrueNFT is
     event Withdrawal(address indexed to, address indexed currency, uint256 amount);
     /// @dev Claimed by Artist
     event ArtistClaimed(address artist);
+    /// @dev Artist Updated
+    event ArtistUpdated(string name, string instagram, address account);
 
     // ============ Methods ============
 
@@ -114,18 +115,13 @@ contract SuperTrueNFT is
         string memory artistInstagram_,
         string memory name_,
         string memory symbol_
-        // string memory uri_
     ) public initializer {
         __ERC721Pausable_init();
         __ERC721_init_unchained(name_, symbol_);
         __EIP712_init("SuperTrue", version);
 
-        //Set Owner Account
-        // _transferOwnership(owner_);
         //Set Hub Address
         _hub = hub_;
-        //Set URI
-        // _base_uri = uri_;
         // _fundingRecipient = payable(owner_);
 
         artist.id = artistId_;
@@ -161,6 +157,7 @@ contract SuperTrueNFT is
     function setArtist(string memory _name, string memory _instagram) public onlyOwnerOrAdmin {
         artist.name = _name;
         artist.instagram = _instagram;
+        emit ArtistUpdated(artist.name, artist.instagram, artist.account);
     }
 
     /**
@@ -168,6 +165,7 @@ contract SuperTrueNFT is
      */
     function setArtistAccount(address account) public onlyOwnerOrAdminOrArtist {
         artist.account = account;
+        emit ArtistUpdated(artist.name, artist.instagram, account);
         emit ArtistClaimed(account);
     }
 
