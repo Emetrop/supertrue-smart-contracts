@@ -18,6 +18,10 @@ module.exports = async ({ chainId }) => {
   await configContract.deployed();
   console.log("Config Deployed to:", configContract.address);
 
+  // set treasury address
+  // const treasuryAddress = "0x0000000000000000000000000000000000000001";
+  // await configContract.setTreasury(treasuryAddress);
+
   const SuperTrueNFTContract = await ethers.getContractFactory("SuperTrueNFT");
   const superTrueNFTContract = await SuperTrueNFTContract.deploy();
   await superTrueNFTContract.deployed();
@@ -33,10 +37,7 @@ module.exports = async ({ chainId }) => {
     timeout:120000
   });
   await proxy.deployed();
-  console.log("Super True Hub deployed to:", proxy.address);
-
-  //Set Config
-  // proxy.setConfig(configContract.address);
+  console.log("SuperTrueCreator deployed to:", proxy.address);
 
   // Verify your contracts with Etherscan
   // You don't want to verify on localhost
@@ -45,11 +46,11 @@ module.exports = async ({ chainId }) => {
     console.log("Start code verification on etherscan");
     await sleep(15000);
     //Verify Proxy
-    await run("verify:verify", {
-      address: proxy.address,
-      contract: "contracts/SuperTrueCreator.sol:SuperTrueCreator",
-      contractArguments: [configContract.address],
-    });
+    // await run("verify:verify", {
+    //   address: proxy.address,
+    //   contract: "contracts/SuperTrueCreator.sol:SuperTrueCreator",
+    //   contractArguments: [configContract.address, superTrueNFTContract.address],
+    // });
     //Verify Config
     await run("verify:verify", {
       address: configContract.address,
@@ -59,6 +60,6 @@ module.exports = async ({ chainId }) => {
 
     console.log("End code verification on etherscan");
   }
-
 };
-module.exports.tags = ["Supertrue", "SuperTrueCreator"];
+
+module.exports.tags = ["SuperTrue", "SuperTrueCreator"];
