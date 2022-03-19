@@ -100,11 +100,11 @@ contract SuperTrueNFT is
 
     /// Funds Withdrawal
     event Withdrawal(address indexed to, address indexed currency, uint256 amount);
-    /// @dev Claimed by Artist
+    /// Claimed by Artist
     event ArtistClaimed(address artist);
-    /// @dev Artist Updated
+    /// Artist Updated
     event ArtistUpdated(string name, string instagram, address account);
-    /// @dev Price Updated
+    /// Price Updated
     event PriceUpdated(uint256 oldPrice, uint256 newPrice);
 
     // ============ Methods ============
