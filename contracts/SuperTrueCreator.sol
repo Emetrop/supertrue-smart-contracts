@@ -69,19 +69,6 @@ contract SuperTrueCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable 
     }
 
     /**
-     * @dev Transfers ownership of all contract in protocol
-     * Can only be called by the current owner.
-     * TODO: DEPRECATE & Inherit
-
-    function transferOwnership(address newOwner) public override onlyOwner {
-        //Transfer This Contract's Ownership
-        _transferOwnership(newOwner);
-        //Config's (Protocol) Ownership
-        IConfig(_CONFIG).transferOwnership(newOwner);
-    }
-    */
-
-    /**
      * @dev Returns the address of the current owner.
      */
     function owner() public view override returns (address) {
