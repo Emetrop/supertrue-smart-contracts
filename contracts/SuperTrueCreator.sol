@@ -76,7 +76,6 @@ contract SuperTrueCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable 
         return IConfig(configContract).owner();
     }
 
-
     /**
      * Set Configurations Contract Address
      */

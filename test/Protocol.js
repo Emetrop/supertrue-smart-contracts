@@ -56,13 +56,11 @@ describe("EntireProtocol", function () {
                 expect(await configContract.paused()).to.equal(false);
                 //Pause
                 await configContract.pause();
-
                 expect(await configContract.paused()).to.equal(true);
                 //Unpause
                 await configContract.unpause();
                 expect(await configContract.paused()).to.equal(false);
             });
-
 
             it("should prevent unauthorized access", async function () {
                 await expect(
@@ -305,6 +303,33 @@ describe("EntireProtocol", function () {
             //Undo (By Admin)
             await artistContract.connect(admin).setContractURI("");
             expect(await artistContract.contractURI()).to.equal(BASE_URI + "1/storefront");
+        });
+
+        it("should be pausable", async function () {
+            expect(await artistContract.paused()).to.equal(false);
+            //Pause
+            await artistContract.pause();
+            expect(await artistContract.paused()).to.equal(true);
+            //Should fail to mint
+            await expect(
+                artistContract.mint(tester.address)
+            ).to.be.revertedWith("Pausable: paused");
+            //Unpause
+            await artistContract.unpause();
+            expect(await artistContract.paused()).to.equal(false);
+        });
+
+        it("Should obey protocol pause", async function () {
+            //Pause
+            await configContract.pause();
+            expect(await artistContract.paused()).to.equal(true);
+            //Should fail to mint
+            await expect(
+                artistContract.mint(tester.address)
+            ).to.be.revertedWith("Pausable: paused");
+            //Unpause
+            await configContract.unpause();
+            expect(await artistContract.paused()).to.equal(false);
         });
 
         it("Beacon should be upgradable", async function () {

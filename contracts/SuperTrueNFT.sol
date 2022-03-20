@@ -69,6 +69,8 @@ contract SuperTrueNFT is
     string public constant version = "1";
 
 
+    // bool private _paused;   //Override Pausa//TODO: Maybe move up when re-deplying
+
     // ============ Modifiers ============
 
     /**
@@ -254,6 +256,14 @@ contract SuperTrueNFT is
      */
     function unpause() public onlyOwnerOrAdmin {
         _unpause();
+    }
+
+    /**
+     * @dev Returns true if the contract is paused, and false otherwise.
+     */
+    function paused() public view override returns (bool) {
+        address configContract = ISuperTrueCreator(_hub).getConfig();
+        return (IConfig(configContract).paused() || super.paused());
     }
 
     /// Get Total Supply
