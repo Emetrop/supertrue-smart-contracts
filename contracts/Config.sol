@@ -3,11 +3,13 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
+
 
 /**
  * Global Configuration Contract
  */
-contract Config is Ownable {
+contract Config is Ownable, Pausable {
 
     // Arbitrary contract designation signature
     string public constant role = "SuperTrueConfig";
@@ -44,7 +46,7 @@ contract Config is Ownable {
     //-- Methods --//
 
 
-    constructor() {
+    constructor() Ownable() Pausable() {
         //Default Base URI
         _baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
         //Default Treasury Fee
@@ -75,6 +77,17 @@ contract Config is Ownable {
         _signer1 = signer1_;
         _signer2 = signer2_;
         emit SignersSet(signer1_, signer2_);
+    }
+    //-- Pausability
+
+    /// Pause Protocol
+    function pause() external whenNotPaused onlyOwnerOrAdmin {
+        _pause();
+    }
+
+    /// Unpause Protocol
+    function unpause() external whenPaused onlyOwnerOrAdmin {
+        _unpause();
     }
 
     //-- Treasury

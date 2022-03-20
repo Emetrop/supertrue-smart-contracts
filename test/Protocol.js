@@ -52,6 +52,18 @@ describe("EntireProtocol", function () {
                 expect(await configContract.owner()).to.equal(owner.address);
             });
 
+            it("should be pausable", async function () {
+                expect(await configContract.paused()).to.equal(false);
+                //Pause
+                await configContract.pause();
+
+                expect(await configContract.paused()).to.equal(true);
+                //Unpause
+                await configContract.unpause();
+                expect(await configContract.paused()).to.equal(false);
+            });
+
+
             it("should prevent unauthorized access", async function () {
                 await expect(
                     configContract.connect(admin).setTreasury(admin.address)
