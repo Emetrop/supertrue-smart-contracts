@@ -36,6 +36,7 @@ contract SuperTrueNFT is
         string name;
         string instagram;
         address account;
+        bool blocked;
     }
 
     // ============ Storage ============
@@ -108,6 +109,8 @@ contract SuperTrueNFT is
     event ArtistUpdated(string name, string instagram, address account);
     /// Price Updated
     event PriceUpdated(uint256 oldPrice, uint256 newPrice);
+    /// Contract Blocked / Unblocked
+    event Blocked(bool blocked);
 
     // ============ Methods ============
 
@@ -263,7 +266,7 @@ contract SuperTrueNFT is
      */
     function paused() public view override returns (bool) {
         address configContract = ISuperTrueCreator(_hub).getConfig();
-        return (IConfig(configContract).paused() || super.paused());
+        return (IConfig(configContract).paused() || super.paused() || artist.blocked);
     }
 
     /// Get Total Supply
@@ -271,11 +274,14 @@ contract SuperTrueNFT is
         return _tokenIds.current();
     }
 
-    /* DEPRECATED - Moved to Config
-    function setBaseURI(string memory baseURI) public onlyOwnerOrAdmin {
-        _base_uri = baseURI;
+    /**
+     * Block or Unblock Artist Contract
+     * @dev Pause + Emit Event
+     */
+    function blockContract(bool blocked) public onlyOwnerOrAdmin {
+        artist.blocked = blocked;
+        emit Blocked(blocked);
     }
-    */
 
     /**
      * @dev Buy New Token

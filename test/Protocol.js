@@ -305,7 +305,7 @@ describe("EntireProtocol", function () {
             expect(await artistContract.contractURI()).to.equal(BASE_URI + "1/storefront");
         });
 
-        it("should be pausable", async function () {
+        it("Could be pausable", async function () {
             expect(await artistContract.paused()).to.equal(false);
             //Pause
             await artistContract.pause();
@@ -317,6 +317,19 @@ describe("EntireProtocol", function () {
             //Unpause
             await artistContract.unpause();
             expect(await artistContract.paused()).to.equal(false);
+        });
+
+        it("Could be blocked", async function () {
+            //Block
+            let tx = await artistContract.blockContract(true);
+            await expect(tx).to.emit(artistContract, 'Blocked');
+            //Should fail to mint
+            await expect(
+                artistContract.mint(tester.address)
+            ).to.be.revertedWith("Pausable: paused");
+            //Unblock
+            tx = await artistContract.blockContract(false);
+            await expect(tx).to.emit(artistContract, 'Blocked');
         });
 
         it("Should obey protocol pause", async function () {
