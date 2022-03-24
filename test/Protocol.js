@@ -376,9 +376,18 @@ describe("EntireProtocol", function () {
         });
 
         describe("Tokens", function () {
+            it("Should Fail To Mint NFT Without Value", async function () {
+                await expect(
+                  artistContract.mint(admin.address)
+                ).to.be.revertedWith("Insufficient Payment");
+            });
+
             it("Should Mint NFTokens", async function () {
-                let tx = await artistContract.mint(admin.address).then(trans => trans.wait());
-                // console.log("minting", tx);
+                const price = await artistContract.price();
+
+                let tx = await artistContract.mint(admin.address, { value: price });
+                await tx.wait();
+
                 //Fetch Token
                 let result = await artistContract.ownerOf(1);
                 expect(result).to.equal(admin.address);

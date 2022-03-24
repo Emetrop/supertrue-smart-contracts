@@ -325,11 +325,11 @@ contract SuperTrueNFT is
     // function mint(uint256 amount, address to) public payable whenNotPaused {
     function mint(address to) public payable whenNotPaused {
         //Validate Amount
-        require(_price >= msg.value, "Insuficient Payment");
+        require(msg.value >= _price, "Insufficient Payment");
         //Handle Payment
         _handlePaymentNative(msg.value);
         //Increment Token ID
-        _tokenIds.increment(); //We just put this first so that we's start with 1
+        _tokenIds.increment(); //We just put this first so that we start with 1
         //Mint
         _safeMint(to, _tokenIds.current());
         //Update Price
