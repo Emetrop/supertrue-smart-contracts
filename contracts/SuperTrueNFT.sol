@@ -58,8 +58,8 @@ contract SuperTrueNFT is
 
     // Artist Data
     Artist public artist;
-    uint256 private _artistPending;
-    mapping(address => uint256) private _artistPendingERC20;
+    uint256 private _artistPendingFunds;
+    mapping(address => uint256) private _artistPendingFundsERC20;
 
     // Settings
     uint256 private _price; //Current Price / Base Price
@@ -110,7 +110,7 @@ contract SuperTrueNFT is
     /// Funds Withdrawal
     event Withdrawal(
         address indexed to,
-        address indexed currency,
+        address indexed tokenAddress,
         uint256 amount
     );
     /// Claimed by Artist
@@ -178,6 +178,7 @@ contract SuperTrueNFT is
         public
         onlyOwnerOrAdmin
     {
+        // TODO allow empty name and instagram?
         artist.name = _name;
         artist.instagram = _instagram;
         emit ArtistUpdated(artist.name, artist.instagram, artist.account);
@@ -345,6 +346,20 @@ contract SuperTrueNFT is
     }
 
     /**
+     * @dev Get artist's not withdrawn funds
+     */
+    function artistPendingFunds() external view returns (uint256) {
+        return _artistPendingFunds;
+    }
+
+    /**
+     * @dev Get artist's not withdrawn ERC20 funds
+     */
+    function artistPendingFundsERC20(address tokenAddress) external view returns (uint256) {
+        return _artistPendingFundsERC20[tokenAddress];
+    }
+
+    /**
      * @dev Handle Payments Logic -  Native Currency
      */
     function _handlePaymentNative(uint256 amount) private {
@@ -361,7 +376,7 @@ contract SuperTrueNFT is
         if (adjustedAmount > 0) {
             if (artist.account == address(0)) {
                 //Hold for Artist
-                _artistPending += adjustedAmount;
+                _artistPendingFunds += adjustedAmount;
             } else {
                 //Send to Artist
                 payable(artist.account).transfer(adjustedAmount);
@@ -373,7 +388,7 @@ contract SuperTrueNFT is
     /**
      * @dev Handle Payments Logic - ERC20 Tokens
      */
-    function _handlePaymentERC20(address currency, uint256 amount) private {
+    function _handlePaymentERC20(address tokenAddress, uint256 amount) private {
         //Fetch Treasury Data
         (address treasury, uint256 treasuryFee) = _getTreasuryData();
         //Split
@@ -381,17 +396,17 @@ contract SuperTrueNFT is
         uint256 adjustedAmount = amount - treasuryAmount;
         if (treasuryAmount > 0) {
             //Send to Treasury
-            IERC20(currency).transfer(treasury, treasuryAmount);
-            emit Withdrawal(treasury, currency, treasuryAmount);
+            IERC20(tokenAddress).transfer(treasury, treasuryAmount);
+            emit Withdrawal(treasury, tokenAddress, treasuryAmount);
         }
         if (adjustedAmount > 0) {
             if (artist.account == address(0)) {
                 //Hold for Artist
-                _artistPending += adjustedAmount;
+                _artistPendingFunds += adjustedAmount;
             } else {
                 //Send to Artist
-                IERC20(currency).transfer(artist.account, adjustedAmount);
-                emit Withdrawal(artist.account, currency, adjustedAmount);
+                IERC20(tokenAddress).transfer(artist.account, adjustedAmount);
+                emit Withdrawal(artist.account, tokenAddress, adjustedAmount);
             }
         }
     }
@@ -400,8 +415,8 @@ contract SuperTrueNFT is
      * @dev Withdraw Additional Funds (Not from minting)
      */
     function withdraw() external whenNotPaused onlyOwnerOrAdmin {
-        require(address(this).balance > _artistPending, "No Available Balance");
-        uint256 _balanceAvailable = address(this).balance - _artistPending;
+        require(address(this).balance > _artistPendingFunds, "No Available Balance");
+        uint256 _balanceAvailable = address(this).balance - _artistPendingFunds;
         require(_balanceAvailable > 0, "No Available Balance");
         //Process any additional funds
         _handlePaymentNative(_balanceAvailable);
@@ -410,17 +425,17 @@ contract SuperTrueNFT is
     /**
      * @dev Send All Funds From Contract to Owner
      */
-    function withdrawERC20(address currency)
+    function withdrawERC20(address tokenAddress)
         external
         whenNotPaused
         onlyOwnerOrAdmin
     {
-        require(currency != address(0), "Currency Address Not Set");
-        uint256 balance = IERC20(currency).balanceOf(address(this));
-        uint256 _balanceAvailable = balance - _artistPendingERC20[currency];
+        require(tokenAddress != address(0), "Currency Address Not Set");
+        uint256 balance = IERC20(tokenAddress).balanceOf(address(this));
+        uint256 _balanceAvailable = balance - _artistPendingFundsERC20[tokenAddress];
         require(_balanceAvailable > 0, "No Available Balance");
         //Process any additional funds
-        _handlePaymentERC20(currency, _balanceAvailable);
+        _handlePaymentERC20(tokenAddress, _balanceAvailable);
     }
 
     /**
@@ -433,37 +448,37 @@ contract SuperTrueNFT is
     {
         //Validate
         require(artist.account != address(0), "Artist Account Not Set");
-        require(_artistPending > 0, "No Artist Pending Balance");
+        require(_artistPendingFunds > 0, "No Artist Pending Balance");
         //Transfer Pending Balance
-        payable(artist.account).transfer(_artistPending);
-        emit Withdrawal(artist.account, address(0), _artistPending);
+        payable(artist.account).transfer(_artistPendingFunds);
+        emit Withdrawal(artist.account, address(0), _artistPendingFunds);
         //Reset Pending Balance
-        _artistPending = 0;
+        _artistPendingFunds = 0;
     }
 
     /**
      * @dev Artist Withdraw Pending Balance of ERC20 Token
      */
-    function artistWithdrawPendingERC20(address currency)
+    function artistWithdrawPendingERC20(address tokenAddress)
         external
         whenNotPaused
         onlyOwnerOrAdminOrArtist
     {
         //Validate
         require(artist.account != address(0), "Artist Account Not Set");
-        require(_artistPendingERC20[currency] > 0, "No Artist Pending Balance");
+        require(_artistPendingFundsERC20[tokenAddress] > 0, "No Artist Pending Balance");
         //Transfer Pending Balance
-        IERC20(currency).transfer(
+        IERC20(tokenAddress).transfer(
             artist.account,
-            _artistPendingERC20[currency]
+            _artistPendingFundsERC20[tokenAddress]
         );
         emit Withdrawal(
             artist.account,
-            currency,
-            _artistPendingERC20[currency]
+            tokenAddress,
+            _artistPendingFundsERC20[tokenAddress]
         );
         //Reset Pending Balance
-        _artistPendingERC20[currency] = 0;
+        _artistPendingFundsERC20[tokenAddress] = 0;
     }
 
     /* Why receive ERC721? What happens with these tokens after they are received? Can they be extracted?

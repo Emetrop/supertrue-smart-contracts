@@ -32,7 +32,7 @@ module.exports = async ({ chainId }) => {
     [configContract.address, superTrueNFTContract.address],{
     // https://docs.openzeppelin.com/upgrades-plugins/1.x/api-hardhat-upgrades#common-options
     kind: "uups",
-    timeout:120000
+    timeout: 120000
   });
   await proxy.deployed();
   console.log("SuperTrueCreator deployed to:", proxy.address);
@@ -43,6 +43,7 @@ module.exports = async ({ chainId }) => {
     // wait for etherscan to be ready to verify
     console.log("Start code verification on etherscan");
     await sleep(15000);
+    // TODO fix verification for other contracts
     //Verify Proxy
     // await run("verify:verify", {
     //   address: proxy.address,
@@ -53,7 +54,7 @@ module.exports = async ({ chainId }) => {
     await run("verify:verify", {
       address: configContract.address,
       contract: "contracts/Config.sol:Config",
-      contractArguments: [],
+      contractArguments: [treasuryAddress],
     });
 
     console.log("End code verification on etherscan");
