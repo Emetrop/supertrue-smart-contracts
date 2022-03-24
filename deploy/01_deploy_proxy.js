@@ -13,14 +13,12 @@ const sleep = (ms) =>
   );
 
 module.exports = async ({ chainId }) => {
+  // const treasuryAddress = "0x0000000000000000000000000000000000000001"; // TODO change for deployment
+
   const ConfigContract = await ethers.getContractFactory("Config");
-  const configContract = await ConfigContract.deploy();
+  const configContract = await ConfigContract.deploy(treasuryAddress);
   await configContract.deployed();
   console.log("Config Deployed to:", configContract.address);
-
-  // set treasury address
-  // const treasuryAddress = "0x0000000000000000000000000000000000000001";
-  // await configContract.setTreasury(treasuryAddress);
 
   const SuperTrueNFTContract = await ethers.getContractFactory("SuperTrueNFT");
   const superTrueNFTContract = await SuperTrueNFTContract.deploy();

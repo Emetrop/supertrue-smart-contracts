@@ -28,28 +28,32 @@ describe("EntireProtocol", function () {
     let owner;
     let admin;
     let tester;
+    let treasury;
     let addrs;
 
-    // quick fix to let gas reporter fetch data from gas station & coinmarketcap
-    // before((done) => { setTimeout(done, 2000); });
+    before(async function () {
+        [owner, admin, tester, treasury, ...addrs] = await ethers.getSigners();
+
+        //Config
+        const ConfigContract = await ethers.getContractFactory("Config");
+        configContract = await ConfigContract.deploy(treasury.address);
+
+        //Deploy Factory
+        const SuperTrueCreator = await ethers.getContractFactory("SuperTrueCreator");
+        const SuperTrueNFT = await ethers.getContractFactory("SuperTrueNFT");
+        const superTrueNFT = await SuperTrueNFT.deploy();
+
+        //Deploying new proxy
+        factoryContract = await upgrades.deployProxy(SuperTrueCreator, [configContract.address, superTrueNFT.address], { kind: "uups" });
+    })
 
     describe("Config Contract", function () {
-
-        before(async function () {
-            //Deploy
-            const ConfigContract = await ethers.getContractFactory("Config");
-            configContract = await ConfigContract.deploy();
-            //Populate Accounts
-            [owner, admin, tester, ...addrs] = await ethers.getSigners();
-        })
-
         it("should be a SuperTrueConfig", async function () {
             expect(await configContract.role()).to.equal("SuperTrueConfig");
         });
 
         describe("Permissions", function () {
             it("should be owned by deployer", async function () {
-                // const [owner] = await ethers.getSigners();
                 expect(await configContract.owner()).to.equal(owner.address);
             });
 
@@ -105,7 +109,7 @@ describe("EntireProtocol", function () {
             it("should hold treasury data", async function () {
                 //Defaults
                 let treasuryData = await configContract.getTreasuryData();
-                expect(treasuryData[0]).to.equal(ZERO_ADDR);
+                expect(treasuryData[0]).to.equal(treasury.address);
                 expect(treasuryData[1]).to.equal(2000);
                 //New Values
                 let newTreasury = await ethers.getSigner(2);
@@ -126,31 +130,7 @@ describe("EntireProtocol", function () {
 
     });
 
-  before(async function () {
-
-        //Mock Config
-        const ConfigContract = await ethers.getContractFactory("Config");
-        let mockConfigContract = await ConfigContract.deploy();
-
-
-        //Deploy Factory
-        const SuperTrueCreator = await ethers.getContractFactory("SuperTrueCreator");
-        const SuperTrueNFT = await ethers.getContractFactory("SuperTrueNFT");
-        const superTrueNFT = await SuperTrueNFT.deploy();
-        // deploying new proxy
-        // factoryContract = await upgrades.deployProxy(SuperTrueCreator, { kind: "uups" });
-        factoryContract = await upgrades.deployProxy(SuperTrueCreator, [mockConfigContract.address, superTrueNFT.address], { kind: "uups" });
-        console.log("Factory deployed to:", factoryContract.address);
-
-        //Set Config
-        // await factoryContract.setConfig(mockConfigContract.address);
-
-        //Populate Accounts
-        // [owner, ...addrs] = await ethers.getSigners();
-    })
-
     describe("Factory", function () {
-
         it("Should have Config", async function () {
             expect(await factoryContract.getConfig()).not.to.equal(ZERO_ADDR);    //Starts With Defaults
             // expect(await factoryContract.getConfig()).to.equal(ZERO_ADDR);     //Starts Empty

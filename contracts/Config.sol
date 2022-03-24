@@ -49,7 +49,8 @@ contract Config is Ownable, Pausable {
 
     //-- Methods --//
 
-    constructor() Ownable() Pausable() {
+    constructor(address treasury) Ownable() Pausable() {
+        _treasury = treasury;
         //Default Base URI
         _baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
         //Default Treasury Fee
