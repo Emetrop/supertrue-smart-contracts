@@ -469,7 +469,8 @@ contract SuperTrueNFT is
     /* Why receive ERC721? What happens with these tokens after they are received? Can they be extracted?
 
     // function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
-    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external pure override returns (bytes4) {
+    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
+        external pure override returns (bytes4) {
         return IERC721ReceiverUpgradeable.onERC721Received.selector;
     }
 */

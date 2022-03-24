@@ -14,6 +14,7 @@
     "ethers": "^5.5.4",
     "prettier": "^2.6.0",
     "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "solhint": "^3.3.7",
     "typescript": "^4.6.2"
   },
   "dependencies": {
@@ -53,6 +54,7 @@
     "generate": "hardhat generate",
     "account": "hardhat account",
     "etherscan-verify": "hardhat etherscan-verify --api-key PSW8C433Q667DVEX5BCRMGNAH9FSGFZ7Q8",
-    "prettier": "prettier --write 'contracts/**/*.sol'"
+    "prettier": "prettier --write 'contracts/**/*.sol'",
+    "solhint": "solhint --fix 'contracts/**/*.sol'"
   }
 }
