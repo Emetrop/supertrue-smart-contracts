@@ -23,10 +23,13 @@ contract Config is Ownable, Pausable {
     //Signers addresses
     address private _signer1;
     address private _signer2;
+    //NFT Contract
+    uint256 private _creationFee;
 
     //-- Events --//
     event TreasurySet(address treasury);
     event TreasuryFeeSet(uint256 treasuryFee);
+    event CreationFeeSet(uint256 creationFee);
     event AdminAdded(address admin);
     event AdminRemoved(address admin);
     event SignersSet(address signer1, address signer2);
@@ -54,6 +57,8 @@ contract Config is Ownable, Pausable {
         //Init Signers
         _signer1 = 0x8eC13C4982a5Fb8b914F0927C358E14f8d657133;
         _signer2 = 0xb9fAfb1De9083eAa09Fd7D058784a0316a2960B1;
+        //Creation Fee
+        _creationFee = 0.002 ether;
     }
 
     /**
@@ -117,6 +122,16 @@ contract Config is Ownable, Pausable {
         // uint256 prevTreasuryFee = _treasuryFee;
         _treasuryFee = newTreasuryFee;
         emit TreasuryFeeSet(newTreasuryFee);
+    }
+
+    //-- NFT contract
+    function getCreationFee() public view returns (uint256) {
+        return _creationFee;
+    }
+
+    function setCreationFee(uint256 newCreationFee) public onlyOwnerOrAdmin {
+        _creationFee = newCreationFee;
+        emit CreationFeeSet(newCreationFee);
     }
 
     //-- Admin Management

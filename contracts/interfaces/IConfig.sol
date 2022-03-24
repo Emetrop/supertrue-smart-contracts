@@ -24,6 +24,9 @@ interface IConfig {
     /// Fetch BaseURI
     function getBaseURI() external view returns (string memory);
 
+    /// Fetch BaseURI
+    function getCreationFee() external view returns (uint256);
+
     /// Get Signer 1 Address
     function signer1() external view returns (address);
 

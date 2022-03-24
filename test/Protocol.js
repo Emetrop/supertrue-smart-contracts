@@ -15,7 +15,8 @@ use(solidity);
 describe("EntireProtocol", function () {
     const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
     const PRICE_BASE = '2000000000000000';
-    const PRICE_INCREMENT = '100000000000000';        //TODO: Test Price Incemenets
+    const PRICE_INCREMENT = '100000000000000'; //TODO: Test Price Incemenets
+    const CREATION_FEE = 999;
     const BASE_URI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/"; //Default Base URI
     const ARTISTS = [
         {name: "name1", ig: "ig_name1", guid:'ig:id1'},
@@ -80,6 +81,12 @@ describe("EntireProtocol", function () {
                 ).to.be.revertedWith("Ownable: caller is not the owner");
             });
 
+            it("should change creation fee", async function () {
+                const tx = await configContract.connect(owner).setCreationFee(CREATION_FEE);
+                await expect(tx).to.emit(configContract, 'CreationFeeSet').withArgs(CREATION_FEE);
+
+                expect(await configContract.getCreationFee()).to.equal(CREATION_FEE);
+            });
         });
 
         describe("Data", function () {
@@ -180,16 +187,28 @@ describe("EntireProtocol", function () {
             ).to.be.revertedWith("Non-Existent Artist");
         });
 
+        it("Should return correct creation fee", async function () {
+            expect(await factoryContract.getCreationPrice()).to.equal(CREATION_FEE);
+        });
+
+        it("Should fail to deploy child: SuperTrueNFT Contract without value", async function () {
+            await expect(
+              factoryContract.createArtist("artistName", "artistIG", "artistGUID")
+            ).to.be.revertedWith("Insufficient Payment'");
+        })
+
         it("Should deploy child: SuperTrueNFT Contract", async function () {
             const artistName = ARTISTS[1].name; //"name2";
             const artistIG = ARTISTS[1].ig; //"ig2";
             const artistGUID = ARTISTS[1].guid;
+            const price = await factoryContract.getCreationPrice();
 
             console.log("Deploy Artist 1:"+artistGUID, ARTISTS[1]);
 
             //Deploy New Artist
             //TODO: How to get the id & address from that??
-            let tx = await factoryContract.createArtist(artistName, artistIG, artistGUID);
+            let tx = await factoryContract.createArtist(artistName, artistIG, artistGUID, { value: price });
+
             await expect(tx).to.emit(factoryContract, 'ArtistCreated');
 
             await tx.wait();
@@ -218,9 +237,11 @@ describe("EntireProtocol", function () {
         });
 
         it("Should Not allow same artist to be deployed twice", async function () {
+            const price = await factoryContract.getCreationPrice();
+
             await expect(
                 //Deploy New Artist
-                factoryContract.createArtist(ARTISTS[1].name, ARTISTS[1].ig, ARTISTS[1].guid)
+                factoryContract.createArtist(ARTISTS[1].name, ARTISTS[1].ig, ARTISTS[1].guid, { value: price })
             ).to.be.revertedWith("GUID already used");
 
         });

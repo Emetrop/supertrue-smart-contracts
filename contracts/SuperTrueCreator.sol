@@ -73,6 +73,15 @@ contract SuperTrueCreator is
     }
 
     /**
+     * Get Price For New Collection Creation
+     */
+    function getCreationPrice() public view returns (uint256) {
+        address configContract = getConfig();
+
+        return IConfig(configContract).getCreationFee();
+    }
+
+    /**
      * @dev Function to check if address is admin
      */
     function isAdmin(address account) public view returns (bool) {
@@ -112,7 +121,8 @@ contract SuperTrueCreator is
         string memory name,
         string memory instagram,
         string calldata guid
-    ) public returns (address, uint256) {
+    ) public payable returns (address, uint256) {
+        require(msg.value >= getCreationPrice(), "Insufficient Payment");
         //Validate Input
         require(bytes(name).length > 0, "Empty name");
         require(bytes(instagram).length > 0, "Empty instagram");
