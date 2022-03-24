@@ -19,12 +19,11 @@ import "./interfaces/IERC20.sol";
  *
  */
 contract SuperTrueNFT is
-        ERC721PausableUpgradeable,
-        IERC2981Upgradeable,
-        EIP712Upgradeable
-        // IERC721ReceiverUpgradeable
-        {
-
+    ERC721PausableUpgradeable,
+    IERC2981Upgradeable,
+    EIP712Upgradeable
+    // IERC721ReceiverUpgradeable
+{
     using AddressUpgradeable for address;
     using StringsUpgradeable for uint256;
     using CountersUpgradeable for CountersUpgradeable.Counter;
@@ -47,13 +46,13 @@ contract SuperTrueNFT is
     // json and contract base uri
     // string private _base_uri;
     string private _contract_uri;
-    address private _hub;   //Hub Contract
+    address private _hub; //Hub Contract
 
     // address => allowedToCallFunctions
-    mapping(address => bool) private _admins;   //Admins of this contract
+    mapping(address => bool) private _admins; //Admins of this contract
 
     // 3rd party royalties Request
-    uint256 private _royaltyBPS;    //Deafult to 10% royalties on seconday sales
+    uint256 private _royaltyBPS; //Deafult to 10% royalties on seconday sales
     uint16 internal constant BPS_MAX = 10_000;
     // address payable private _fundingRecipient;   //Using Self
 
@@ -63,12 +62,11 @@ contract SuperTrueNFT is
     mapping(address => uint256) private _artistPendingERC20;
 
     // Settings
-    uint256 private _price;           //Current Price / Base Price
-    uint256 private _priceInterval;  //Price Increments
+    uint256 private _price; //Current Price / Base Price
+    uint256 private _priceInterval; //Price Increments
 
     // Contract version
     string public constant version = "1";
-
 
     // bool private _paused;   //Override Pausa//TODO: Maybe move up when re-deplying
 
@@ -78,7 +76,10 @@ contract SuperTrueNFT is
      * @dev Throws if called by any account other than the owner or admins.
      */
     modifier onlyOwnerOrAdmin() {
-        require(owner() == _msgSender() || isAdmin(_msgSender()), "Only admin or owner");
+        require(
+            owner() == _msgSender() || isAdmin(_msgSender()),
+            "Only admin or owner"
+        );
 
         _;
     }
@@ -87,7 +88,12 @@ contract SuperTrueNFT is
      * @dev Throws if called by any account other than the owner or admins.
      */
     modifier onlyOwnerOrAdminOrArtist() {
-        require(owner() == _msgSender() || isAdmin(_msgSender()) || _msgSender() == artist.account, "Only admin or artist");
+        require(
+            owner() == _msgSender() ||
+                isAdmin(_msgSender()) ||
+                _msgSender() == artist.account,
+            "Only admin or artist"
+        );
         _;
     }
 
@@ -102,7 +108,11 @@ contract SuperTrueNFT is
     // ============ Events ============
 
     /// Funds Withdrawal
-    event Withdrawal(address indexed to, address indexed currency, uint256 amount);
+    event Withdrawal(
+        address indexed to,
+        address indexed currency,
+        uint256 amount
+    );
     /// Claimed by Artist
     event ArtistClaimed(address artist);
     /// Artist Updated
@@ -114,7 +124,7 @@ contract SuperTrueNFT is
 
     // ============ Methods ============
 
-    function initialize (
+    function initialize(
         // address owner_,
         address hub_,
         uint256 artistId_,
@@ -136,9 +146,9 @@ contract SuperTrueNFT is
         artist.instagram = artistInstagram_;
 
         //Defaults
-        _royaltyBPS = 1_000;    //Deafult to 10% royalties on seconday sales
-        _price = 0.002 ether;           //Current Price / Base Price
-        _priceInterval = 0.0001 ether;  //Price Increments
+        _royaltyBPS = 1_000; //Deafult to 10% royalties on seconday sales
+        _price = 0.002 ether; //Current Price / Base Price
+        _priceInterval = 0.0001 ether; //Price Increments
     }
 
     //-- Token Price
@@ -149,6 +159,7 @@ contract SuperTrueNFT is
     function price() external view returns (uint256) {
         return _price;
     }
+
     /**
      * @dev Update Token Price
      */
@@ -163,7 +174,10 @@ contract SuperTrueNFT is
     /**
      * @dev Set Artist's Details
      */
-    function setArtist(string memory _name, string memory _instagram) public onlyOwnerOrAdmin {
+    function setArtist(string memory _name, string memory _instagram)
+        public
+        onlyOwnerOrAdmin
+    {
         artist.name = _name;
         artist.instagram = _instagram;
         emit ArtistUpdated(artist.name, artist.instagram, artist.account);
@@ -181,28 +195,43 @@ contract SuperTrueNFT is
     /**
      * @dev Get account address which signature is signed with
      */
-    function getSigner(bytes calldata signature, uint256 signer) public view returns (address) {
-        bytes32 digest = _hashTypedDataV4(keccak256(abi.encode(
-                keccak256("Message(uint256 signer,address account,string instagram,uint256 artistId)"),
-                signer,
-                _msgSender(),
-                keccak256(bytes(artist.instagram)),
-                artist.id
-            )));
+    function getSigner(bytes calldata signature, uint256 signer)
+        public
+        view
+        returns (address)
+    {
+        bytes32 digest = _hashTypedDataV4(
+            keccak256(
+                abi.encode(
+                    keccak256(
+                        "Message(uint256 signer,address account,string instagram,uint256 artistId)"
+                    ),
+                    signer,
+                    _msgSender(),
+                    keccak256(bytes(artist.instagram)),
+                    artist.id
+                )
+            )
+        );
         return ECDSAUpgradeable.recover(digest, signature);
     }
 
     /**
      * @dev Claim Contract - Set Artist's Account
      */
-    function claim(
-        bytes calldata signature1,
-        bytes calldata signature2
-    ) public {
+    function claim(bytes calldata signature1, bytes calldata signature2)
+        public
+    {
         address configContract = ISuperTrueCreator(_hub).getConfig();
 
-        require((getSigner(signature1, 1) == IConfig(configContract).signer1()), "invalid signature1");
-        require((getSigner(signature2, 2) == IConfig(configContract).signer2()), "invalid signature2");
+        require(
+            (getSigner(signature1, 1) == IConfig(configContract).signer1()),
+            "invalid signature1"
+        );
+        require(
+            (getSigner(signature2, 2) == IConfig(configContract).signer2()),
+            "invalid signature2"
+        );
 
         artist.account = _msgSender();
         emit ArtistClaimed(_msgSender());
@@ -230,9 +259,13 @@ contract SuperTrueNFT is
      */
     function _getTreasuryData() internal view returns (address, uint256) {
         address configContract = ISuperTrueCreator(_hub).getConfig();
-        (address treasury, uint256 treasuryFee) = IConfig(configContract).getTreasuryData();
+        (address treasury, uint256 treasuryFee) = IConfig(configContract)
+            .getTreasuryData();
         //Validate (Don't Burn Assets)
-        require(treasuryFee == 0 || treasury != address(0), "Treasury Misconfigured");
+        require(
+            treasuryFee == 0 || treasury != address(0),
+            "Treasury Misconfigured"
+        );
         return (treasury, treasuryFee);
     }
 
@@ -266,7 +299,9 @@ contract SuperTrueNFT is
      */
     function paused() public view override returns (bool) {
         address configContract = ISuperTrueCreator(_hub).getConfig();
-        return (IConfig(configContract).paused() || super.paused() || artist.blocked);
+        return (IConfig(configContract).paused() ||
+            super.paused() ||
+            artist.blocked);
     }
 
     /// Get Total Supply
@@ -294,7 +329,7 @@ contract SuperTrueNFT is
         //Handle Payment
         _handlePaymentNative(msg.value);
         //Increment Token ID
-        _tokenIds.increment();  //We just put this first so that we's start with 1
+        _tokenIds.increment(); //We just put this first so that we's start with 1
         //Mint
         _safeMint(to, _tokenIds.current());
         //Update Price
@@ -318,16 +353,16 @@ contract SuperTrueNFT is
         //Split
         uint256 treasuryAmount = (amount * treasuryFee) / BPS_MAX;
         uint256 adjustedAmount = amount - treasuryAmount;
-        if(treasuryAmount > 0){
+        if (treasuryAmount > 0) {
             //Send to Treasury
             payable(treasury).transfer(treasuryAmount);
             emit Withdrawal(treasury, address(0), treasuryAmount);
         }
-        if(adjustedAmount > 0){
-            if(artist.account == address(0)) {
+        if (adjustedAmount > 0) {
+            if (artist.account == address(0)) {
                 //Hold for Artist
                 _artistPending += adjustedAmount;
-            }else{
+            } else {
                 //Send to Artist
                 payable(artist.account).transfer(adjustedAmount);
                 emit Withdrawal(artist.account, address(0), adjustedAmount);
@@ -344,16 +379,16 @@ contract SuperTrueNFT is
         //Split
         uint256 treasuryAmount = (amount * treasuryFee) / BPS_MAX;
         uint256 adjustedAmount = amount - treasuryAmount;
-        if(treasuryAmount > 0){
+        if (treasuryAmount > 0) {
             //Send to Treasury
             IERC20(currency).transfer(treasury, treasuryAmount);
             emit Withdrawal(treasury, currency, treasuryAmount);
         }
-        if(adjustedAmount > 0){
-            if(artist.account == address(0)) {
+        if (adjustedAmount > 0) {
+            if (artist.account == address(0)) {
                 //Hold for Artist
                 _artistPending += adjustedAmount;
-            }else{
+            } else {
                 //Send to Artist
                 IERC20(currency).transfer(artist.account, adjustedAmount);
                 emit Withdrawal(artist.account, currency, adjustedAmount);
@@ -375,7 +410,11 @@ contract SuperTrueNFT is
     /**
      * @dev Send All Funds From Contract to Owner
      */
-    function withdrawERC20(address currency) external whenNotPaused onlyOwnerOrAdmin {
+    function withdrawERC20(address currency)
+        external
+        whenNotPaused
+        onlyOwnerOrAdmin
+    {
         require(currency != address(0), "Currency Address Not Set");
         uint256 balance = IERC20(currency).balanceOf(address(this));
         uint256 _balanceAvailable = balance - _artistPendingERC20[currency];
@@ -387,7 +426,11 @@ contract SuperTrueNFT is
     /**
      * @dev Artist Withdraw Pending Balance of Native Tokens
      */
-    function artistWithdrawPending() external whenNotPaused onlyOwnerOrAdminOrArtist {
+    function artistWithdrawPending()
+        external
+        whenNotPaused
+        onlyOwnerOrAdminOrArtist
+    {
         //Validate
         require(artist.account != address(0), "Artist Account Not Set");
         require(_artistPending > 0, "No Artist Pending Balance");
@@ -401,20 +444,29 @@ contract SuperTrueNFT is
     /**
      * @dev Artist Withdraw Pending Balance of ERC20 Token
      */
-    function artistWithdrawPendingERC20(address currency) external whenNotPaused onlyOwnerOrAdminOrArtist {
+    function artistWithdrawPendingERC20(address currency)
+        external
+        whenNotPaused
+        onlyOwnerOrAdminOrArtist
+    {
         //Validate
         require(artist.account != address(0), "Artist Account Not Set");
         require(_artistPendingERC20[currency] > 0, "No Artist Pending Balance");
         //Transfer Pending Balance
-        IERC20(currency).transfer(artist.account, _artistPendingERC20[currency]);
-        emit Withdrawal(artist.account, currency, _artistPendingERC20[currency]);
+        IERC20(currency).transfer(
+            artist.account,
+            _artistPendingERC20[currency]
+        );
+        emit Withdrawal(
+            artist.account,
+            currency,
+            _artistPendingERC20[currency]
+        );
         //Reset Pending Balance
         _artistPendingERC20[currency] = 0;
     }
 
-
-
-/* Why receive ERC721? What happens with these tokens after they are received? Can they be extracted?
+    /* Why receive ERC721? What happens with these tokens after they are received? Can they be extracted?
 
     // function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
     function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data) external pure override returns (bytes4) {
@@ -428,7 +480,10 @@ contract SuperTrueNFT is
      * @dev Set Royalties Requested
      */
     function setRoyalties(uint256 royaltyBPS) public onlyOwnerOrAdmin {
-        require(royaltyBPS >= 0 && royaltyBPS <= 10_000, "Wrong royaltyBPS value");
+        require(
+            royaltyBPS >= 0 && royaltyBPS <= 10_000,
+            "Wrong royaltyBPS value"
+        );
         _royaltyBPS = royaltyBPS;
     }
 
@@ -439,7 +494,12 @@ contract SuperTrueNFT is
      * @return receiver - address of who should be sent the royalty payment
      * @return royaltyAmount - the royalty payment amount for `salePrice`
      */
-    function royaltyInfo(uint256, uint256 salePrice) public view override returns (address receiver, uint256 royaltyAmount) {
+    function royaltyInfo(uint256, uint256 salePrice)
+        public
+        view
+        override
+        returns (address receiver, uint256 royaltyAmount)
+    {
         // if (_fundingRecipient == address(0x0)) { return (_fundingRecipient, 0); }
         // return (_fundingRecipient, (salePrice * _royaltyBPS) / 10_000);
 
@@ -452,7 +512,10 @@ contract SuperTrueNFT is
     /**
      * @dev Overrid Default Contract URI
      */
-    function setContractURI(string memory uri_) external onlyOwnerOrAdminOrArtist {
+    function setContractURI(string memory uri_)
+        external
+        onlyOwnerOrAdminOrArtist
+    {
         _contract_uri = uri_;
     }
 
@@ -461,18 +524,29 @@ contract SuperTrueNFT is
      *  https://docs.opensea.io/docs/contract-level-metadata
      */
     function contractURI() public view returns (string memory) {
-        if(bytes(_contract_uri).length > 0) return _contract_uri;
+        if (bytes(_contract_uri).length > 0) return _contract_uri;
         // .../storefront
-        return string(abi.encodePacked(_baseURI(), 'storefront'));
+        return string(abi.encodePacked(_baseURI(), "storefront"));
     }
 
     /**
      * @dev See {IERC721Metadata-tokenURI}.
      */
-    function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        override
+        returns (string memory)
+    {
+        require(
+            _exists(tokenId),
+            "ERC721Metadata: URI query for nonexistent token"
+        );
         // .../json/tokenID
-        return string(abi.encodePacked(_baseURI(), "json", "/", tokenId.toString()));
+        return
+            string(
+                abi.encodePacked(_baseURI(), "json", "/", tokenId.toString())
+            );
     }
 
     /**
@@ -483,6 +557,13 @@ contract SuperTrueNFT is
     function _baseURI() internal view override returns (string memory) {
         // return _base_uri;
         address configContract = ISuperTrueCreator(_hub).getConfig();
-        return string(abi.encodePacked(IConfig(configContract).getBaseURI(), artist.id.toString(), "/"));
+        return
+            string(
+                abi.encodePacked(
+                    IConfig(configContract).getBaseURI(),
+                    artist.id.toString(),
+                    "/"
+                )
+            );
     }
 }

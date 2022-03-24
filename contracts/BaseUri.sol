@@ -9,7 +9,7 @@ import "./IBaseUri.sol";
 contract BaseUri is IBaseUri, OwnableUpgradeable {
     string private _uri;
 
-    function baseUri() public view override returns(string memory) {
+    function baseUri() public view override returns (string memory) {
         return _uri;
     }
 

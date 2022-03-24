@@ -8,10 +8,9 @@ import "../SuperTrueCreator.sol";
  * SuperTrueCreator for Testing Purposes
  */
 contract SuperTrueCreatorv2 is SuperTrueCreator {
-
     // string private yoyo = 'to';  //TESTING: Not Upgrade Safe
 
-    function hasChanged() external pure returns (bool){
+    function hasChanged() external pure returns (bool) {
         return true;
     }
 }

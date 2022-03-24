@@ -5,12 +5,10 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
-
 /**
  * Global Configuration Contract
  */
 contract Config is Ownable, Pausable {
-
     // Arbitrary contract designation signature
     string public constant role = "SuperTrueConfig";
 
@@ -19,7 +17,7 @@ contract Config is Ownable, Pausable {
     uint256 private _treasuryFee;
     address private _treasury;
     //Admin
-    mapping(address => bool) private _admins;   //Admins of this contract
+    mapping(address => bool) private _admins; //Admins of this contract
     //URI
     string private _baseURI;
     //Signers addresses
@@ -39,18 +37,20 @@ contract Config is Ownable, Pausable {
      * @dev Throws if called by any account other than the owner or admins.
      */
     modifier onlyOwnerOrAdmin() {
-        require(owner() == _msgSender() || isAdmin(_msgSender()), "Only admin or owner");
+        require(
+            owner() == _msgSender() || isAdmin(_msgSender()),
+            "Only admin or owner"
+        );
         _;
     }
 
     //-- Methods --//
 
-
     constructor() Ownable() Pausable() {
         //Default Base URI
         _baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
         //Default Treasury Fee
-        _treasuryFee = 2000;  //20%
+        _treasuryFee = 2000; //20%
         //Init Signers
         _signer1 = 0x8eC13C4982a5Fb8b914F0927C358E14f8d657133;
         _signer2 = 0xb9fAfb1De9083eAa09Fd7D058784a0316a2960B1;
@@ -78,6 +78,7 @@ contract Config is Ownable, Pausable {
         _signer2 = signer2_;
         emit SignersSet(signer1_, signer2_);
     }
+
     //-- Pausability
 
     /// Pause Protocol
@@ -121,18 +122,18 @@ contract Config is Ownable, Pausable {
     //-- Admin Management
 
     /**
-    * @dev enables an address for only admin functions
-    * @param admin the address to enable
-    */
+     * @dev enables an address for only admin functions
+     * @param admin the address to enable
+     */
     function addAdmin(address admin) external onlyOwner {
         _admins[admin] = true;
         emit AdminAdded(admin);
     }
 
     /**
-    * @dev disables an address for only admin functions
-    * @param admin the address to disbale
-    */
+     * @dev disables an address for only admin functions
+     * @param admin the address to disbale
+     */
     function removeAdmin(address admin) external onlyOwner {
         _admins[admin] = false;
         emit AdminRemoved(admin);

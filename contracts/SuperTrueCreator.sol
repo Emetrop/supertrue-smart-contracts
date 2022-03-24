@@ -2,21 +2,25 @@
 
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol';
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
-import '@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol';
-import '@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol';
+import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
+import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
-import './SuperTrueNFT.sol';
+import "./SuperTrueNFT.sol";
 import "./interfaces/IConfig.sol";
 
 /**
  * @dev Beacon Proxy Factory
  */
-contract SuperTrueCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable {
+contract SuperTrueCreator is
+    Initializable,
+    UUPSUpgradeable,
+    OwnableUpgradeable
+{
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using StringsUpgradeable for uint256;
 
@@ -26,22 +30,30 @@ contract SuperTrueCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable 
     // address used for signature verification, changeable by owner
     // address public admin;   //DEPRECATED
     address public beaconAddress;
-    address private _CONFIG;    //Configuration Contract
-
+    address private _CONFIG; //Configuration Contract
 
     // registry of created contracts
     mapping(uint256 => address) private artistContracts;
-    mapping(bytes32 => uint256) private artistGUID;   //Index Unique Artist IDs
+    mapping(bytes32 => uint256) private artistGUID; //Index Unique Artist IDs
 
     // ============ Events ============
 
     /// Emitted when an Artist is created
-    event ArtistCreated(uint256 artistId, string symbol, string name, string instagram, address indexed artistAddress);
+    event ArtistCreated(
+        uint256 artistId,
+        string symbol,
+        string name,
+        string instagram,
+        address indexed artistAddress
+    );
 
     // ============ Functions ============
 
     /// Initializes factory
-    function initialize(address config, address nftContract) public initializer {
+    function initialize(address config, address nftContract)
+        public
+        initializer
+    {
         //Set Config Address
         _CONFIG = config;
 
@@ -81,7 +93,11 @@ contract SuperTrueCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable 
      */
     function setConfig(address _config) public onlyOwner {
         //String Match - Validate Contract's Designation
-        require(keccak256(abi.encodePacked(IConfig(_config).role())) == keccak256(abi.encodePacked("SuperTrueConfig")), "Invalid Config Contract");
+        require(
+            keccak256(abi.encodePacked(IConfig(_config).role())) ==
+                keccak256(abi.encodePacked("SuperTrueConfig")),
+            "Invalid Config Contract"
+        );
         //Set
         _CONFIG = _config;
     }
@@ -105,14 +121,16 @@ contract SuperTrueCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable 
 
         atArtistId.increment();
         uint256 id = atArtistId.current();
-        string memory collectionName = string(abi.encodePacked("SuperTrue ", id.toString()));
+        string memory collectionName = string(
+            abi.encodePacked("SuperTrue ", id.toString())
+        );
         string memory symbol = string(abi.encodePacked("ST", id.toString()));
 
         //Deploy
         BeaconProxy proxy = new BeaconProxy(
             beaconAddress,
             abi.encodeWithSelector(
-                SuperTrueNFT( payable(address(0)) ).initialize.selector,
+                SuperTrueNFT(payable(address(0))).initialize.selector,
                 address(this), // admin,
                 // 12, "SuperTrue 12", SP12, https://supertrue.fans/
                 id,
@@ -127,17 +145,32 @@ contract SuperTrueCreator is Initializable, UUPSUpgradeable, OwnableUpgradeable 
         artistContracts[id] = address(proxy);
         artistGUID[guidHash] = id;
 
-        emit ArtistCreated(atArtistId.current(), symbol, name, instagram, address(proxy));
+        emit ArtistCreated(
+            atArtistId.current(),
+            symbol,
+            name,
+            instagram,
+            address(proxy)
+        );
 
         return (address(proxy), id);
     }
 
     /// Get Artist's Contract Address by ID
-    function getArtistContract(uint256 artistId) external view returns(address) {
+    function getArtistContract(uint256 artistId)
+        external
+        view
+        returns (address)
+    {
         require(artistContracts[artistId] != address(0), "Non-Existent Artist");
         return artistContracts[artistId];
     }
-    function getArtistContractByGUID(uint256 artistId) external view returns(address) {
+
+    function getArtistContractByGUID(uint256 artistId)
+        external
+        view
+        returns (address)
+    {
         require(artistContracts[artistId] != address(0), "Non-Existent Artist");
         return artistContracts[artistId];
     }
