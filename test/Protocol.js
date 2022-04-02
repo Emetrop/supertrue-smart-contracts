@@ -255,13 +255,6 @@ describe("EntireProtocol", function () {
             expect(await artistContract.owner()).to.equal(owner.address);
         });
 
-        it("Should inherit Admin", async function () {
-            //Set Admin
-            await configContract.addAdmin(admin.address);
-            //Check Admin
-            expect(await artistContract.isAdmin(admin.address)).to.equal(true);
-        });
-
         it("Should have price", async function () {
             let result = await artistContract.price();
             expect(result).to.equal(PRICE_BASE);
@@ -300,10 +293,10 @@ describe("EntireProtocol", function () {
             //Fail
             await expect(
                 artistContract.connect(tester).setContractURI("NO")
-            ).to.be.revertedWith("Only admin or artist");
-            //Undo (By Admin)
-            await artistContract.connect(admin).setContractURI("");
-            expect(await artistContract.contractURI()).to.equal(BASE_URI + "1/storefront");
+            ).to.be.revertedWith("Only owner");
+            //Undo
+            await artistContract.setContractURI(BASE_URI);
+            expect(await artistContract.contractURI()).to.equal(BASE_URI);
         });
 
         it("Could be pausable", async function () {
@@ -517,6 +510,12 @@ describe("EntireProtocol", function () {
 
                 await expect(tx).to.emit(artistContract, 'ArtistClaimed').withArgs(artistAccount);
                 expect((await artistContract.artist()).account).to.equal(artistAccount);
+            });
+        });
+
+        describe("Payments", function () {
+            it("Should increase funds after mint", async function () {
+                // TODO
             });
         });
     });

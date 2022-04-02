@@ -11,7 +11,6 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
 import "./interfaces/ISuperTrueCreator.sol";
 import "./interfaces/IConfig.sol";
-import "./interfaces/IERC20.sol";
 
 /**
  * SuperTrue NFT
@@ -22,7 +21,6 @@ contract SuperTrueNFT is
     ERC721PausableUpgradeable,
     IERC2981Upgradeable,
     EIP712Upgradeable
-    // IERC721ReceiverUpgradeable
 {
     using AddressUpgradeable for address;
     using StringsUpgradeable for uint256;
@@ -52,14 +50,13 @@ contract SuperTrueNFT is
     mapping(address => bool) private _admins; //Admins of this contract
 
     // 3rd party royalties Request
-    uint256 private _royaltyBPS; //Deafult to 10% royalties on seconday sales
+    uint256 private _royaltyBPS; //Default to 10% royalties on secondary sales
     uint16 internal constant BPS_MAX = 10_000;
     // address payable private _fundingRecipient;   //Using Self
 
     // Artist Data
     Artist public artist;
     uint256 private _artistPendingFunds;
-    mapping(address => uint256) private _artistPendingFundsERC20;
 
     // Settings
     uint256 private _price; //Current Price / Base Price
@@ -68,30 +65,26 @@ contract SuperTrueNFT is
     // Contract version
     string public constant version = "1";
 
-    // bool private _paused;   //Override Pausa//TODO: Maybe move up when re-deplying
-
     // ============ Modifiers ============
 
     /**
      * @dev Throws if called by any account other than the owner or admins.
      */
-    modifier onlyOwnerOrAdmin() {
+    modifier onlyOwner() {
         require(
-            owner() == _msgSender() || isAdmin(_msgSender()),
-            "Only admin or owner"
+            owner() == _msgSender(),
+            "Only owner"
         );
-
         _;
     }
 
     /**
      * @dev Throws if called by any account other than the owner or admins.
      */
-    modifier onlyOwnerOrAdminOrArtist() {
+    modifier onlyOwnerOrArtist() {
         require(
             owner() == _msgSender() ||
-                isAdmin(_msgSender()) ||
-                _msgSender() == artist.account,
+            _msgSender() == artist.account,
             "Only admin or artist"
         );
         _;
@@ -110,13 +103,13 @@ contract SuperTrueNFT is
     /// Funds Withdrawal
     event Withdrawal(
         address indexed to,
-        address indexed tokenAddress,
+        address indexed tokenAddress, // prepared for ERC20 tokens
         uint256 amount
     );
     /// Claimed by Artist
     event ArtistClaimed(address artist);
     /// Artist Updated
-    event ArtistUpdated(string name, string instagram, address account);
+    event ArtistUpdated(string name, string instagram);
     /// Price Updated
     event PriceUpdated(uint256 oldPrice, uint256 newPrice);
     /// Contract Blocked / Unblocked
@@ -125,7 +118,6 @@ contract SuperTrueNFT is
     // ============ Methods ============
 
     function initialize(
-        // address owner_,
         address hub_,
         uint256 artistId_,
         string memory artistName_,
@@ -139,14 +131,13 @@ contract SuperTrueNFT is
 
         //Set Hub Address
         _hub = hub_;
-        // _fundingRecipient = payable(owner_);
 
         artist.id = artistId_;
         artist.name = artistName_;
         artist.instagram = artistInstagram_;
 
         //Defaults
-        _royaltyBPS = 1_000; //Deafult to 10% royalties on seconday sales
+        _royaltyBPS = 1_000; //Default to 10% royalties on secondary sales
         _price = 0.002 ether; //Current Price / Base Price
         _priceInterval = 0.0001 ether; //Price Increments
     }
@@ -176,20 +167,22 @@ contract SuperTrueNFT is
      */
     function setArtist(string memory _name, string memory _instagram)
         public
-        onlyOwnerOrAdmin
+        onlyOwner
     {
-        // TODO allow empty name and instagram?
+        require(bytes(_name).length > 0, "Empty name");
+        require(bytes(_instagram).length > 0, "Empty instagram");
+
         artist.name = _name;
         artist.instagram = _instagram;
-        emit ArtistUpdated(artist.name, artist.instagram, artist.account);
+
+        emit ArtistUpdated(artist.name, artist.instagram);
     }
 
     /**
      * @dev Claim Contract - Set Artist's Account
      */
-    function setArtistAccount(address account) public onlyOwnerOrAdminOrArtist {
+    function setArtistAccount(address account) public onlyOwnerOrArtist {
         artist.account = account;
-        emit ArtistUpdated(artist.name, artist.instagram, account);
         emit ArtistClaimed(account);
     }
 
@@ -247,14 +240,6 @@ contract SuperTrueNFT is
     }
 
     /**
-     * @dev Function to check if address is admin
-     */
-    function isAdmin(address account) public view returns (bool) {
-        address configContract = ISuperTrueCreator(_hub).getConfig();
-        return IConfig(configContract).isAdmin(account);
-    }
-
-    /**
      * @dev Fetch Treasury Data
      * Centralized Treasury Settings for all Artist Contracts
      */
@@ -282,7 +267,7 @@ contract SuperTrueNFT is
      *
      * See {ERC721Pausable} and {Pausable-_pause}.
      */
-    function pause() public onlyOwnerOrAdmin {
+    function pause() public onlyOwner {
         _pause();
     }
 
@@ -291,7 +276,7 @@ contract SuperTrueNFT is
      *
      * See {ERC721Pausable} and {Pausable-_unpause}.
      */
-    function unpause() public onlyOwnerOrAdmin {
+    function unpause() public onlyOwner {
         _unpause();
     }
 
@@ -314,7 +299,7 @@ contract SuperTrueNFT is
      * Block or Unblock Artist Contract
      * @dev Pause + Emit Event
      */
-    function blockContract(bool blocked) public onlyOwnerOrAdmin {
+    function blockContract(bool blocked) public onlyOwner {
         artist.blocked = blocked;
         emit Blocked(blocked);
     }
@@ -323,12 +308,9 @@ contract SuperTrueNFT is
      * @dev Buy New Token
      * Single token at a time
      */
-    // function mint(uint256 amount, address to) public payable whenNotPaused {
     function mint(address to) public payable whenNotPaused {
         //Validate Amount
         require(msg.value >= _price, "Insufficient Payment");
-        //Handle Payment
-        _handlePaymentNative(msg.value);
         //Increment Token ID
         _tokenIds.increment(); //We just put this first so that we start with 1
         //Mint
@@ -338,25 +320,10 @@ contract SuperTrueNFT is
     }
 
     /**
-     * @dev General purpose native currency reception function (donations)
-     */
-    receive() external payable {
-        //Handle as Payment
-        _handlePaymentNative(msg.value);
-    }
-
-    /**
      * @dev Get artist's not withdrawn funds
      */
     function artistPendingFunds() external view returns (uint256) {
         return _artistPendingFunds;
-    }
-
-    /**
-     * @dev Get artist's not withdrawn ERC20 funds
-     */
-    function artistPendingFundsERC20(address tokenAddress) external view returns (uint256) {
-        return _artistPendingFundsERC20[tokenAddress];
     }
 
     /**
@@ -386,35 +353,9 @@ contract SuperTrueNFT is
     }
 
     /**
-     * @dev Handle Payments Logic - ERC20 Tokens
-     */
-    function _handlePaymentERC20(address tokenAddress, uint256 amount) private {
-        //Fetch Treasury Data
-        (address treasury, uint256 treasuryFee) = _getTreasuryData();
-        //Split
-        uint256 treasuryAmount = (amount * treasuryFee) / BPS_MAX;
-        uint256 adjustedAmount = amount - treasuryAmount;
-        if (treasuryAmount > 0) {
-            //Send to Treasury
-            IERC20(tokenAddress).transfer(treasury, treasuryAmount);
-            emit Withdrawal(treasury, tokenAddress, treasuryAmount);
-        }
-        if (adjustedAmount > 0) {
-            if (artist.account == address(0)) {
-                //Hold for Artist
-                _artistPendingFunds += adjustedAmount;
-            } else {
-                //Send to Artist
-                IERC20(tokenAddress).transfer(artist.account, adjustedAmount);
-                emit Withdrawal(artist.account, tokenAddress, adjustedAmount);
-            }
-        }
-    }
-
-    /**
      * @dev Withdraw Additional Funds (Not from minting)
      */
-    function withdraw() external whenNotPaused onlyOwnerOrAdmin {
+    function withdraw() external whenNotPaused onlyOwner {
         require(address(this).balance > _artistPendingFunds, "No Available Balance");
         uint256 _balanceAvailable = address(this).balance - _artistPendingFunds;
         require(_balanceAvailable > 0, "No Available Balance");
@@ -423,28 +364,12 @@ contract SuperTrueNFT is
     }
 
     /**
-     * @dev Send All Funds From Contract to Owner
-     */
-    function withdrawERC20(address tokenAddress)
-        external
-        whenNotPaused
-        onlyOwnerOrAdmin
-    {
-        require(tokenAddress != address(0), "Currency Address Not Set");
-        uint256 balance = IERC20(tokenAddress).balanceOf(address(this));
-        uint256 _balanceAvailable = balance - _artistPendingFundsERC20[tokenAddress];
-        require(_balanceAvailable > 0, "No Available Balance");
-        //Process any additional funds
-        _handlePaymentERC20(tokenAddress, _balanceAvailable);
-    }
-
-    /**
      * @dev Artist Withdraw Pending Balance of Native Tokens
      */
-    function artistWithdrawPending()
+    function withdrawArtist()
         external
         whenNotPaused
-        onlyOwnerOrAdminOrArtist
+        onlyOwnerOrArtist
     {
         //Validate
         require(artist.account != address(0), "Artist Account Not Set");
@@ -456,46 +381,12 @@ contract SuperTrueNFT is
         _artistPendingFunds = 0;
     }
 
-    /**
-     * @dev Artist Withdraw Pending Balance of ERC20 Token
-     */
-    function artistWithdrawPendingERC20(address tokenAddress)
-        external
-        whenNotPaused
-        onlyOwnerOrAdminOrArtist
-    {
-        //Validate
-        require(artist.account != address(0), "Artist Account Not Set");
-        require(_artistPendingFundsERC20[tokenAddress] > 0, "No Artist Pending Balance");
-        //Transfer Pending Balance
-        IERC20(tokenAddress).transfer(
-            artist.account,
-            _artistPendingFundsERC20[tokenAddress]
-        );
-        emit Withdrawal(
-            artist.account,
-            tokenAddress,
-            _artistPendingFundsERC20[tokenAddress]
-        );
-        //Reset Pending Balance
-        _artistPendingFundsERC20[tokenAddress] = 0;
-    }
-
-    /* Why receive ERC721? What happens with these tokens after they are received? Can they be extracted?
-
-    // function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
-    function onERC721Received(address operator, address from, uint256 tokenId, bytes calldata data)
-        external pure override returns (bytes4) {
-        return IERC721ReceiverUpgradeable.onERC721Received.selector;
-    }
-*/
-
     //-- Royalties
 
     /**
      * @dev Set Royalties Requested
      */
-    function setRoyalties(uint256 royaltyBPS) public onlyOwnerOrAdmin {
+    function setRoyalties(uint256 royaltyBPS) public onlyOwner {
         require(
             royaltyBPS >= 0 && royaltyBPS <= 10_000,
             "Wrong royaltyBPS value"
@@ -526,11 +417,11 @@ contract SuperTrueNFT is
     //-- URI Handling
 
     /**
-     * @dev Overrid Default Contract URI
+     * @dev Override Default Contract URI
      */
     function setContractURI(string memory uri_)
         external
-        onlyOwnerOrAdminOrArtist
+        onlyOwner
     {
         _contract_uri = uri_;
     }
