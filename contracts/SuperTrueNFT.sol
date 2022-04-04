@@ -14,7 +14,7 @@ import "./interfaces/IConfig.sol";
 
 /**
  * SuperTrue NFT
- * Version 0.6.0
+ * Version 0.7.0
  *
  */
 contract SuperTrueNFT is
@@ -57,6 +57,7 @@ contract SuperTrueNFT is
     // Artist Data
     Artist public artist;
     uint256 private _artistPendingFunds;
+    uint256 private _treasuryPendingFunds;
 
     // Settings
     uint256 private _price; //Current Price / Base Price
@@ -140,6 +141,8 @@ contract SuperTrueNFT is
         _royaltyBPS = 1_000; //Default to 10% royalties on secondary sales
         _price = 0.002 ether; //Current Price / Base Price
         _priceInterval = 0.0001 ether; //Price Increments
+        _artistPendingFunds = 0;
+        _treasuryPendingFunds = 0;
     }
 
     //-- Token Price
@@ -171,6 +174,8 @@ contract SuperTrueNFT is
     {
         require(bytes(_name).length > 0, "Empty name");
         require(bytes(_instagram).length > 0, "Empty instagram");
+
+        // TODO check that instagram is not taken already
 
         artist.name = _name;
         artist.instagram = _instagram;
@@ -305,6 +310,16 @@ contract SuperTrueNFT is
     }
 
     /**
+     * @dev Adjusts Pending Funds
+     */
+    function _splitFunds(uint256 value) private {
+        (, uint256 treasuryFee) = _getTreasuryData();
+        uint256 artistShare = (value * (BPS_MAX - treasuryFee)) / BPS_MAX;
+        _artistPendingFunds += artistShare;
+        _treasuryPendingFunds += value - artistShare;
+    }
+
+    /**
      * @dev Buy New Token
      * Single token at a time
      */
@@ -317,68 +332,70 @@ contract SuperTrueNFT is
         _safeMint(to, _tokenIds.current());
         //Update Price
         _updatePrice();
+        //Update pending funds
+        _splitFunds(msg.value);
+    }
+
+    /**
+     * @dev General purpose native currency reception function (donations)
+     */
+    receive() external payable {
+        _splitFunds(msg.value);
     }
 
     /**
      * @dev Get artist's not withdrawn funds
      */
-    function artistPendingFunds() external view returns (uint256) {
+    function artistPendingFunds() public view returns (uint256) {
         return _artistPendingFunds;
     }
 
     /**
-     * @dev Handle Payments Logic -  Native Currency
+     * @dev Get treasury's not withdrawn funds
      */
-    function _handlePaymentNative(uint256 amount) private {
-        //Fetch Treasury Data
-        (address treasury, uint256 treasuryFee) = _getTreasuryData();
-        //Split
-        uint256 treasuryAmount = (amount * treasuryFee) / BPS_MAX;
-        uint256 adjustedAmount = amount - treasuryAmount;
-        if (treasuryAmount > 0) {
-            //Send to Treasury
-            payable(treasury).transfer(treasuryAmount);
-            emit Withdrawal(treasury, address(0), treasuryAmount);
-        }
-        if (adjustedAmount > 0) {
-            if (artist.account == address(0)) {
-                //Hold for Artist
-                _artistPendingFunds += adjustedAmount;
-            } else {
-                //Send to Artist
-                payable(artist.account).transfer(adjustedAmount);
-                emit Withdrawal(artist.account, address(0), adjustedAmount);
-            }
-        }
+    function treasuryPendingFunds() public view returns (uint256) {
+        return _treasuryPendingFunds;
     }
 
     /**
-     * @dev Withdraw Additional Funds (Not from minting)
+     * @dev Treasury Withdraw Pending Funds of Native Currency
      */
-    function withdraw() external whenNotPaused onlyOwner {
-        require(address(this).balance > _artistPendingFunds, "No Available Balance");
-        uint256 _balanceAvailable = address(this).balance - _artistPendingFunds;
-        require(_balanceAvailable > 0, "No Available Balance");
-        //Process any additional funds
-        _handlePaymentNative(_balanceAvailable);
+    function withdrawTreasury() external whenNotPaused onlyOwner {
+        require(_treasuryPendingFunds > 0, "No Pending Funds");
+        require(_treasuryPendingFunds <= address(this).balance, "Not Enough Funds");
+
+        (address treasury,) = _getTreasuryData();
+
+        require(treasury != address(0), "Treasury Account Not Set");
+
+        uint256 treasuryFunds = _treasuryPendingFunds;
+
+        _treasuryPendingFunds = 0;
+
+        payable(treasury).transfer(treasuryFunds);
+
+        emit Withdrawal(treasury, address(0), treasuryFunds);
     }
 
     /**
-     * @dev Artist Withdraw Pending Balance of Native Tokens
+     * @dev Artist Withdraw Pending Funds of Native Currency
      */
     function withdrawArtist()
         external
         whenNotPaused
         onlyOwnerOrArtist
     {
-        //Validate
+        require(_artistPendingFunds > 0, "No Pending Funds");
+        require(_artistPendingFunds <= address(this).balance, "Not Enough Funds");
         require(artist.account != address(0), "Artist Account Not Set");
-        require(_artistPendingFunds > 0, "No Artist Pending Balance");
-        //Transfer Pending Balance
-        payable(artist.account).transfer(_artistPendingFunds);
-        emit Withdrawal(artist.account, address(0), _artistPendingFunds);
-        //Reset Pending Balance
+
+        uint256 artistFunds = _artistPendingFunds;
+
         _artistPendingFunds = 0;
+
+        payable(artist.account).transfer(artistFunds);
+
+        emit Withdrawal(artist.account, address(0), artistFunds);
     }
 
     //-- Royalties

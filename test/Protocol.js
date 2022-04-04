@@ -522,8 +522,136 @@ describe("EntireProtocol", function () {
         });
 
         describe("Payments", function () {
-            it("Should increase funds after mint", async function () {
-                // TODO
+            it("should increase artist pending funds after mint", async function () {
+                const startBalance = 0;
+
+                expect(await artistContract.artistPendingFunds()).to.equal(startBalance);
+
+                const price = await artistContract.price();
+                let tx = await artistContract.mint(tester.address, { value: price });
+                await tx.wait();
+
+                const addedBalance = price * 0.8; // 80% for artist
+
+                expect(await artistContract.artistPendingFunds()).to.equal(startBalance + addedBalance);
+            });
+
+            it("should increase treasury pending funds after mint", async function () {
+                const startBalance = 0;
+
+                expect(await artistContract.treasuryPendingFunds()).to.equal(startBalance);
+
+                const price = await artistContract.price();
+                let tx = await artistContract.mint(tester.address, { value: price });
+                await tx.wait();
+
+                const addedBalance = price * 0.2; // 20% for treasury
+
+                expect(await artistContract.treasuryPendingFunds()).to.equal(startBalance + addedBalance);
+            });
+
+            it("Should treasury pending funds equals to 0 after withdraw", async function () {
+                const price = await artistContract.price();
+                let tx = await artistContract.mint(tester.address, { value: price });
+                await tx.wait();
+
+                tx = await artistContract.withdrawTreasury();
+                await tx.wait();
+
+                expect(await artistContract.treasuryPendingFunds()).to.equal(0);
+            });
+
+            it("Should fail when try to do treasury withdraw with no pending treasury funds", async function () {
+                await expect(artistContract.withdrawTreasury()).to.be.revertedWith("No Pending Funds");
+            });
+
+            it("Should fail when try to do artist withdraw without claimed account", async function () {
+                const price = await artistContract.price();
+                let tx = await artistContract.mint(tester.address, { value: price });
+                await tx.wait();
+
+                await expect(artistContract.withdrawArtist()).to.be.revertedWith("Artist Account Not Set");
+            });
+
+            const claimAccount = async () => {
+                const artist = await artistContract.artist();
+                const artistAccount = owner.address;
+
+                const typedData1 = {
+                    types,
+                    primaryType: "Message",
+                    domain: {
+                        name: "SuperTrue",
+                        version: "1",
+                        chainId: 31337,
+                        verifyingContract: artistContract.address
+                    },
+                    message: {
+                        signer: 1,
+                        account: artistAccount,
+                        instagram: artist.instagram,
+                        artistId: Number(artist.id)
+                    }
+                };
+
+                const typedData2 = {
+                    types,
+                    primaryType: "Message",
+                    domain: {
+                        name: "SuperTrue",
+                        version: "1",
+                        chainId: 31337,
+                        verifyingContract: artistContract.address
+                    },
+                    message: {
+                        signer: 2,
+                        account: artistAccount,
+                        instagram: artist.instagram,
+                        artistId: Number(artist.id)
+                    }
+                };
+
+                const signature1 = signTypedData({privateKey: signer1PrivateKey, data: typedData1, version: SignTypedDataVersion.V4});
+                const signature2 = signTypedData({privateKey: signer2PrivateKey, data: typedData2, version: SignTypedDataVersion.V4});
+
+                const tx = await artistContract.claim(signature1, signature2);
+                await tx.wait();
+            }
+
+            it("Should artist pending funds equals to 0 after withdraw", async function () {
+                const price = await artistContract.price();
+                let tx = await artistContract.mint(tester.address, { value: price });
+                await tx.wait();
+
+                await claimAccount();
+
+                tx = await artistContract.withdrawArtist();
+                await tx.wait();
+
+                expect(await artistContract.artistPendingFunds()).to.equal(0);
+            });
+
+            it("Should receive native currency via transfer", async function () {
+                const tx = await tester.sendTransaction({
+                    to: artistContract.address,
+                    value: 888,
+                });
+
+                await tx.wait();
+
+                expect(await waffle.provider.getBalance(artistContract.address)).to.equal(888);
+            });
+
+            it("Should increase pending funds after transfer", async function () {
+                const tx = await tester.sendTransaction({
+                    to: artistContract.address,
+                    value: 100,
+                });
+
+                await tx.wait();
+
+                expect(await artistContract.artistPendingFunds()).to.equal(80);
+                expect(await artistContract.treasuryPendingFunds()).to.equal(20);
             });
         });
     });
