@@ -573,9 +573,8 @@ describe("EntireProtocol", function () {
                 await expect(artistContract.withdrawArtist()).to.be.revertedWith("Artist Account Not Set");
             });
 
-            const claimAccount = async () => {
+            const claimAccount = async (artistAccount) => {
                 const artist = await artistContract.artist();
-                const artistAccount = owner.address;
 
                 const typedData1 = {
                     types,
@@ -618,12 +617,32 @@ describe("EntireProtocol", function () {
                 await tx.wait();
             }
 
+            it("Should emit Withdrawal event with withdraw", async function () {
+                const price = await artistContract.price();
+                let tx = await artistContract.mint(tester.address, { value: price });
+                await tx.wait();
+
+                tx = await artistContract.withdrawTreasury();
+                await tx.wait();
+
+                await expect(tx).to.emit(artistContract, 'Withdrawal')
+                  .withArgs(treasury.address, ethers.constants.AddressZero, price*0.2);
+
+                await claimAccount(owner.address);
+
+                tx = await artistContract.withdrawArtist();
+                await tx.wait();
+
+                await expect(tx).to.emit(artistContract, 'Withdrawal')
+                  .withArgs(owner.address, ethers.constants.AddressZero, price*0.8);
+            });
+
             it("Should artist pending funds equals to 0 after withdraw", async function () {
                 const price = await artistContract.price();
                 let tx = await artistContract.mint(tester.address, { value: price });
                 await tx.wait();
 
-                await claimAccount();
+                await claimAccount(owner.address);
 
                 tx = await artistContract.withdrawArtist();
                 await tx.wait();
