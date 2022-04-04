@@ -1,4 +1,4 @@
-const { ethers } = require("hardhat");
+const { ethers, waffle } = require("hardhat");
 const { use, expect } = require("chai");
 const { solidity } = require("ethereum-waffle");
 const { signTypedData, SignTypedDataVersion } = require('@metamask/eth-sig-util');
@@ -16,7 +16,7 @@ describe("EntireProtocol", function () {
     const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
     const PRICE_BASE = '2000000000000000';
     const PRICE_INCREMENT = '100000000000000'; //TODO: Test Price Incemenets
-    const CREATION_FEE = 999;
+    const CREATION_FEE = 2000000000000000;
     const BASE_URI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/"; //Default Base URI
     const ARTISTS = [
         {name: "name1", ig: "ig_name1", guid:'ig:id1'},
@@ -24,15 +24,41 @@ describe("EntireProtocol", function () {
     ];
     let configContract;
     let factoryContract;
+    let artistContract;
     let artistContracts = [];
     let owner;
     let admin;
     let tester;
     let treasury;
-    let addrs;
 
-    before(async function () {
-        [owner, admin, tester, treasury, ...addrs] = await ethers.getSigners();
+    // ************* signatures
+    const types = {
+        EIP712Domain: [
+            { name: 'name', type: 'string' },
+            { name: 'version', type: 'string' },
+            { name: 'chainId', type: 'uint256' },
+            { name: 'verifyingContract', type: 'address' },
+        ],
+        Message: [
+            { name: 'signer', type: 'uint256' },
+            { name: 'account', type: 'address' },
+            { name: 'instagram', type: 'string' },
+            { name: 'artistId', type: 'uint256' },
+        ]
+    };
+    const signer1 = "0x8eC13C4982a5Fb8b914F0927C358E14f8d657133";
+    const signer2 = "0xb9fAfb1De9083eAa09Fd7D058784a0316a2960B1";
+    const signer1PrivateKey = Buffer.from(
+      'e3126708c26c5312d95395c6fb53329166484e57375b0493e3713b0cccfdf792',
+      'hex',
+    );
+    const signer2PrivateKey = Buffer.from(
+      '8b38a7dfbdfd6d05f27ec2223d91f8a30026a4f1add7507a296a5cc177513733',
+      'hex',
+    );
+
+    beforeEach(async function () {
+        [owner, admin, tester, treasury] = await ethers.getSigners();
 
         //Config
         const ConfigContract = await ethers.getContractFactory("Config");
@@ -40,11 +66,24 @@ describe("EntireProtocol", function () {
 
         //Deploy Factory
         const SuperTrueCreator = await ethers.getContractFactory("SuperTrueCreator");
-        const SuperTrueNFT = await ethers.getContractFactory("SuperTrueNFT");
-        const superTrueNFT = await SuperTrueNFT.deploy();
+        const SuperTrueNFTImplementation = await ethers.getContractFactory("SuperTrueNFT");
+        const superTrueNFTImplementation = await SuperTrueNFTImplementation.deploy();
 
         //Deploying new proxy
-        factoryContract = await upgrades.deployProxy(SuperTrueCreator, [configContract.address, superTrueNFT.address], { kind: "uups" });
+        factoryContract = await upgrades.deployProxy(SuperTrueCreator, [configContract.address, superTrueNFTImplementation.address], { kind: "uups" });
+
+        const price = await factoryContract.getCreationPrice();
+
+        //Deploy New Artist
+        let tx = await factoryContract.createArtist(ARTISTS[0].name, ARTISTS[0].ig, ARTISTS[0].guid, { value: price });
+        await tx.wait();
+
+        //Fetch New Artist Contract Address
+        const artistContractAddr = await factoryContract.getArtistContract(1);
+
+        //Attach
+        const SuperTrueNFT = await ethers.getContractFactory("SuperTrueNFT");
+        artistContract = await SuperTrueNFT.attach(artistContractAddr);
     })
 
     describe("Config Contract", function () {
@@ -86,10 +125,14 @@ describe("EntireProtocol", function () {
             });
 
             it("should change creation fee", async function () {
-                const tx = await configContract.connect(owner).setCreationFee(CREATION_FEE);
-                await expect(tx).to.emit(configContract, 'CreationFeeSet').withArgs(CREATION_FEE);
-
                 expect(await configContract.getCreationFee()).to.equal(CREATION_FEE);
+
+                const newCreationFee = 999;
+
+                const tx = await configContract.connect(owner).setCreationFee(newCreationFee);
+                await expect(tx).to.emit(configContract, 'CreationFeeSet').withArgs(newCreationFee);
+
+                expect(await configContract.getCreationFee()).to.equal(newCreationFee);
             });
         });
 
@@ -163,12 +206,8 @@ describe("EntireProtocol", function () {
 
         it("Should fail to return data on inexistent artists", async function () {
             await expect(
-                factoryContract.getArtistContract(1)
+                factoryContract.getArtistContract(99)
             ).to.be.revertedWith("Non-Existent Artist");
-        });
-
-        it("Should return correct creation fee", async function () {
-            expect(await factoryContract.getCreationPrice()).to.equal(CREATION_FEE);
         });
 
         it("Should fail to deploy child: SuperTrueNFT Contract without value", async function () {
@@ -182,8 +221,6 @@ describe("EntireProtocol", function () {
             const artistIG = ARTISTS[1].ig; //"ig2";
             const artistGUID = ARTISTS[1].guid;
             const price = await factoryContract.getCreationPrice();
-
-            console.log("Deploy Artist 1:"+artistGUID, ARTISTS[1]);
 
             //Deploy New Artist
             //TODO: How to get the id & address from that??
@@ -200,12 +237,6 @@ describe("EntireProtocol", function () {
             //Fetch New Artist Contract Address
             const artistContractAddr = await factoryContract.getArtistContract(1);
 
-            //Attach
-            const SuperTrueNFT = await ethers.getContractFactory("SuperTrueNFT");
-            const newArtistContract = await SuperTrueNFT.attach(artistContractAddr);
-            //Keep
-            artistContracts.push(newArtistContract);
-
             // let t1 = await newArtistContract.owner();
             // console.log("Deployed Artist Contract to:"+artistContractAddr, newArtistContract, t1);
             // console.log("Deployed Artist Contract:", artistContracts[0]);
@@ -216,14 +247,12 @@ describe("EntireProtocol", function () {
             expect(artistContractAddr).not.to.equal(ZERO_ADDR);
         });
 
-        it("Should Not allow same artist to be deployed twice", async function () {
+        it("Should Not allow same guid artist to be deployed twice", async function () {
             const price = await factoryContract.getCreationPrice();
 
             await expect(
-                //Deploy New Artist
-                factoryContract.createArtist(ARTISTS[1].name, ARTISTS[1].ig, ARTISTS[1].guid, { value: price })
+                factoryContract.createArtist(ARTISTS[1].name, ARTISTS[1].ig, ARTISTS[0].guid, { value: price })
             ).to.be.revertedWith("GUID already used");
-
         });
 
         it("Factory should be upgradable", async function () {
@@ -244,12 +273,6 @@ describe("EntireProtocol", function () {
     });
 
     describe("Artist NFT", function () {
-        let artistContract;
-
-        before(async function () {
-            artistContract = artistContracts[0];
-        });
-
         it("Should inherit Owner", async function () {
             //Not Admin
             expect(await artistContract.owner()).to.equal(owner.address);
@@ -387,11 +410,21 @@ describe("EntireProtocol", function () {
                 expect(result).to.equal(admin.address);
             });
             it("Should Have Token URI", async function () {
+                const price = await artistContract.price();
+
+                let tx = await artistContract.mint(admin.address, { value: price });
+                await tx.wait();
+
                 let tokenURI = BASE_URI + "1/json/1";
                 let result = await artistContract.tokenURI(1);
                 expect(result).to.equal(tokenURI);
             });
             it("Can Change Token URI", async function () {
+                const price = await artistContract.price();
+
+                let tx = await artistContract.mint(admin.address, { value: price });
+                await tx.wait();
+
                 let newBaseURI = "https://test-domain.com/api/";
                 //Change
                 await configContract.setBaseURI(newBaseURI);
@@ -406,31 +439,6 @@ describe("EntireProtocol", function () {
         });
 
         describe("Claim", function () {
-            const signer1 = "0x8eC13C4982a5Fb8b914F0927C358E14f8d657133";
-            const signer2 = "0xb9fAfb1De9083eAa09Fd7D058784a0316a2960B1";
-            const signer1PrivateKey = Buffer.from(
-              'e3126708c26c5312d95395c6fb53329166484e57375b0493e3713b0cccfdf792',
-              'hex',
-            );
-            const signer2PrivateKey = Buffer.from(
-              '8b38a7dfbdfd6d05f27ec2223d91f8a30026a4f1add7507a296a5cc177513733',
-              'hex',
-            );
-            const types = {
-                EIP712Domain: [
-                    { name: 'name', type: 'string' },
-                    { name: 'version', type: 'string' },
-                    { name: 'chainId', type: 'uint256' },
-                    { name: 'verifyingContract', type: 'address' },
-                ],
-                Message: [
-                    { name: 'signer', type: 'uint256' },
-                    { name: 'account', type: 'address' },
-                    { name: 'instagram', type: 'string' },
-                    { name: 'artistId', type: 'uint256' },
-                ]
-            };
-
             before(async function () {
                 await configContract.setSigners(signer1, signer2);
             });
