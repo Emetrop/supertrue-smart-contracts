@@ -111,8 +111,6 @@ contract SuperTrueNFT is
     event ArtistClaimed(address artist);
     /// Artist Updated
     event ArtistUpdated(string name, string instagram);
-    /// Price Updated
-    event PriceUpdated(uint256 oldPrice, uint256 newPrice);
     /// Contract Blocked / Unblocked
     event Blocked(bool blocked);
 
@@ -152,15 +150,6 @@ contract SuperTrueNFT is
      */
     function price() external view returns (uint256) {
         return _price;
-    }
-
-    /**
-     * @dev Update Token Price
-     */
-    function _updatePrice() private {
-        uint256 oldPrice = _price;
-        _price += _priceInterval;
-        emit PriceUpdated(oldPrice, _price);
     }
 
     //-- Artist Data
@@ -331,7 +320,7 @@ contract SuperTrueNFT is
         //Mint
         _safeMint(to, _tokenIds.current());
         //Update Price
-        _updatePrice();
+        _price += _priceInterval;
         //Update pending funds
         _splitFunds(msg.value);
     }
