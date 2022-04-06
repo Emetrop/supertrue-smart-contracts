@@ -15,6 +15,7 @@
     "prettier": "^2.6.0",
     "prettier-plugin-solidity": "^1.0.0-beta.19",
     "solhint": "^3.3.7",
+    "solidity-coverage": "^0.7.20",
     "typescript": "^4.6.2"
   },
   "dependencies": {
@@ -40,6 +41,7 @@
     "chain": "hardhat node --network hardhat --no-deploy",
     "fork": "hardhat node --no-deploy --network hardhat --fork https://mainnet.infura.io/v3/460f40a260564ac4a4f4b3fffb032dad",
     "test": "hardhat test --network hardhat",
+    "coverage": "hardhat coverage --network hardhat",
     "rinkeby": "hardhat deploy --network rinkeby",
     "ropsten": "hardhat deploy --network ropsten",
     "mumbai": "hardhat deploy --network mumbai",

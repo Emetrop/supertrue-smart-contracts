@@ -8,6 +8,7 @@ require("@tenderly/hardhat-tenderly");
 
 require("hardhat-deploy");
 require("hardhat-gas-reporter");
+require('solidity-coverage')
 
 require("@nomiclabs/hardhat-ethers");
 require("@nomiclabs/hardhat-etherscan");
