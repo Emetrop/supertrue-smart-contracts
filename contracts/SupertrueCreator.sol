@@ -36,8 +36,9 @@ contract SupertrueCreator is
     IConfig private config; // Configuration contract
 
     // registry of created contracts
-    mapping(uint256 => address) private artistContracts;
-    // can be only added but not changed
+    // values can be only added but not changed
+    mapping(uint256 => address) private artistIdToContractAddress;
+    // values can be only added but not changed
     mapping(string => uint256) private instagramIdToArtistId;
 
     // Contract version
@@ -150,8 +151,11 @@ contract SupertrueCreator is
      * Get artist's contract address by artist ID
      */
     function getArtistContract(uint256 artistId) public view returns (address) {
-        require(artistContracts[artistId] != address(0), "Artist not found");
-        return artistContracts[artistId];
+        require(
+            artistIdToContractAddress[artistId] != address(0),
+            "Artist not found"
+        );
+        return artistIdToContractAddress[artistId];
     }
 
     /**
@@ -166,7 +170,9 @@ contract SupertrueCreator is
         bytes32 digest = _hashTypedDataV4(
             keccak256(
                 abi.encode(
-                    keccak256("Message(uint256 signer,string instagramId,string instagram)"),
+                    keccak256(
+                        "Message(uint256 signer,string instagramId,string instagram)"
+                    ),
                     signer,
                     keccak256(bytes(instagramId)),
                     keccak256(bytes(instagram))
@@ -201,7 +207,7 @@ contract SupertrueCreator is
             abi.encodeWithSelector(
                 SupertrueNFT.initialize.selector,
                 address(this), // admin,
-                // 12, "Supertrue 12", SP12, https://supertrue.fans/
+                // 12, "Supertrue 12", ST12, https://supertrue.fans/
                 id,
                 name,
                 instagram,
@@ -212,7 +218,7 @@ contract SupertrueCreator is
         );
 
         // Add to registry
-        artistContracts[id] = address(proxy);
+        artistIdToContractAddress[id] = address(proxy);
         instagramIdToArtistId[instagramId] = id;
 
         emit ArtistCreated(
@@ -281,13 +287,26 @@ contract SupertrueCreator is
         );
         ISupertrueNFT.Artist memory artist = artistContract.getArtist();
 
-        address signer1 = getSigner(signature1, 1, instagram, artist.instagramId);
+        require(
+            _msgSender() == config.owner() || _msgSender() == artist.account,
+            "Only owner or artist"
+        );
+
+        address signer1 = getSigner(
+            signature1,
+            1,
+            instagram,
+            artist.instagramId
+        );
         require(signer1 == config.signer1(), "Invalid signature1");
 
-        address signer2 = getSigner(signature2, 2, instagram, artist.instagramId);
+        address signer2 = getSigner(
+            signature2,
+            2,
+            instagram,
+            artist.instagramId
+        );
         require(signer2 == config.signer2(), "Invalid signature2");
-
-        require(_msgSender() == config.owner() || _msgSender() == artist.account, "Only owner or artist");
 
         artistContract.updateArtist(name, instagram);
 
