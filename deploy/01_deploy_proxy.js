@@ -15,27 +15,27 @@ const sleep = (ms) =>
 module.exports = async ({ chainId }) => {
   // const treasuryAddress = "0x0000000000000000000000000000000000000001"; // TODO change for deployment
 
-  const ConfigContract = await ethers.getContractFactory("Config");
+  const ConfigContract = await ethers.getContractFactory("SupertrueConfig");
   const configContract = await ConfigContract.deploy(treasuryAddress);
   await configContract.deployed();
   console.log("Config Deployed to:", configContract.address);
 
-  const SuperTrueNFTContract = await ethers.getContractFactory("SuperTrueNFT");
-  const superTrueNFTContract = await SuperTrueNFTContract.deploy();
-  await superTrueNFTContract.deployed();
-  console.log("SuperTrueNFT Deployed to:", configContract.address);
+  const SupertrueNFTContract = await ethers.getContractFactory("SupertrueNFT");
+  const supertrueNFTContract = await SupertrueNFTContract.deploy();
+  await supertrueNFTContract.deployed();
+  console.log("SupertrueNFT Deployed to:", configContract.address);
 
-  const SuperTrueCreator = await ethers.getContractFactory("SuperTrueCreator");
+  const SupertrueCreator = await ethers.getContractFactory("SupertrueCreator");
 
   // deploying new proxy
-  const proxy = await upgrades.deployProxy(SuperTrueCreator,
-    [configContract.address, superTrueNFTContract.address],{
+  const proxy = await upgrades.deployProxy(SupertrueCreator,
+    [configContract.address, supertrueNFTContract.address],{
     // https://docs.openzeppelin.com/upgrades-plugins/1.x/api-hardhat-upgrades#common-options
     kind: "uups",
     timeout: 120000
   });
   await proxy.deployed();
-  console.log("SuperTrueCreator deployed to:", proxy.address);
+  console.log("SupertrueCreator deployed to:", proxy.address);
 
   // Verify your contracts with Etherscan
   // You don't want to verify on localhost
@@ -47,8 +47,8 @@ module.exports = async ({ chainId }) => {
     //Verify Proxy
     // await run("verify:verify", {
     //   address: proxy.address,
-    //   contract: "contracts/SuperTrueCreator.sol:SuperTrueCreator",
-    //   contractArguments: [configContract.address, superTrueNFTContract.address],
+    //   contract: "contracts/SupertrueCreator.sol:SupertrueCreator",
+    //   contractArguments: [configContract.address, supertrueNFTContract.address],
     // });
     //Verify Config
     await run("verify:verify", {
@@ -61,4 +61,4 @@ module.exports = async ({ chainId }) => {
   }
 };
 
-module.exports.tags = ["SuperTrue", "SuperTrueCreator"];
+module.exports.tags = ["Supertrue", "SupertrueCreator"];
