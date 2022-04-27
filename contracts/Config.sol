@@ -9,9 +9,6 @@ import "@openzeppelin/contracts/security/Pausable.sol";
  * Global Configuration Contract
  */
 contract Config is Ownable, Pausable {
-    // Arbitrary contract designation signature
-    string public constant role = "SuperTrueConfig";
-
     //-- Storage --//
     //Treasury
     uint256 private _treasuryFee;

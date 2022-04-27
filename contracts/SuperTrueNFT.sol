@@ -155,7 +155,8 @@ contract SuperTrueNFT is
      * @dev Set Artist's Details
      */
     function updateArtist(string memory _name, string memory _instagram)
-        public override
+        public
+        override
         onlyHub
     {
         require(bytes(_name).length > 0, "Empty name");
@@ -191,20 +192,22 @@ contract SuperTrueNFT is
         return ECDSAUpgradeable.recover(digest, signature);
     }
 
+    function _config() private view returns (IConfig) {
+        return IConfig(ISuperTrueCreator(_hub).getConfig());
+    }
+
     /**
      * @dev Claim Contract - Set Artist's Account
      */
     function claim(bytes calldata signature1, bytes calldata signature2)
         public
     {
-        address configContract = ISuperTrueCreator(_hub).getConfig();
-
         require(
-            (getSigner(signature1, 1) == IConfig(configContract).signer1()),
+            (getSigner(signature1, 1) == _config().signer1()),
             "invalid signature1"
         );
         require(
-            (getSigner(signature2, 2) == IConfig(configContract).signer2()),
+            (getSigner(signature2, 2) == _config().signer2()),
             "invalid signature2"
         );
 
@@ -216,8 +219,7 @@ contract SuperTrueNFT is
      * @dev Returns the address of the current owner.
      */
     function owner() public view virtual returns (address) {
-        address configContract = ISuperTrueCreator(_hub).getConfig();
-        return IConfig(configContract).owner();
+        return _config().owner();
     }
 
     /**
@@ -225,9 +227,7 @@ contract SuperTrueNFT is
      * Centralized Treasury Settings for all Artist Contracts
      */
     function _getTreasuryData() internal view returns (address, uint256) {
-        address configContract = ISuperTrueCreator(_hub).getConfig();
-        (address treasury, uint256 treasuryFee) = IConfig(configContract)
-            .getTreasuryData();
+        (address treasury, uint256 treasuryFee) = _config().getTreasuryData();
         //Validate (Don't Burn Assets)
         require(
             treasuryFee == 0 || treasury != address(0),
@@ -265,10 +265,7 @@ contract SuperTrueNFT is
      * @dev Returns true if the contract is paused, and false otherwise.
      */
     function paused() public view override returns (bool) {
-        address configContract = ISuperTrueCreator(_hub).getConfig();
-        return (IConfig(configContract).paused() ||
-            super.paused() ||
-            _artist.blocked);
+        return (_config().paused() || super.paused() || _artist.blocked);
     }
 
     /// Get Total Supply
@@ -454,12 +451,10 @@ contract SuperTrueNFT is
      * by default, can be overriden in child contracts.
      */
     function _baseURI() internal view override returns (string memory) {
-        // return _base_uri;
-        address configContract = ISuperTrueCreator(_hub).getConfig();
         return
             string(
                 abi.encodePacked(
-                    IConfig(configContract).getBaseURI(),
+                    _config().getBaseURI(),
                     _artist.id.toString(),
                     "/"
                 )
