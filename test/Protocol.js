@@ -84,7 +84,7 @@ describe("EntireProtocol", () => {
     [owner, admin, tester, treasury] = await ethers.getSigners();
 
     //Config
-    const ConfigContract = await ethers.getContractFactory("Config");
+    const ConfigContract = await ethers.getContractFactory("SupertrueConfig");
     configContract = await ConfigContract.deploy(treasury.address);
 
     //Deploy Factory

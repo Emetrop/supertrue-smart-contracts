@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-interface IConfig {
+interface ISupertrueConfig {
     /// Arbitrary contract designation signature
     function isSupertrueConfig() external view returns (bool);
 
@@ -17,9 +17,6 @@ interface IConfig {
 
     /// Get Owner
     function owner() external view returns (address);
-
-    /// Transfers ownership of the contract to a new account (`newOwner`).
-    function transferOwnership(address) external;
 
     /// Fetch BaseURI
     function getBaseURI() external view returns (string memory);

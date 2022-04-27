@@ -5,10 +5,12 @@ pragma solidity ^0.8.13;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
+import "./interfaces/ISupertrueConfig.sol";
+
 /**
  * Global Configuration Contract
  */
-contract Config is Ownable, Pausable {
+contract SupertrueConfig is ISupertrueConfig, Ownable, Pausable {
     //-- Storage --//
     //Treasury
     uint256 private _treasuryFee;
@@ -64,6 +66,13 @@ contract Config is Ownable, Pausable {
     }
 
     /**
+     * @dev Returns the address of the current owner.
+     */
+    function owner() public view override(ISupertrueConfig, Ownable) returns (address) {
+        return Ownable.owner();
+    }
+
+    /**
      * @dev Get Signers Storage Contract Address
      */
     function signer1() public view returns (address) {
@@ -87,6 +96,13 @@ contract Config is Ownable, Pausable {
     }
 
     //-- Pausability
+
+    /**
+     * @dev Returns true if the contract is paused, and false otherwise.
+     */
+    function paused() public view virtual override(ISupertrueConfig, Pausable) returns (bool) {
+        return Pausable.paused();
+    }
 
     /// Pause Protocol
     function pause() external whenNotPaused onlyOwnerOrAdmin {

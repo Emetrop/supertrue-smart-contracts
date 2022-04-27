@@ -11,7 +11,7 @@ import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
 import "./interfaces/ISupertrueCreator.sol";
 import "./interfaces/ISupertrueNFT.sol";
-import "./interfaces/IConfig.sol";
+import "./interfaces/ISupertrueConfig.sol";
 
 /**
  * Supertrue NFT
@@ -192,8 +192,8 @@ contract SupertrueNFT is
         return ECDSAUpgradeable.recover(digest, signature);
     }
 
-    function _config() private view returns (IConfig) {
-        return IConfig(ISupertrueCreator(_hub).getConfig());
+    function _config() private view returns (ISupertrueConfig) {
+        return ISupertrueConfig(ISupertrueCreator(_hub).getConfig());
     }
 
     /**

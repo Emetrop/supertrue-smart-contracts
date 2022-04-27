@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
 import "./SupertrueNFT.sol";
-import "./interfaces/IConfig.sol";
+import "./interfaces/ISupertrueConfig.sol";
 import "./interfaces/ISupertrueNFT.sol";
 import "./interfaces/ISupertrueNFT.sol";
 
@@ -33,7 +33,7 @@ contract SupertrueCreator is
     CountersUpgradeable.Counter private atArtistId;
 
     UpgradeableBeacon private beacon; // SupertrueNFT beacon
-    IConfig private config; // Configuration contract
+    ISupertrueConfig private config; // Configuration contract
 
     // registry of created contracts
     // values can be only added but not changed
@@ -74,11 +74,11 @@ contract SupertrueCreator is
         __EIP712_init("Supertrue", version);
 
         require(
-            IConfig(config_).isSupertrueConfig(),
+            ISupertrueConfig(config_).isSupertrueConfig(),
             "Invalid config contract"
         );
 
-        config = IConfig(config_);
+        config = ISupertrueConfig(config_);
 
         // Init beacon
         UpgradeableBeacon _beacon = new UpgradeableBeacon(nftContract);
@@ -97,11 +97,11 @@ contract SupertrueCreator is
      */
     function setConfig(address config_) public onlyOwner {
         require(
-            IConfig(config_).isSupertrueConfig(),
+            ISupertrueConfig(config_).isSupertrueConfig(),
             "Invalid config contract"
         );
 
-        config = IConfig(config_);
+        config = ISupertrueConfig(config_);
 
         emit ConfigAddressChanged(config_);
     }
