@@ -11,15 +11,15 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgra
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
-import "./SuperTrueNFT.sol";
+import "./SupertrueNFT.sol";
 import "./interfaces/IConfig.sol";
-import "./interfaces/ISuperTrueNFT.sol";
-import "./interfaces/ISuperTrueNFT.sol";
+import "./interfaces/ISupertrueNFT.sol";
+import "./interfaces/ISupertrueNFT.sol";
 
 /**
  * Beacon Proxy Factory
  */
-contract SuperTrueCreator is
+contract SupertrueCreator is
     Initializable,
     UUPSUpgradeable,
     OwnableUpgradeable,
@@ -32,7 +32,7 @@ contract SuperTrueCreator is
 
     CountersUpgradeable.Counter private atArtistId;
 
-    UpgradeableBeacon private beacon; // SuperTrueNFT beacon
+    UpgradeableBeacon private beacon; // SupertrueNFT beacon
     IConfig private config; // Configuration contract
 
     // registry of created contracts
@@ -70,10 +70,10 @@ contract SuperTrueCreator is
         public
         initializer
     {
-        __EIP712_init("SuperTrue", version);
+        __EIP712_init("Supertrue", version);
 
         require(
-            IConfig(config_).isSuperTrueConfig(),
+            IConfig(config_).isSupertrueConfig(),
             "Invalid config contract"
         );
 
@@ -96,7 +96,7 @@ contract SuperTrueCreator is
      */
     function setConfig(address config_) public onlyOwner {
         require(
-            IConfig(config_).isSuperTrueConfig(),
+            IConfig(config_).isSupertrueConfig(),
             "Invalid config contract"
         );
 
@@ -132,14 +132,14 @@ contract SuperTrueCreator is
     function _authorizeUpgrade(address) internal override onlyOwner {}
 
     /**
-     * Get SuperTrueNFT beacon address
+     * Get SupertrueNFT beacon address
      */
     function getBeacon() public view returns (address) {
         return address(beacon);
     }
 
     /**
-     * Upgrade SuperTrueNFT beacon implementation
+     * Upgrade SupertrueNFT beacon implementation
      */
     function upgradeBeacon(address _newImplementation) public onlyOwner {
         beacon.upgradeTo(_newImplementation);
@@ -191,7 +191,7 @@ contract SuperTrueCreator is
         uint256 id = atArtistId.current();
 
         string memory collectionName = string(
-            abi.encodePacked("SuperTrue ", id.toString())
+            abi.encodePacked("Supertrue ", id.toString())
         );
         string memory symbol = string(abi.encodePacked("ST", id.toString()));
 
@@ -199,9 +199,9 @@ contract SuperTrueCreator is
         BeaconProxy proxy = new BeaconProxy(
             address(beacon),
             abi.encodeWithSelector(
-                SuperTrueNFT.initialize.selector,
+                SupertrueNFT.initialize.selector,
                 address(this), // admin,
-                // 12, "SuperTrue 12", SP12, https://supertrue.fans/
+                // 12, "Supertrue 12", SP12, https://supertrue.fans/
                 id,
                 name,
                 instagram,
@@ -276,10 +276,10 @@ contract SuperTrueCreator is
         require(bytes(name).length > 0, "Empty name");
         require(bytes(instagram).length > 0, "Empty instagram");
 
-        ISuperTrueNFT artistContract = ISuperTrueNFT(
+        ISupertrueNFT artistContract = ISupertrueNFT(
             getArtistContract(artistId)
         );
-        ISuperTrueNFT.Artist memory artist = artistContract.getArtist();
+        ISupertrueNFT.Artist memory artist = artistContract.getArtist();
 
         address signer1 = getSigner(signature1, 1, instagram, artist.instagramId);
         require(signer1 == config.signer1(), "Invalid signature1");

@@ -9,20 +9,20 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
-import "./interfaces/ISuperTrueCreator.sol";
-import "./interfaces/ISuperTrueNFT.sol";
+import "./interfaces/ISupertrueCreator.sol";
+import "./interfaces/ISupertrueNFT.sol";
 import "./interfaces/IConfig.sol";
 
 /**
- * SuperTrue NFT
+ * Supertrue NFT
  * Version 0.7.0
  *
  */
-contract SuperTrueNFT is
+contract SupertrueNFT is
     ERC721PausableUpgradeable,
     IERC2981Upgradeable,
     EIP712Upgradeable,
-    ISuperTrueNFT
+    ISupertrueNFT
 {
     using AddressUpgradeable for address;
     using StringsUpgradeable for uint256;
@@ -115,7 +115,7 @@ contract SuperTrueNFT is
     ) public initializer {
         __ERC721Pausable_init();
         __ERC721_init_unchained(name_, symbol_);
-        __EIP712_init("SuperTrue", version);
+        __EIP712_init("Supertrue", version);
 
         //Set Hub Address
         _hub = hub_;
@@ -193,7 +193,7 @@ contract SuperTrueNFT is
     }
 
     function _config() private view returns (IConfig) {
-        return IConfig(ISuperTrueCreator(_hub).getConfig());
+        return IConfig(ISupertrueCreator(_hub).getConfig());
     }
 
     /**

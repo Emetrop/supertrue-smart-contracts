@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 interface IConfig {
     /// Arbitrary contract designation signature
-    function isSuperTrueConfig() external view returns (bool);
+    function isSupertrueConfig() external view returns (bool);
 
     /// Check if contract is paused
     function paused() external view returns (bool);

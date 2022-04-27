@@ -61,7 +61,7 @@ describe("EntireProtocol", () => {
       types,
       primaryType: "Message",
       domain: {
-        name: "SuperTrue",
+        name: "Supertrue",
         version: "1",
         chainId: 31337,
         verifyingContract: factoryContract.address,
@@ -88,19 +88,19 @@ describe("EntireProtocol", () => {
     configContract = await ConfigContract.deploy(treasury.address);
 
     //Deploy Factory
-    const SuperTrueCreator = await ethers.getContractFactory(
-      "SuperTrueCreator"
+    const SupertrueCreator = await ethers.getContractFactory(
+      "SupertrueCreator"
     );
-    const SuperTrueNFTImplementation = await ethers.getContractFactory(
-      "SuperTrueNFT"
+    const SupertrueNFTImplementation = await ethers.getContractFactory(
+      "SupertrueNFT"
     );
-    const superTrueNFTImplementation =
-      await SuperTrueNFTImplementation.deploy();
+    const supertrueNFTImplementation =
+      await SupertrueNFTImplementation.deploy();
 
     //Deploying new proxy
     factoryContract = await upgrades.deployProxy(
-      SuperTrueCreator,
-      [configContract.address, superTrueNFTImplementation.address],
+      SupertrueCreator,
+      [configContract.address, supertrueNFTImplementation.address],
       { kind: "uups" }
     );
 
@@ -132,13 +132,13 @@ describe("EntireProtocol", () => {
     const artistContractAddr = await factoryContract.getArtistContract(1);
 
     //Attach
-    const SuperTrueNFT = await ethers.getContractFactory("SuperTrueNFT");
-    artistContract = await SuperTrueNFT.attach(artistContractAddr);
+    const SupertrueNFT = await ethers.getContractFactory("SupertrueNFT");
+    artistContract = await SupertrueNFT.attach(artistContractAddr);
   });
 
   describe("Config Contract", () => {
-    it("Should be a SuperTrueConfig", async () => {
-      expect(await configContract.isSuperTrueConfig()).to.equal(true);
+    it("Should be a SupertrueConfig", async () => {
+      expect(await configContract.isSupertrueConfig()).to.equal(true);
     });
 
     describe("Permissions", () => {
@@ -266,7 +266,7 @@ describe("EntireProtocol", () => {
       );
     });
 
-    it("Should fail to deploy child: SuperTrueNFT contract without value", async () => {
+    it("Should fail to deploy child: SupertrueNFT contract without value", async () => {
       const signature1 = getArtistUpdateSignedMessage({
         signer: 1,
         instagramId: ARTISTS[0].igId,
@@ -289,7 +289,7 @@ describe("EntireProtocol", () => {
       ).to.be.revertedWith("Insufficient payment'");
     });
 
-    it("Should deploy child: SuperTrueNFT Contract", async () => {
+    it("Should deploy child: SupertrueNFT Contract", async () => {
       const artistName = ARTISTS[1].name;
       const artistIG = ARTISTS[1].ig;
       const artistGUID = ARTISTS[1].igId;
@@ -366,7 +366,7 @@ describe("EntireProtocol", () => {
     it("Factory should be upgradable", async () => {
       //Fetch New Implementation Contract
       let NewImplementation = await ethers.getContractFactory(
-        "contracts/contracts-test/SuperTrueCreatorv2.sol:SuperTrueCreatorv2"
+        "contracts/contracts-test/SupertrueCreatorv2.sol:SupertrueCreatorv2"
       );
       await upgrades.upgradeProxy(factoryContract, NewImplementation);
 
@@ -477,10 +477,10 @@ describe("EntireProtocol", () => {
 
     it("Beacon should be upgradable", async () => {
       //Current Implementation
-      const OldImplementation = await ethers.getContractFactory("SuperTrueNFT");
+      const OldImplementation = await ethers.getContractFactory("SupertrueNFT");
       //New Implementation
       const NewImplementation = await ethers.getContractFactory(
-        "contracts/contracts-test/SuperTrueNFTv2.sol:SuperTrueNFTv2"
+        "contracts/contracts-test/SupertrueNFTv2.sol:SupertrueNFTv2"
       );
       let newImplementation = await NewImplementation.deploy();
 
@@ -582,7 +582,7 @@ describe("EntireProtocol", () => {
         types,
         primaryType: "Message",
         domain: {
-          name: "SuperTrue",
+          name: "Supertrue",
           version: "1",
           chainId: 31337,
           verifyingContract: artistContract.address,

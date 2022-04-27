@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-interface ISuperTrueNFT {
+interface ISupertrueNFT {
     struct Artist {
         uint256 id; // immutable
         string instagramId; // immutable
