@@ -62,6 +62,10 @@ contract Config is Ownable, Pausable {
         _creationFee = 0.002 ether;
     }
 
+    function isSuperTrueConfig() public pure returns (bool) {
+        return true;
+    }
+
     /**
      * @dev Get Signers Storage Contract Address
      */

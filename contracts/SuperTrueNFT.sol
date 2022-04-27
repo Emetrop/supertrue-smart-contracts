@@ -10,6 +10,7 @@ import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
 import "./interfaces/ISuperTrueCreator.sol";
+import "./interfaces/ISuperTrueNFT.sol";
 import "./interfaces/IConfig.sol";
 
 /**
@@ -20,21 +21,12 @@ import "./interfaces/IConfig.sol";
 contract SuperTrueNFT is
     ERC721PausableUpgradeable,
     IERC2981Upgradeable,
-    EIP712Upgradeable
+    EIP712Upgradeable,
+    ISuperTrueNFT
 {
     using AddressUpgradeable for address;
     using StringsUpgradeable for uint256;
     using CountersUpgradeable for CountersUpgradeable.Counter;
-
-    // ============ Structs ============
-
-    struct Artist {
-        uint256 id;
-        string name;
-        string instagram;
-        address account;
-        bool blocked;
-    }
 
     // ============ Storage ============
 
@@ -55,7 +47,7 @@ contract SuperTrueNFT is
     // address payable private _fundingRecipient;   //Using Self
 
     // Artist Data
-    Artist public artist;
+    Artist private _artist;
     uint256 private _artistPendingFunds;
     uint256 private _treasuryPendingFunds;
 
@@ -69,13 +61,18 @@ contract SuperTrueNFT is
     // ============ Modifiers ============
 
     /**
+     * @dev Throws if called by any account other than the hub.
+     */
+    modifier onlyHub() {
+        require(_msgSender() == _hub, "Only hub");
+        _;
+    }
+
+    /**
      * @dev Throws if called by any account other than the owner or admins.
      */
     modifier onlyOwner() {
-        require(
-            owner() == _msgSender(),
-            "Only owner"
-        );
+        require(_msgSender() == owner(), "Only owner");
         _;
     }
 
@@ -84,18 +81,9 @@ contract SuperTrueNFT is
      */
     modifier onlyOwnerOrArtist() {
         require(
-            owner() == _msgSender() ||
-            _msgSender() == artist.account,
-            "Only admin or artist"
+            _msgSender() == owner() || _msgSender() == _artist.account,
+            "Only owner or artist"
         );
-        _;
-    }
-
-    /**
-     * @dev Throws if called by any account other than the hub.
-     */
-    modifier onlyHub() {
-        require(_hub == _msgSender(), "Only Hub");
         _;
     }
 
@@ -121,6 +109,7 @@ contract SuperTrueNFT is
         uint256 artistId_,
         string memory artistName_,
         string memory artistInstagram_,
+        string memory artistInstagramId_,
         string memory name_,
         string memory symbol_
     ) public initializer {
@@ -131,9 +120,10 @@ contract SuperTrueNFT is
         //Set Hub Address
         _hub = hub_;
 
-        artist.id = artistId_;
-        artist.name = artistName_;
-        artist.instagram = artistInstagram_;
+        _artist.id = artistId_;
+        _artist.name = artistName_;
+        _artist.instagram = artistInstagram_;
+        _artist.instagramId = artistInstagramId_;
 
         //Defaults
         _royaltyBPS = 1_000; //Default to 10% royalties on secondary sales
@@ -155,33 +145,30 @@ contract SuperTrueNFT is
     //-- Artist Data
 
     /**
+     * @dev Get artist
+     */
+    function getArtist() external view override returns (Artist memory) {
+        return _artist;
+    }
+
+    /**
      * @dev Set Artist's Details
      */
-    function setArtist(string memory _name, string memory _instagram)
-        public
-        onlyOwner
+    function updateArtist(string memory _name, string memory _instagram)
+        public override
+        onlyHub
     {
         require(bytes(_name).length > 0, "Empty name");
         require(bytes(_instagram).length > 0, "Empty instagram");
 
-        // TODO check that instagram is not taken already
+        _artist.name = _name;
+        _artist.instagram = _instagram;
 
-        artist.name = _name;
-        artist.instagram = _instagram;
-
-        emit ArtistUpdated(artist.name, artist.instagram);
+        emit ArtistUpdated(_name, _instagram);
     }
 
     /**
-     * @dev Claim Contract - Set Artist's Account
-     */
-    function setArtistAccount(address account) public onlyOwnerOrArtist {
-        artist.account = account;
-        emit ArtistClaimed(account);
-    }
-
-    /**
-     * @dev Get account address which signature is signed with
+     * @dev Get pubkey which signature is signed with
      */
     function getSigner(bytes calldata signature, uint256 signer)
         public
@@ -196,8 +183,8 @@ contract SuperTrueNFT is
                     ),
                     signer,
                     _msgSender(),
-                    keccak256(bytes(artist.instagram)),
-                    artist.id
+                    keccak256(bytes(_artist.instagram)),
+                    _artist.id
                 )
             )
         );
@@ -221,7 +208,7 @@ contract SuperTrueNFT is
             "invalid signature2"
         );
 
-        artist.account = _msgSender();
+        _artist.account = _msgSender();
         emit ArtistClaimed(_msgSender());
     }
 
@@ -281,7 +268,7 @@ contract SuperTrueNFT is
         address configContract = ISuperTrueCreator(_hub).getConfig();
         return (IConfig(configContract).paused() ||
             super.paused() ||
-            artist.blocked);
+            _artist.blocked);
     }
 
     /// Get Total Supply
@@ -294,7 +281,7 @@ contract SuperTrueNFT is
      * @dev Pause + Emit Event
      */
     function blockContract(bool blocked) public onlyOwner {
-        artist.blocked = blocked;
+        _artist.blocked = blocked;
         emit Blocked(blocked);
     }
 
@@ -351,9 +338,12 @@ contract SuperTrueNFT is
      */
     function withdrawTreasury() external whenNotPaused onlyOwner {
         require(_treasuryPendingFunds > 0, "No Pending Funds");
-        require(_treasuryPendingFunds <= address(this).balance, "Not Enough Funds");
+        require(
+            _treasuryPendingFunds <= address(this).balance,
+            "Not Enough Funds"
+        );
 
-        (address treasury,) = _getTreasuryData();
+        (address treasury, ) = _getTreasuryData();
 
         require(treasury != address(0), "Treasury Account Not Set");
 
@@ -369,22 +359,21 @@ contract SuperTrueNFT is
     /**
      * @dev Artist Withdraw Pending Funds of Native Currency
      */
-    function withdrawArtist()
-        external
-        whenNotPaused
-        onlyOwnerOrArtist
-    {
+    function withdrawArtist() external whenNotPaused onlyOwnerOrArtist {
         require(_artistPendingFunds > 0, "No Pending Funds");
-        require(_artistPendingFunds <= address(this).balance, "Not Enough Funds");
-        require(artist.account != address(0), "Artist Account Not Set");
+        require(
+            _artistPendingFunds <= address(this).balance,
+            "Not Enough Funds"
+        );
+        require(_artist.account != address(0), "Artist Account Not Set");
 
         uint256 artistFunds = _artistPendingFunds;
 
         _artistPendingFunds = 0;
 
-        payable(artist.account).transfer(artistFunds);
+        payable(_artist.account).transfer(artistFunds);
 
-        emit Withdrawal(artist.account, address(0), artistFunds);
+        emit Withdrawal(_artist.account, address(0), artistFunds);
     }
 
     //-- Royalties
@@ -425,10 +414,7 @@ contract SuperTrueNFT is
     /**
      * @dev Override Default Contract URI
      */
-    function setContractURI(string memory uri_)
-        external
-        onlyOwner
-    {
+    function setContractURI(string memory uri_) external onlyOwner {
         _contract_uri = uri_;
     }
 
@@ -474,7 +460,7 @@ contract SuperTrueNFT is
             string(
                 abi.encodePacked(
                     IConfig(configContract).getBaseURI(),
-                    artist.id.toString(),
+                    _artist.id.toString(),
                     "/"
                 )
             );

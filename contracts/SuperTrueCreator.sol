@@ -7,19 +7,23 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgradeable.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
 import "./SuperTrueNFT.sol";
 import "./interfaces/IConfig.sol";
+import "./interfaces/ISuperTrueNFT.sol";
+import "./interfaces/ISuperTrueNFT.sol";
 
 /**
- * @dev Beacon Proxy Factory
+ * Beacon Proxy Factory
  */
 contract SuperTrueCreator is
     Initializable,
     UUPSUpgradeable,
-    OwnableUpgradeable
+    OwnableUpgradeable,
+    EIP712Upgradeable
 {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     using StringsUpgradeable for uint256;
@@ -27,170 +31,266 @@ contract SuperTrueCreator is
     // ============ Storage ============
 
     CountersUpgradeable.Counter private atArtistId;
-    // address used for signature verification, changeable by owner
-    // address public admin;   //DEPRECATED
-    address public beaconAddress;
-    address private _CONFIG; //Configuration Contract
+
+    UpgradeableBeacon private beacon; // SuperTrueNFT beacon
+    IConfig private config; // Configuration contract
 
     // registry of created contracts
     mapping(uint256 => address) private artistContracts;
-    mapping(bytes32 => uint256) private artistGUID; //Index Unique Artist IDs
+    // can be only added but not changed
+    mapping(string => uint256) private instagramIdToArtistId;
+
+    // Contract version
+    string public constant version = "1";
 
     // ============ Events ============
 
-    /// Emitted when an Artist is created
+    /// Emitted when an artist is created
     event ArtistCreated(
         uint256 artistId,
         string symbol,
         string name,
         string instagram,
+        string instagramId,
         address indexed artistAddress
     );
 
+    /// Emitted when an artist is created
+    event ArtistUpdated(uint256 artistId, string name, string instagram);
+
+    /// Emitted when config address is changed
+    event ConfigAddressChanged(address config);
+
     // ============ Functions ============
 
-    /// Initializes factory
-    function initialize(address config, address nftContract)
+    /**
+     * Initializes factory
+     */
+    function initialize(address config_, address nftContract)
         public
         initializer
     {
-        //Set Config Address
-        _CONFIG = config;
+        __EIP712_init("SuperTrue", version);
 
-        // __Ownable_init_unchained();  //Set Ownership to Sender   //No Longer Necessary - Owner Forward to Config
-        // baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
+        require(
+            IConfig(config_).isSuperTrueConfig(),
+            "Invalid config contract"
+        );
 
-        //init beacon
+        config = IConfig(config_);
+
+        // Init beacon
         UpgradeableBeacon _beacon = new UpgradeableBeacon(nftContract);
-        beaconAddress = address(_beacon);
+        beacon = _beacon;
     }
 
     /**
-     * Get Configurations Contract Address
+     * Get config contract address
      */
     function getConfig() public view returns (address) {
-        return _CONFIG;
+        return address(config);
     }
 
     /**
-     * Get Price For New Collection Creation
+     * Set configurations contract address
+     */
+    function setConfig(address config_) public onlyOwner {
+        require(
+            IConfig(config_).isSuperTrueConfig(),
+            "Invalid config contract"
+        );
+
+        config = IConfig(config_);
+
+        emit ConfigAddressChanged(config_);
+    }
+
+    /**
+     * Get price for new collection creation
      */
     function getCreationPrice() public view returns (uint256) {
-        address configContract = getConfig();
-
-        return IConfig(configContract).getCreationFee();
+        return config.getCreationFee();
     }
 
     /**
-     * @dev Function to check if address is admin
+     * Function to check if address is admin
      */
     function isAdmin(address account) public view returns (bool) {
-        address configContract = getConfig();
-        return IConfig(configContract).isAdmin(account);
+        return config.isAdmin(account);
     }
 
     /**
-     * @dev Returns the address of the current owner.
+     * Returns the address of the current owner.
      */
     function owner() public view override returns (address) {
-        address configContract = getConfig();
-        return IConfig(configContract).owner();
+        return config.owner();
     }
 
     /**
-     * Set Configurations Contract Address
+     * Define who can upgrade
      */
-    function setConfig(address _config) public onlyOwner {
-        //String Match - Validate Contract's Designation
-        require(
-            keccak256(abi.encodePacked(IConfig(_config).role())) ==
-                keccak256(abi.encodePacked("SuperTrueConfig")),
-            "Invalid Config Contract"
-        );
-        //Set
-        _CONFIG = _config;
+    function _authorizeUpgrade(address) internal override onlyOwner {}
+
+    /**
+     * Get SuperTrueNFT beacon address
+     */
+    function getBeacon() public view returns (address) {
+        return address(beacon);
     }
 
     /**
-     * Creates a new artist contract
+     * Upgrade SuperTrueNFT beacon implementation
+     */
+    function upgradeBeacon(address _newImplementation) public onlyOwner {
+        beacon.upgradeTo(_newImplementation);
+        beacon = UpgradeableBeacon(_newImplementation);
+    }
+
+    /**
+     * Get artist's contract address by artist ID
+     */
+    function getArtistContract(uint256 artistId) public view returns (address) {
+        require(artistContracts[artistId] != address(0), "Artist not found");
+        return artistContracts[artistId];
+    }
+
+    /**
+     * Get pubkey which signature is signed with
+     */
+    function getSigner(
+        bytes calldata signature,
+        uint256 signer,
+        string memory instagramId,
+        string memory instagram
+    ) public view returns (address) {
+        bytes32 digest = _hashTypedDataV4(
+            keccak256(
+                abi.encode(
+                    keccak256("Message(uint256 signer,string instagramId,string instagram)"),
+                    signer,
+                    keccak256(bytes(instagramId)),
+                    keccak256(bytes(instagram))
+                )
+            )
+        );
+        return ECDSAUpgradeable.recover(digest, signature);
+    }
+
+    /**
+     * Creates a new artist contract - extracted from createArtist to avoid stack too deep error
      * @param name Name of the artist
      * @param instagram Instagram of the artist
-     * @param guid unique global identifier (Instagram ID)
+     * @param instagramId Unique Instagram ID
      */
-    function createArtist(
+    function _createArtist(
         string memory name,
         string memory instagram,
-        string calldata guid
-    ) public payable returns (address, uint256) {
-        require(msg.value >= getCreationPrice(), "Insufficient Payment");
-        //Validate Input
-        require(bytes(name).length > 0, "Empty name");
-        require(bytes(instagram).length > 0, "Empty instagram");
-        bytes32 guidHash = keccak256(bytes(guid));
-        require(artistGUID[guidHash] == 0, "GUID already used");
-
+        string memory instagramId
+    ) private returns (address artistContractAddress, uint256 artistId) {
         atArtistId.increment();
         uint256 id = atArtistId.current();
+
         string memory collectionName = string(
             abi.encodePacked("SuperTrue ", id.toString())
         );
         string memory symbol = string(abi.encodePacked("ST", id.toString()));
 
-        //Deploy
+        // Deploy
         BeaconProxy proxy = new BeaconProxy(
-            beaconAddress,
+            address(beacon),
             abi.encodeWithSelector(
-                SuperTrueNFT(payable(address(0))).initialize.selector,
+                SuperTrueNFT.initialize.selector,
                 address(this), // admin,
                 // 12, "SuperTrue 12", SP12, https://supertrue.fans/
                 id,
                 name,
                 instagram,
+                instagramId,
                 collectionName,
                 symbol
             )
         );
 
-        // add to registry
+        // Add to registry
         artistContracts[id] = address(proxy);
-        artistGUID[guidHash] = id;
+        instagramIdToArtistId[instagramId] = id;
 
         emit ArtistCreated(
             atArtistId.current(),
             symbol,
             name,
             instagram,
+            instagramId,
             address(proxy)
         );
 
         return (address(proxy), id);
     }
 
-    /// Get Artist's Contract Address by ID
-    function getArtistContract(uint256 artistId)
-        external
-        view
-        returns (address)
-    {
-        require(artistContracts[artistId] != address(0), "Non-Existent Artist");
-        return artistContracts[artistId];
+    /**
+     * Creates a new artist contract
+     * @param name Name of the artist
+     * @param instagram Instagram of the artist
+     * @param instagramId Unique Instagram ID
+     * @param signature1 signed {instagram, id} message by signer1
+     * @param signature2 signed {instagram, id} message by signer2
+     */
+    function createArtist(
+        string memory name,
+        string memory instagramId,
+        string memory instagram,
+        bytes calldata signature1,
+        bytes calldata signature2
+    ) public payable returns (address artistContractAddress, uint256 artistId) {
+        require(msg.value >= getCreationPrice(), "Insufficient payment");
+
+        require(bytes(name).length > 0, "Empty name");
+        require(bytes(instagram).length > 0, "Empty instagram");
+        require(bytes(instagramId).length > 0, "Empty instagram ID");
+
+        require(instagramIdToArtistId[instagramId] == 0, "Instagram ID exists");
+
+        address signer1 = getSigner(signature1, 1, instagramId, instagram);
+        require(signer1 == config.signer1(), "Invalid signature1");
+
+        address signer2 = getSigner(signature2, 2, instagramId, instagram);
+        require(signer2 == config.signer2(), "Invalid signature2");
+
+        return _createArtist(name, instagram, instagramId);
     }
 
-    function getArtistContractByGUID(uint256 artistId)
-        external
-        view
-        returns (address)
-    {
-        require(artistContracts[artistId] != address(0), "Non-Existent Artist");
-        return artistContracts[artistId];
-    }
+    /**
+     * Update artist's details
+     * @param name Name of the artist
+     * @param instagram Instagram of the artist
+     * @param signature1 signed {instagram, id} message by signer1
+     * @param signature2 signed {instagram, id} message by signer2
+     */
+    function updateArtist(
+        uint256 artistId,
+        string memory name,
+        string memory instagram,
+        bytes calldata signature1,
+        bytes calldata signature2
+    ) public {
+        require(bytes(name).length > 0, "Empty name");
+        require(bytes(instagram).length > 0, "Empty instagram");
 
-    /// Define Who Can Upgrade
-    function _authorizeUpgrade(address) internal override onlyOwner {}
+        ISuperTrueNFT artistContract = ISuperTrueNFT(
+            getArtistContract(artistId)
+        );
+        ISuperTrueNFT.Artist memory artist = artistContract.getArtist();
 
-    /// Upgrade Beacon Implementation
-    function upgradeBeacon(address _newImplementation) public onlyOwner {
-        UpgradeableBeacon(beaconAddress).upgradeTo(_newImplementation);
-        beaconAddress = _newImplementation;
+        address signer1 = getSigner(signature1, 1, instagram, artist.instagramId);
+        require(signer1 == config.signer1(), "Invalid signature1");
+
+        address signer2 = getSigner(signature2, 2, instagram, artist.instagramId);
+        require(signer2 == config.signer2(), "Invalid signature2");
+
+        require(_msgSender() == config.owner() || _msgSender() == artist.account, "Only owner or artist");
+
+        artistContract.updateArtist(name, instagram);
+
+        emit ArtistUpdated(artistId, name, instagram);
     }
 }

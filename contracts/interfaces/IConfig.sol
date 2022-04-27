@@ -3,6 +3,9 @@
 pragma solidity ^0.8.0;
 
 interface IConfig {
+    /// For verification
+    function isSuperTrueConfig() external view returns (bool);
+
     /// Arbitrary contract designation signature
     function role() external view returns (string memory);
 
