@@ -14,7 +14,6 @@ import "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 import "./SupertrueNFT.sol";
 import "./interfaces/ISupertrueConfig.sol";
 import "./interfaces/ISupertrueNFT.sol";
-import "./interfaces/ISupertrueNFT.sol";
 
 /**
  * Beacon Proxy Factory
@@ -148,14 +147,32 @@ contract SupertrueCreator is
     }
 
     /**
-     * Get artist's contract address by artist ID
+     * Get artist contract address by instagram ID
+     */
+    function getArtistContract(string memory instagramId)
+        public
+        view
+        returns (address)
+    {
+        return artistIdToContractAddress[instagramIdToArtistId[instagramId]];
+    }
+
+    /**
+     * Get artist contract address by artist ID
      */
     function getArtistContract(uint256 artistId) public view returns (address) {
-        require(
-            artistIdToContractAddress[artistId] != address(0),
-            "Artist not found"
-        );
         return artistIdToContractAddress[artistId];
+    }
+
+    /**
+     * Get artist ID by instagram ID
+     */
+    function getArtistId(string memory instagramId)
+        public
+        view
+        returns (uint256)
+    {
+        return instagramIdToArtistId[instagramId];
     }
 
     /**
@@ -282,9 +299,11 @@ contract SupertrueCreator is
         require(bytes(name).length > 0, "Empty name");
         require(bytes(instagram).length > 0, "Empty instagram");
 
-        ISupertrueNFT artistContract = ISupertrueNFT(
-            getArtistContract(artistId)
-        );
+        address contractAddress = getArtistContract(artistId);
+
+        require(contractAddress != address(0), "Artist not found");
+
+        ISupertrueNFT artistContract = ISupertrueNFT(contractAddress);
         ISupertrueNFT.Artist memory artist = artistContract.getArtist();
 
         require(

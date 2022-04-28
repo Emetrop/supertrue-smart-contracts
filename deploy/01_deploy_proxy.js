@@ -18,12 +18,12 @@ module.exports = async ({ chainId }) => {
   const ConfigContract = await ethers.getContractFactory("SupertrueConfig");
   const configContract = await ConfigContract.deploy(treasuryAddress);
   await configContract.deployed();
-  console.log("Config Deployed to:", configContract.address);
+  console.log("SupertrueConfig deployed to:", configContract.address);
 
   const SupertrueNFTContract = await ethers.getContractFactory("SupertrueNFT");
   const supertrueNFTContract = await SupertrueNFTContract.deploy();
   await supertrueNFTContract.deployed();
-  console.log("SupertrueNFT Deployed to:", configContract.address);
+  console.log("SupertrueNFT deployed to:", supertrueNFTContract.address);
 
   const SupertrueCreator = await ethers.getContractFactory("SupertrueCreator");
 
@@ -53,7 +53,7 @@ module.exports = async ({ chainId }) => {
     //Verify Config
     await run("verify:verify", {
       address: configContract.address,
-      contract: "contracts/Config.sol:Config",
+      contract: "contracts/SupertrueConfig.sol:SupertrueConfig",
       contractArguments: [treasuryAddress],
     });
 

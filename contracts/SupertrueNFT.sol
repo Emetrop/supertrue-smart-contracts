@@ -203,11 +203,11 @@ contract SupertrueNFT is
         public
     {
         require(
-            (getSigner(signature1, 1) == _config().signer1()),
+            getSigner(signature1, 1) == _config().signer1(),
             "invalid signature1"
         );
         require(
-            (getSigner(signature2, 2) == _config().signer2()),
+            getSigner(signature2, 2) == _config().signer2(),
             "invalid signature2"
         );
 

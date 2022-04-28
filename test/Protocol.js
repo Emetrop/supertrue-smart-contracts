@@ -129,7 +129,7 @@ describe("EntireProtocol", () => {
     await tx.wait();
 
     //Fetch New Artist Contract Address
-    const artistContractAddr = await factoryContract.getArtistContract(1);
+    const artistContractAddr = await factoryContract["getArtistContract(uint256)"](1);
 
     //Attach
     const SupertrueNFT = await ethers.getContractFactory("SupertrueNFT");
@@ -260,9 +260,15 @@ describe("EntireProtocol", () => {
       expect(await factoryContract.isAdmin(admin.address)).to.equal(true);
     });
 
-    it("Should fail for not existing artist id", async () => {
-      await expect(factoryContract.getArtistContract(99)).to.be.revertedWith(
-        "Artist not found"
+    it("Should return 0 address for not existing artist id", async () => {
+      await expect(await factoryContract["getArtistContract(uint256)"](99)).to.be.equal(
+        ethers.constants.AddressZero
+      );
+    });
+
+    it("Should return 0 address for not existing instagram id", async () => {
+      await expect(await factoryContract["getArtistContract(string)"]("99")).to.be.equal(
+        ethers.constants.AddressZero
       );
     });
 
@@ -325,7 +331,7 @@ describe("EntireProtocol", () => {
       // console.log("Deployed Artist Contract:", dep);
 
       //Fetch New Artist Contract Address
-      const artistContractAddr = await factoryContract.getArtistContract(1);
+      const artistContractAddr = await factoryContract["getArtistContract(uint256)"](1);
 
       // let t1 = await newArtistContract.owner();
       // console.log("Deployed Artist Contract to:"+artistContractAddr, newArtistContract, t1);
