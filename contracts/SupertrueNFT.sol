@@ -112,9 +112,10 @@ contract SupertrueNFT is
         string memory name_,
         string memory symbol_
     ) public initializer {
+        __ERC721_init(name_, symbol_);
         __ERC721Pausable_init();
-        __ERC721_init_unchained(name_, symbol_);
         __EIP712_init("Supertrue", version);
+
         _setDefaultRoyalty(address(this), _defaultRoyaltyBPS);
 
         //Set Hub Address
