@@ -2,12 +2,12 @@
 
 pragma solidity ^0.8.13;
 
-import "../SupertrueCreator.sol";
+import "../SupertrueHub.sol";
 
 /**
- * SupertrueCreator for Testing Purposes
+ * SupertrueHub for Testing Purposes
  */
-contract SupertrueCreatorv2 is SupertrueCreator {
+contract SupertrueHubv2 is SupertrueHub {
     function hasChanged() external pure returns (bool) {
         return true;
     }

@@ -88,8 +88,8 @@ describe("EntireProtocol", () => {
     configContract = await ConfigContract.deploy(treasury.address);
 
     //Deploy Factory
-    const SupertrueCreator = await ethers.getContractFactory(
-      "SupertrueCreator"
+    const SupertrueHub = await ethers.getContractFactory(
+      "SupertrueHub"
     );
     const SupertrueNFTImplementation = await ethers.getContractFactory(
       "SupertrueNFT"
@@ -99,7 +99,7 @@ describe("EntireProtocol", () => {
 
     //Deploying new proxy
     factoryContract = await upgrades.deployProxy(
-      SupertrueCreator,
+      SupertrueHub,
       [configContract.address, supertrueNFTImplementation.address],
       { kind: "uups" }
     );
@@ -372,7 +372,7 @@ describe("EntireProtocol", () => {
     it("Factory should be upgradable", async () => {
       //Fetch New Implementation Contract
       let NewImplementation = await ethers.getContractFactory(
-        "contracts/contracts-test/SupertrueCreatorv2.sol:SupertrueCreatorv2"
+        "contracts/contracts-test/SupertrueHubv2.sol:SupertrueHubv2"
       );
       await upgrades.upgradeProxy(factoryContract, NewImplementation);
 

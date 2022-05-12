@@ -2,6 +2,6 @@
 
 pragma solidity ^0.8.13;
 
-interface ISupertrueCreator {
+interface ISupertrueHub {
     function getConfig() external view returns (address);
 }

@@ -9,7 +9,7 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
-import "./interfaces/ISupertrueCreator.sol";
+import "./interfaces/ISupertrueHub.sol";
 import "./interfaces/ISupertrueNFT.sol";
 import "./interfaces/ISupertrueConfig.sol";
 
@@ -193,7 +193,7 @@ contract SupertrueNFT is
     }
 
     function _config() private view returns (ISupertrueConfig) {
-        return ISupertrueConfig(ISupertrueCreator(_hub).getConfig());
+        return ISupertrueConfig(ISupertrueHub(_hub).getConfig());
     }
 
     /**

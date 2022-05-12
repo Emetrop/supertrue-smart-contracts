@@ -16,9 +16,9 @@ import "./interfaces/ISupertrueConfig.sol";
 import "./interfaces/ISupertrueNFT.sol";
 
 /**
- * Beacon Proxy Factory
+ * Supertrue Hub
  */
-contract SupertrueCreator is
+contract SupertrueHub is
     Initializable,
     UUPSUpgradeable,
     OwnableUpgradeable,

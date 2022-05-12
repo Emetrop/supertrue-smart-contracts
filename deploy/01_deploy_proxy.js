@@ -25,17 +25,17 @@ module.exports = async ({ chainId }) => {
   await supertrueNFTContract.deployed();
   console.log("SupertrueNFT deployed to:", supertrueNFTContract.address);
 
-  const SupertrueCreator = await ethers.getContractFactory("SupertrueCreator");
+  const SupertrueHub = await ethers.getContractFactory("SupertrueHub");
 
   // deploying new proxy
-  const proxy = await upgrades.deployProxy(SupertrueCreator,
+  const proxy = await upgrades.deployProxy(SupertrueHub,
     [configContract.address, supertrueNFTContract.address],{
     // https://docs.openzeppelin.com/upgrades-plugins/1.x/api-hardhat-upgrades#common-options
     kind: "uups",
     timeout: 120000
   });
   await proxy.deployed();
-  console.log("SupertrueCreator deployed to:", proxy.address);
+  console.log("SupertrueHub deployed to:", proxy.address);
 
   // Verify your contracts with Etherscan
   // You don't want to verify on localhost
@@ -47,7 +47,7 @@ module.exports = async ({ chainId }) => {
     //Verify Proxy
     // await run("verify:verify", {
     //   address: proxy.address,
-    //   contract: "contracts/SupertrueCreator.sol:SupertrueCreator",
+    //   contract: "contracts/SupertrueHub.sol:SupertrueHub",
     //   contractArguments: [configContract.address, supertrueNFTContract.address],
     // });
     //Verify Config
@@ -61,4 +61,4 @@ module.exports = async ({ chainId }) => {
   }
 };
 
-module.exports.tags = ["Supertrue", "SupertrueCreator"];
+module.exports.tags = ["Supertrue", "SupertrueHub"];
