@@ -3,7 +3,7 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/interfaces/IERC2981Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/common/ERC2981Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
@@ -20,8 +20,8 @@ import "./interfaces/ISupertrueConfig.sol";
  */
 contract SupertrueNFT is
     ERC721PausableUpgradeable,
-    IERC2981Upgradeable,
     EIP712Upgradeable,
+    ERC2981Upgradeable,
     ISupertrueNFT
 {
     using AddressUpgradeable for address;
@@ -41,10 +41,9 @@ contract SupertrueNFT is
     // address => allowedToCallFunctions
     mapping(address => bool) private _admins; //Admins of this contract
 
-    // 3rd party royalties Request
-    uint256 private _royaltyBPS; //Default to 10% royalties on secondary sales
+    // 3rd party royalties
+    uint96 private constant _defaultRoyaltyBPS = 1_000; //10% royalties on secondary sales
     uint16 internal constant BPS_MAX = 10_000;
-    // address payable private _fundingRecipient;   //Using Self
 
     // Artist Data
     Artist private _artist;
@@ -116,6 +115,7 @@ contract SupertrueNFT is
         __ERC721Pausable_init();
         __ERC721_init_unchained(name_, symbol_);
         __EIP712_init("Supertrue", version);
+        _setDefaultRoyalty(address(this), _defaultRoyaltyBPS);
 
         //Set Hub Address
         _hub = hub_;
@@ -126,7 +126,6 @@ contract SupertrueNFT is
         _artist.instagramId = artistInstagramId_;
 
         //Defaults
-        _royaltyBPS = 1_000; //Default to 10% royalties on secondary sales
         _price = 0.002 ether; //Current Price / Base Price
         _priceInterval = 0.0001 ether; //Price Increments
         _artistPendingFunds = 0;
@@ -378,32 +377,8 @@ contract SupertrueNFT is
     /**
      * @dev Set Royalties Requested
      */
-    function setRoyalties(uint256 royaltyBPS) public onlyOwner {
-        require(
-            royaltyBPS >= 0 && royaltyBPS <= 10_000,
-            "Wrong royaltyBPS value"
-        );
-        _royaltyBPS = royaltyBPS;
-    }
-
-    /**
-     * @dev Called with the sale price to determine how much royalty is owed and to whom.
-     * @ param _tokenId - the NFT asset queried for royalty information
-     * @param salePrice - the sale price of the NFT asset specified by `tokenId`
-     * @return receiver - address of who should be sent the royalty payment
-     * @return royaltyAmount - the royalty payment amount for `salePrice`
-     */
-    function royaltyInfo(uint256, uint256 salePrice)
-        public
-        view
-        override
-        returns (address receiver, uint256 royaltyAmount)
-    {
-        // if (_fundingRecipient == address(0x0)) { return (_fundingRecipient, 0); }
-        // return (_fundingRecipient, (salePrice * _royaltyBPS) / 10_000);
-
-        //Using the contract to hold royalties
-        return (address(this), (salePrice * _royaltyBPS) / 10_000);
+    function setRoyalties(uint96 royaltyBPS) public onlyOwner {
+        _setDefaultRoyalty(address(this), royaltyBPS);
     }
 
     //-- URI Handling
@@ -459,5 +434,18 @@ contract SupertrueNFT is
                     "/"
                 )
             );
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721Upgradeable, ERC2981Upgradeable)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
     }
 }
