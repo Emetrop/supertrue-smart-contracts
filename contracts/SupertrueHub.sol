@@ -181,6 +181,7 @@ contract SupertrueHub is
     function getSigner(
         bytes calldata signature,
         uint256 signer,
+        address account,
         string memory instagramId,
         string memory instagram
     ) public view returns (address) {
@@ -188,9 +189,10 @@ contract SupertrueHub is
             keccak256(
                 abi.encode(
                     keccak256(
-                        "Message(uint256 signer,string instagramId,string instagram)"
+                        "Message(uint256 signer,address account,string instagramId,string instagram)"
                     ),
                     signer,
+                    account,
                     keccak256(bytes(instagramId)),
                     keccak256(bytes(instagram))
                 )
@@ -208,7 +210,8 @@ contract SupertrueHub is
     function _createArtist(
         string memory name,
         string memory instagram,
-        string memory instagramId
+        string memory instagramId,
+        address artistAccount
     ) private returns (address artistContractAddress, uint256 artistId) {
         atArtistId.increment();
         uint256 id = atArtistId.current();
@@ -229,6 +232,7 @@ contract SupertrueHub is
                 name,
                 instagram,
                 instagramId,
+                artistAccount,
                 collectionName,
                 symbol
             )
@@ -273,13 +277,13 @@ contract SupertrueHub is
 
         require(instagramIdToArtistId[instagramId] == 0, "Instagram ID exists");
 
-        address signer1 = getSigner(signature1, 1, instagramId, instagram);
+        address signer1 = getSigner(signature1, 1, _msgSender(), instagramId, instagram);
         require(signer1 == config.signer1(), "Invalid signature1");
 
-        address signer2 = getSigner(signature2, 2, instagramId, instagram);
+        address signer2 = getSigner(signature2, 2, _msgSender(), instagramId, instagram);
         require(signer2 == config.signer2(), "Invalid signature2");
 
-        return _createArtist(name, instagram, instagramId);
+        return _createArtist(name, instagram, instagramId, _msgSender());
     }
 
     /**
@@ -314,16 +318,18 @@ contract SupertrueHub is
         address signer1 = getSigner(
             signature1,
             1,
-            instagram,
-            artist.instagramId
+            address(0),
+            artist.instagramId,
+            instagram
         );
         require(signer1 == config.signer1(), "Invalid signature1");
 
         address signer2 = getSigner(
             signature2,
             2,
-            instagram,
-            artist.instagramId
+            address(0),
+            artist.instagramId,
+            instagram
         );
         require(signer2 == config.signer2(), "Invalid signature2");
 

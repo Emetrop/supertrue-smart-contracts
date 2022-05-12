@@ -109,6 +109,7 @@ contract SupertrueNFT is
         string memory artistName_,
         string memory artistInstagram_,
         string memory artistInstagramId_,
+        address artistAccount_,
         string memory name_,
         string memory symbol_
     ) public initializer {
@@ -131,6 +132,8 @@ contract SupertrueNFT is
         _priceInterval = 0.0001 ether; //Price Increments
         _artistPendingFunds = 0;
         _treasuryPendingFunds = 0;
+
+        _claim(artistAccount_);
     }
 
     //-- Token Price
@@ -196,6 +199,11 @@ contract SupertrueNFT is
         return ISupertrueConfig(ISupertrueHub(_hub).getConfig());
     }
 
+    function _claim(address artistAccount) private {
+        _artist.account = artistAccount;
+        emit ArtistClaimed(artistAccount);
+    }
+
     /**
      * @dev Claim Contract - Set Artist's Account
      */
@@ -211,8 +219,7 @@ contract SupertrueNFT is
             "invalid signature2"
         );
 
-        _artist.account = _msgSender();
-        emit ArtistClaimed(_msgSender());
+        _claim(_msgSender());
     }
 
     /**

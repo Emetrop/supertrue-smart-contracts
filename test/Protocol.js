@@ -25,7 +25,10 @@ describe("EntireProtocol", () => {
   let configContract;
   let factoryContract;
   let artistContract;
+
+  // accounts
   let owner;
+  let artist;
   let admin;
   let tester;
   let treasury;
@@ -42,7 +45,7 @@ describe("EntireProtocol", () => {
     "hex"
   );
 
-  const getArtistUpdateSignedMessage = ({ signer, instagramId, instagram }) => {
+  const getArtistUpdateSignedMessage = ({ signer, account, instagramId, instagram }) => {
     const types = {
       EIP712Domain: [
         { name: "name", type: "string" },
@@ -52,6 +55,7 @@ describe("EntireProtocol", () => {
       ],
       Message: [
         { name: "signer", type: "uint256" },
+        { name: "account", type: "address" },
         { name: "instagramId", type: "string" },
         { name: "instagram", type: "string" },
       ],
@@ -68,6 +72,7 @@ describe("EntireProtocol", () => {
       },
       message: {
         signer,
+        account,
         instagramId,
         instagram,
       },
@@ -81,7 +86,7 @@ describe("EntireProtocol", () => {
   };
 
   beforeEach(async () => {
-    [owner, admin, tester, treasury] = await ethers.getSigners();
+    [owner, admin, tester, artist, treasury] = await ethers.getSigners();
 
     //Config
     const ConfigContract = await ethers.getContractFactory("SupertrueConfig");
@@ -108,11 +113,13 @@ describe("EntireProtocol", () => {
 
     const signature1 = getArtistUpdateSignedMessage({
       signer: 1,
+      account: owner.address,
       instagramId: ARTISTS[0].igId,
       instagram: ARTISTS[0].ig,
     });
     const signature2 = getArtistUpdateSignedMessage({
       signer: 2,
+      account: owner.address,
       instagramId: ARTISTS[0].igId,
       instagram: ARTISTS[0].ig,
     });
@@ -230,6 +237,25 @@ describe("EntireProtocol", () => {
   });
 
   describe("Factory", () => {
+    it("Should be upgradable", async () => {
+      //Fetch New Implementation Contract
+      let NewImplementation = await ethers.getContractFactory(
+        "contracts/contracts-test/SupertrueHubv2.sol:SupertrueHubv2"
+      );
+      await upgrades.upgradeProxy(factoryContract, NewImplementation);
+
+      //Update Interface
+      const newFactoryContract = await NewImplementation.attach(
+        factoryContract.address
+      );
+      // console.log("Upgraded Facroty (Hub) at: "+ factoryContract.address, newFactoryContract);
+
+      //Validate Upgrade
+      let hasChanged = await newFactoryContract.hasChanged();
+      //Verify Upgrade
+      expect(hasChanged).to.equal(true);
+    });
+
     it("Should have Config", async () => {
       expect(await factoryContract.getConfig()).not.to.equal(ZERO_ADDR); //Starts With Defaults
     });
@@ -240,6 +266,7 @@ describe("EntireProtocol", () => {
         factoryContract.connect(tester).setConfig(configContract.address)
       ).to.be.revertedWith("Ownable: caller is not the owner");
     });
+
     it("Should change Config", async () => {
       //Set Config
       await factoryContract.setConfig(configContract.address);
@@ -275,11 +302,13 @@ describe("EntireProtocol", () => {
     it("Should fail to deploy child: SupertrueNFT contract without value", async () => {
       const signature1 = getArtistUpdateSignedMessage({
         signer: 1,
+        account: owner.address,
         instagramId: ARTISTS[0].igId,
         instagram: ARTISTS[0].ig,
       });
       const signature2 = getArtistUpdateSignedMessage({
         signer: 2,
+        account: owner.address,
         instagramId: ARTISTS[0].igId,
         instagram: ARTISTS[0].ig,
       });
@@ -303,13 +332,15 @@ describe("EntireProtocol", () => {
 
       const signature1 = getArtistUpdateSignedMessage({
         signer: 1,
-        instagramId: ARTISTS[1].igId,
-        instagram: ARTISTS[1].ig,
+        account: owner.address,
+        instagramId: artistGUID,
+        instagram: artistIG,
       });
       const signature2 = getArtistUpdateSignedMessage({
         signer: 2,
-        instagramId: ARTISTS[1].igId,
-        instagram: ARTISTS[1].ig,
+        account: owner.address,
+        instagramId: artistGUID,
+        instagram: artistIG,
       });
 
       //Deploy New Artist
@@ -324,7 +355,6 @@ describe("EntireProtocol", () => {
       );
 
       await expect(tx).to.emit(factoryContract, "ArtistCreated");
-      await tx.wait();
 
       // console.log("[TEST] Deployed Artist Contract:"+T1.address, tx);
       // let dep = await tx.wait();
@@ -343,16 +373,81 @@ describe("EntireProtocol", () => {
       expect(artistContractAddr).not.to.equal(ZERO_ADDR);
     });
 
+    it("Should update artist", async () => {
+      const artistName = ARTISTS[1].name;
+      const artistIG = ARTISTS[1].ig;
+      const artistGUID = ARTISTS[1].igId;
+      const price = await factoryContract.getCreationPrice();
+
+      let signature1 = getArtistUpdateSignedMessage({
+        signer: 1,
+        account: owner.address,
+        instagramId: artistGUID,
+        instagram: artistIG,
+      });
+      let signature2 = getArtistUpdateSignedMessage({
+        signer: 2,
+        account: owner.address,
+        instagramId: artistGUID,
+        instagram: artistIG,
+      });
+
+      //Deploy New Artist
+      //TODO: How to get the id & address from that??
+      let tx = await factoryContract.createArtist(
+        artistName,
+        artistGUID,
+        artistIG,
+        signature1,
+        signature2,
+        { value: price }
+      );
+
+      await tx.wait();
+
+      const artistId = 2;
+
+      const newName = "Artist New Name";
+      const newInstagram = "Artist New Instagram";
+
+      signature1 = getArtistUpdateSignedMessage({
+        signer: 1,
+        account: ethers.constants.AddressZero,
+        instagramId: artistGUID,
+        instagram: newInstagram,
+      });
+      signature2 = getArtistUpdateSignedMessage({
+        signer: 2,
+        account: ethers.constants.AddressZero,
+        instagramId: artistGUID,
+        instagram: newInstagram,
+      });
+
+      tx = await factoryContract.updateArtist(
+        artistId,
+        newName,
+        newInstagram,
+        signature1,
+        signature2
+      );
+
+      await expect(tx)
+        .to.emit(factoryContract, "ArtistUpdated")
+        .withArgs(artistId, newName, newInstagram);
+    });
+
     it("Should not allow same instagram id to be deployed twice", async () => {
       const price = await factoryContract.getCreationPrice();
 
       const signature1 = getArtistUpdateSignedMessage({
         signer: 1,
+        account: owner.address,
         instagramId: ARTISTS[1].igId,
         instagram: ARTISTS[1].ig,
       });
       const signature2 = getArtistUpdateSignedMessage({
         signer: 2,
+        account: owner.address,
         instagramId: ARTISTS[1].igId,
         instagram: ARTISTS[1].ig,
       });
@@ -367,25 +462,6 @@ describe("EntireProtocol", () => {
           { value: price }
         )
       ).to.be.revertedWith("Instagram ID exists");
-    });
-
-    it("Factory should be upgradable", async () => {
-      //Fetch New Implementation Contract
-      let NewImplementation = await ethers.getContractFactory(
-        "contracts/contracts-test/SupertrueHubv2.sol:SupertrueHubv2"
-      );
-      await upgrades.upgradeProxy(factoryContract, NewImplementation);
-
-      //Update Interface
-      const newFactoryContract = await NewImplementation.attach(
-        factoryContract.address
-      );
-      // console.log("Upgraded Facroty (Hub) at: "+ factoryContract.address, newFactoryContract);
-
-      //Validate Upgrade
-      let hasChanged = await newFactoryContract.hasChanged();
-      //Verify Upgrade
-      expect(hasChanged).to.equal(true);
     });
   });
 
@@ -713,43 +789,12 @@ describe("EntireProtocol", () => {
         );
       });
 
-      it("Should fail when try to do artist withdraw without claimed account", async () => {
-        const price = await artistContract.price();
-        let tx = await artistContract.mint(tester.address, { value: price });
-        await tx.wait();
-
-        await expect(artistContract.withdrawArtist()).to.be.revertedWith(
-          "Artist Account Not Set"
-        );
-      });
-
-      const claimAccount = async (account) => {
-        const artist = await artistContract.getArtist();
-
-        const signature1 = getClaimAccountSignedMessage({
-          signer: 1,
-          account,
-          instagram: artist.instagram,
-          artistId: artist.id,
-        });
-        const signature2 = getClaimAccountSignedMessage({
-          signer: 2,
-          account,
-          instagram: artist.instagram,
-          artistId: artist.id,
-        });
-
-        const tx = await artistContract.claim(signature1, signature2);
-        await tx.wait();
-      };
-
       it("Should emit Withdrawal event with withdraw", async () => {
         const price = await artistContract.price();
         let tx = await artistContract.mint(tester.address, { value: price });
         await tx.wait();
 
         tx = await artistContract.withdrawTreasury();
-        await tx.wait();
 
         await expect(tx)
           .to.emit(artistContract, "Withdrawal")
@@ -759,10 +804,7 @@ describe("EntireProtocol", () => {
             price * 0.2
           );
 
-        await claimAccount(owner.address);
-
         tx = await artistContract.withdrawArtist();
-        await tx.wait();
 
         await expect(tx)
           .to.emit(artistContract, "Withdrawal")
@@ -773,8 +815,6 @@ describe("EntireProtocol", () => {
         const price = await artistContract.price();
         let tx = await artistContract.mint(tester.address, { value: price });
         await tx.wait();
-
-        await claimAccount(owner.address);
 
         tx = await artistContract.withdrawArtist();
         await tx.wait();
