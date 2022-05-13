@@ -9,6 +9,8 @@ import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
+import "@prb/math/contracts/PRBMathUD60x18.sol";
+
 import "./interfaces/ISupertrueHub.sol";
 import "./interfaces/ISupertrueNFT.sol";
 import "./interfaces/ISupertrueConfig.sol";
@@ -27,6 +29,7 @@ contract SupertrueNFT is
     using AddressUpgradeable for address;
     using StringsUpgradeable for uint256;
     using CountersUpgradeable for CountersUpgradeable.Counter;
+    using PRBMathUD60x18 for uint256;
 
     // ============ Storage ============
 
@@ -50,9 +53,12 @@ contract SupertrueNFT is
     uint256 private _artistPendingFunds;
     uint256 private _treasuryPendingFunds;
 
-    // Settings
-    uint256 private _price; //Current Price / Base Price
-    uint256 private _priceInterval; //Price Increments
+    // Pricing
+    uint256 private constant _startPriceCents = 500 ether;
+    uint256 private constant _endPriceCents = 5000 ether;
+    uint256 private constant _logEndX = 2 ether; // has to be multiplier of 2!
+    uint256 private constant _logEndY = 1 ether; // == log2(logEndX)
+    uint256 private constant _reachEndPriceTokenId = 1000;
 
     // Contract version
     string public constant version = "1";
@@ -128,8 +134,6 @@ contract SupertrueNFT is
         _artist.instagramId = artistInstagramId_;
 
         //Defaults
-        _price = 0.002 ether; //Current Price / Base Price
-        _priceInterval = 0.0001 ether; //Price Increments
         _artistPendingFunds = 0;
         _treasuryPendingFunds = 0;
 
@@ -139,10 +143,39 @@ contract SupertrueNFT is
     //-- Token Price
 
     /**
-     * @dev Get the Current Token Price
+     * @dev Get 18 decimal price in native token for current tokenId
      */
-    function price() external view returns (uint256) {
-        return _price;
+    function price() public view returns (uint256) {
+        return priceTokenId(_tokenIds.current() + 1);
+    }
+
+    /**
+     * @dev Get 18 decimal price in native token for tokenId
+     */
+    function priceTokenId(uint256 tokenId) public view returns (uint256) {
+        require(tokenId > 0, "TokenID has to be bigger than 0");
+
+        uint256 tokenPriceCents = ISupertrueHub(_hub).getTokenPrice().fromUint();
+
+        if (tokenId >= _reachEndPriceTokenId) {
+            return _endPriceCents.div(tokenPriceCents);
+        }
+        if (tokenId == 1) {
+            return _startPriceCents.div(tokenPriceCents);
+        }
+
+        uint256 dec1 = uint256(1).fromUint();
+
+        uint256 multiplier = (_logEndX-dec1).div(_reachEndPriceTokenId.fromUint());
+
+        // returns number between 1 and logEndX
+        uint256 x = dec1 + tokenId.fromUint().mul(multiplier);
+        uint256 y = x.log2();
+
+        uint256 normalisedPriceCents = _endPriceCents - _startPriceCents;
+        uint256 priceCents = normalisedPriceCents.div(_logEndY).mul(y) + _startPriceCents;
+
+        return priceCents.div(tokenPriceCents);
     }
 
     //-- Artist Data
@@ -305,13 +338,11 @@ contract SupertrueNFT is
      */
     function mint(address to) public payable whenNotPaused {
         //Validate Amount
-        require(msg.value >= _price, "Insufficient Payment");
+        require(msg.value >= price(), "Insufficient Payment");
         //Increment Token ID
         _tokenIds.increment(); //We just put this first so that we start with 1
         //Mint
         _safeMint(to, _tokenIds.current());
-        //Update Price
-        _price += _priceInterval;
         //Update pending funds
         _splitFunds(msg.value);
     }

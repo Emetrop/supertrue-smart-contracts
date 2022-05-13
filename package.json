@@ -25,6 +25,7 @@
     "@openzeppelin/contracts": "^4.4.1",
     "@openzeppelin/contracts-upgradeable": "^4.4.1",
     "@openzeppelin/upgrades-core": "^1.10.0",
+    "@prb/math": "^2.5.0",
     "@tenderly/hardhat-tenderly": "^1.0.10",
     "chai": "^4.2.0",
     "chalk": "^4.1.0",

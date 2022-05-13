@@ -40,6 +40,9 @@ contract SupertrueHub is
     // values can be only added but not changed
     mapping(string => uint256) private instagramIdToArtistId;
 
+    // native token price in USD cents
+    uint256 _tokenPrice;
+
     // Contract version
     string public constant version = "1";
 
@@ -66,7 +69,7 @@ contract SupertrueHub is
     /**
      * Initializes factory
      */
-    function initialize(address config_, address nftContract)
+    function initialize(address config_, address nftContract, uint256 tokenPrice)
         public
         initializer
     {
@@ -82,6 +85,8 @@ contract SupertrueHub is
         // Init beacon
         UpgradeableBeacon _beacon = new UpgradeableBeacon(nftContract);
         beacon = _beacon;
+
+        _tokenPrice = tokenPrice;
     }
 
     /**
@@ -103,6 +108,21 @@ contract SupertrueHub is
         config = ISupertrueConfig(config_);
 
         emit ConfigAddressChanged(config_);
+    }
+
+    /**
+     * Get current native token price in USD cents
+     */
+    function getTokenPrice() public view returns (uint256) {
+        return _tokenPrice;
+    }
+
+    /**
+     * Set current native token price in USD cents
+     */
+    function setTokenPrice(uint256 cents) public onlyOwner {
+        // TODO get price from chainlink oracle
+        _tokenPrice = cents;
     }
 
     /**

@@ -13,8 +13,7 @@ const utils = ethers.utils;
  */
 describe("EntireProtocol", () => {
   const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
-  const PRICE_BASE = "2000000000000000";
-  const PRICE_INCREMENT = "100000000000000"; //TODO: Test Price Incemenets
+  const PRICE_BASE = "5000000000000000";
   const CREATION_FEE = 2000000000000000;
   const BASE_URI =
     "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/"; //Default Base URI
@@ -22,6 +21,7 @@ describe("EntireProtocol", () => {
     { name: "name1", ig: "ig_name1", igId: "123" },
     { name: "name2", ig: "ig_name2", igId: "234" },
   ];
+  const tokenPriceInCents = 100000; // $1k to avoid comparing BigNums
   let configContract;
   let factoryContract;
   let artistContract;
@@ -105,7 +105,7 @@ describe("EntireProtocol", () => {
     //Deploying new proxy
     factoryContract = await upgrades.deployProxy(
       SupertrueHub,
-      [configContract.address, supertrueNFTImplementation.address],
+      [configContract.address, supertrueNFTImplementation.address, tokenPriceInCents],
       { kind: "uups" }
     );
 
@@ -589,6 +589,23 @@ describe("EntireProtocol", () => {
 
       //Verify Upgrade
       expect(hasChanged).to.equal(true);
+    });
+
+    describe("Pricing", () => {
+      it("Should return correct price per tokenId", async () => {
+        const startPrice = 5000000000000000; // == 0.05
+        const endPrice = 50000000000000000; // == 0.5
+
+        await expect(await artistContract.priceTokenId(1)).to.be.equal(startPrice);
+        await expect((await artistContract.priceTokenId(1000)).eq(endPrice.toString())).to.be.true;
+        await expect((await artistContract.priceTokenId(10000)).eq(endPrice.toString())).to.be.true;
+
+        await expect((await artistContract.priceTokenId(2)).eq("5129712883990460")).to.be.true;
+        await expect((await artistContract.priceTokenId(100)).eq("11187658568747070")).to.be.true;
+        await expect((await artistContract.priceTokenId(500)).eq("31323312532452027")).to.be.true;
+        await expect((await artistContract.priceTokenId(900)).eq("46669973835030041")).to.be.true;
+        await expect((await artistContract.priceTokenId(999)).eq("49967531243714324")).to.be.true;
+      });
     });
 
     describe("Tokens", () => {
