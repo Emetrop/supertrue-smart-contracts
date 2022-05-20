@@ -81,17 +81,6 @@ contract SupertrueNFT is
         _;
     }
 
-    /**
-     * @dev Throws if called by any account other than the owner or admins.
-     */
-    modifier onlyOwnerOrArtist() {
-        require(
-            _msgSender() == owner() || _msgSender() == _artist.account,
-            "Only owner or artist"
-        );
-        _;
-    }
-
     // ============ Events ============
 
     /// Funds Withdrawal
@@ -155,7 +144,9 @@ contract SupertrueNFT is
     function priceTokenId(uint256 tokenId) public view returns (uint256) {
         require(tokenId > 0, "TokenID has to be bigger than 0");
 
-        uint256 tokenPriceCents = ISupertrueHub(_hub).getTokenPrice().fromUint();
+        uint256 tokenPriceCents = ISupertrueHub(_hub)
+            .getTokenPrice()
+            .fromUint();
 
         if (tokenId >= _reachEndPriceTokenId) {
             return _endPriceCents.div(tokenPriceCents);
@@ -166,14 +157,17 @@ contract SupertrueNFT is
 
         uint256 dec1 = uint256(1).fromUint();
 
-        uint256 multiplier = (_logEndX-dec1).div(_reachEndPriceTokenId.fromUint());
+        uint256 multiplier = (_logEndX - dec1).div(
+            _reachEndPriceTokenId.fromUint()
+        );
 
         // returns number between 1 and logEndX
         uint256 x = dec1 + tokenId.fromUint().mul(multiplier);
         uint256 y = x.log2();
 
         uint256 normalisedPriceCents = _endPriceCents - _startPriceCents;
-        uint256 priceCents = normalisedPriceCents.div(_logEndY).mul(y) + _startPriceCents;
+        uint256 priceCents = normalisedPriceCents.div(_logEndY).mul(y) +
+            _startPriceCents;
 
         return priceCents.div(tokenPriceCents);
     }
@@ -373,10 +367,6 @@ contract SupertrueNFT is
      */
     function withdrawTreasury() external whenNotPaused onlyOwner {
         require(_treasuryPendingFunds > 0, "No Pending Funds");
-        require(
-            _treasuryPendingFunds <= address(this).balance,
-            "Not Enough Funds"
-        );
 
         (address treasury, ) = _getTreasuryData();
 
@@ -394,13 +384,16 @@ contract SupertrueNFT is
     /**
      * @dev Artist Withdraw Pending Funds of Native Currency
      */
-    function withdrawArtist() external whenNotPaused onlyOwnerOrArtist {
+    function withdrawArtist() external whenNotPaused {
         require(_artistPendingFunds > 0, "No Pending Funds");
-        require(
-            _artistPendingFunds <= address(this).balance,
-            "Not Enough Funds"
-        );
         require(_artist.account != address(0), "Artist Account Not Set");
+
+        require(
+            _msgSender() == _artist.account ||
+            _msgSender() == owner() ||
+            _config().isRelay(_msgSender()),
+            "Only owner or artist or relay "
+        );
 
         uint256 artistFunds = _artistPendingFunds;
 

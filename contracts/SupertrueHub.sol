@@ -291,10 +291,7 @@ contract SupertrueHub is
     ) public payable returns (address artistContractAddress, uint256 artistId) {
         require(msg.value >= getCreationPrice(), "Insufficient payment");
 
-        require(bytes(name).length > 0, "Empty name");
-        require(bytes(instagram).length > 0, "Empty instagram");
-        require(bytes(instagramId).length > 0, "Empty instagram ID");
-
+        // we trust signers that they validated params for correctness
         require(instagramIdToArtistId[instagramId] == 0, "Instagram ID exists");
 
         address signer1 = getSigner(signature1, 1, _msgSender(), instagramId, instagram);
@@ -304,6 +301,37 @@ contract SupertrueHub is
         require(signer2 == config.signer2(), "Invalid signature2");
 
         return _createArtist(name, instagram, instagramId, _msgSender());
+    }
+
+    /**
+     * Creates a new artist contract gasless via relay
+     * @param account Artist's account address
+     * @param name Name of the artist
+     * @param instagram Instagram of the artist
+     * @param instagramId Unique Instagram ID
+     * @param signature1 signed {instagram, id} message by signer1
+     * @param signature2 signed {instagram, id} message by signer2
+     */
+    function createArtistRelay(
+        address account,
+        string memory name,
+        string memory instagramId,
+        string memory instagram,
+        bytes calldata signature1,
+        bytes calldata signature2
+    ) public returns (address artistContractAddress, uint256 artistId) {
+        // we trust signers that they validated params for correctness
+        require(instagramIdToArtistId[instagramId] == 0, "Instagram ID exists");
+
+        require(config.isRelay(_msgSender()), "Only relay");
+
+        address signer1 = getSigner(signature1, 1, account, instagramId, instagram);
+        require(signer1 == config.signer1(), "Invalid signature1");
+
+        address signer2 = getSigner(signature2, 2, account, instagramId, instagram);
+        require(signer2 == config.signer2(), "Invalid signature2");
+
+        return _createArtist(name, instagram, instagramId, account);
     }
 
     /**
@@ -320,9 +348,7 @@ contract SupertrueHub is
         bytes calldata signature1,
         bytes calldata signature2
     ) public {
-        require(bytes(name).length > 0, "Empty name");
-        require(bytes(instagram).length > 0, "Empty instagram");
-
+        // we trust signers that they validated params for correctness
         address contractAddress = getArtistContract(artistId);
 
         require(contractAddress != address(0), "Artist not found");

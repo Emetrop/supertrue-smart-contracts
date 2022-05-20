@@ -14,11 +14,18 @@ const sleep = (ms) =>
 
 module.exports = async ({ chainId }) => {
   // const treasuryAddress = "0x0000000000000000000000000000000000000001"; // TODO change for deployment
+  // const relayAddress = "0x0000000000000000000000000000000000000001"; // TODO change for deployment
 
   const ConfigContract = await ethers.getContractFactory("SupertrueConfig");
   const configContract = await ConfigContract.deploy(treasuryAddress);
   await configContract.deployed();
   console.log("SupertrueConfig deployed to:", configContract.address);
+
+  // set relay
+  // await ethers.getContractAt("SupertrueConfig", configContract.address)
+  //   .then(contract => contract.addRelay(relayAddress))
+  //   .then(tx => tx.wait());
+  // console.log("Relay set to", relayAddress);
 
   const SupertrueNFTContract = await ethers.getContractFactory("SupertrueNFT");
   const supertrueNFTContract = await SupertrueNFTContract.deploy();
@@ -41,8 +48,8 @@ module.exports = async ({ chainId }) => {
   // You don't want to verify on localhost
   if (chainId !== localChainId) {
     // wait for etherscan to be ready to verify
-    console.log("Start code verification on etherscan");
-    await sleep(15000);
+    // console.log("Start code verification on etherscan");
+    // await sleep(15000);
     // TODO fix verification for other contracts
     //Verify Proxy
     // await run("verify:verify", {
@@ -51,13 +58,13 @@ module.exports = async ({ chainId }) => {
     //   contractArguments: [configContract.address, supertrueNFTContract.address],
     // });
     //Verify Config
-    await run("verify:verify", {
-      address: configContract.address,
-      contract: "contracts/SupertrueConfig.sol:SupertrueConfig",
-      contractArguments: [treasuryAddress],
-    });
-
-    console.log("End code verification on etherscan");
+    // await run("verify:verify", {
+    //   address: configContract.address,
+    //   contract: "contracts/SupertrueConfig.sol:SupertrueConfig",
+    //   contractArguments: [treasuryAddress],
+    // });
+    //
+    // console.log("End code verification on etherscan");
   }
 };
 

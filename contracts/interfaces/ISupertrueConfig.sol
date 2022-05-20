@@ -9,13 +9,16 @@ interface ISupertrueConfig {
     /// Check if contract is paused
     function paused() external view returns (bool);
 
-    /// Contract Role Signature
+    /// Contract role signature
     function getTreasuryData() external view returns (address, uint256);
 
-    /// Check if Address Has Admin Privileges
-    function isAdmin(address account) external view returns (bool);
+    /// Check if address is whitelisted as admin
+    function isAdmin(address admin) external view returns (bool);
 
-    /// Get Owner
+    /// Check if address is whitelisted as relay
+    function isRelay(address relay) external view returns (bool);
+
+    /// Get owner
     function owner() external view returns (address);
 
     /// Fetch BaseURI
@@ -24,9 +27,9 @@ interface ISupertrueConfig {
     /// Fetch BaseURI
     function getCreationFee() external view returns (uint256);
 
-    /// Get Signer 1 Address
+    /// Get signer 1 address
     function signer1() external view returns (address);
 
-    /// Get Signer 2 Address
+    /// Get signer 2 address
     function signer2() external view returns (address);
 }
