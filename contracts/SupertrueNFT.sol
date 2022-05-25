@@ -452,6 +452,24 @@ contract SupertrueNFT is
             );
     }
 
+    //-- Paper.xyz integration
+
+    function unclaimedSupply() public returns (uint256) {
+        return 1;
+    }
+
+    function getClaimIneligibilityReason(address userWallet, uint256 quantity)
+        public
+        returns (string memory)
+    {
+        return quantity == 1 ? "" : "NOT_ENOUGH_SUPPLY";
+    }
+
+    function claimTo(address userWallet, uint256 quantity) public payable {
+        require(quantity == 1, "Quantity has to be 1");
+        mint(userWallet);
+    }
+
     /**
      * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
      * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
