@@ -169,7 +169,7 @@ contract SupertrueHub is
     /**
      * Get artist contract address by instagram ID
      */
-    function getArtistContract(string memory instagramId)
+    function getArtistContractByInstagramId(string memory instagramId)
         public
         view
         returns (address)
