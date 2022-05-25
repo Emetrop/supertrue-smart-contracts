@@ -404,6 +404,19 @@ contract SupertrueNFT is
         emit Withdrawal(_artist.account, address(0), artistFunds);
     }
 
+    function withdrawArtistRelay(address to) external whenNotPaused {
+        require(_config().isRelay(_msgSender()), "Only relay");
+        require(_artistPendingFunds > 0, "No funds");
+
+        uint256 artistFunds = _artistPendingFunds;
+
+        _artistPendingFunds = 0;
+
+        payable(to).transfer(artistFunds);
+
+        emit Withdrawal(to, address(0), artistFunds);
+    }
+
     //-- Royalties
 
     /**
