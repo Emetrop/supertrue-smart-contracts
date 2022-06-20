@@ -121,7 +121,9 @@ contract SupertrueHub is
      * Set current native token price in USD cents
      */
     function setTokenPrice(uint256 cents) public onlyOwner {
+        // TODO move to config?
         // TODO get price from chainlink oracle
+        // TODO fire event so subgraph price can be updated
         _tokenPrice = cents;
     }
 

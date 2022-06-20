@@ -34,9 +34,11 @@ module.exports = async ({ chainId }) => {
 
   const SupertrueHub = await ethers.getContractFactory("SupertrueHub");
 
+  // const tokenPrice = 100000;
+
   // deploying new proxy
   const proxy = await upgrades.deployProxy(SupertrueHub,
-    [configContract.address, supertrueNFTContract.address],{
+    [configContract.address, supertrueNFTContract.address, tokenPrice],{
     // https://docs.openzeppelin.com/upgrades-plugins/1.x/api-hardhat-upgrades#common-options
     kind: "uups",
     timeout: 120000
