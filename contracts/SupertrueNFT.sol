@@ -7,7 +7,6 @@ import "@openzeppelin/contracts-upgradeable/token/common/ERC2981Upgradeable.sol"
 import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
-import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
 
 import "@prb/math/contracts/PRBMathUD60x18.sol";
 
@@ -23,20 +22,32 @@ contract SupertrueNFT is
 {
     using AddressUpgradeable for address;
     using StringsUpgradeable for uint256;
-    using CountersUpgradeable for CountersUpgradeable.Counter;
     using PRBMathUD60x18 for uint256;
 
     // ============ Storage ============
 
-    // counter
-    CountersUpgradeable.Counter private _tokenIds;
+    struct Layout {
+        address diamond;
+        uint256 tokenCounter;
+        // artist
+        uint256 id; // immutable
+        string username; // immutable
+        address account;
+        // metadata = name, instagram, instagramId
+        mapping(string => string) metadata;
+        // funds
+        uint256 artistPendingFunds;
+        uint256 treasuryPendingFunds;
+    }
 
-    address private _diamond; // Diamond contract
+    bytes32 private constant STORAGE_SLOT = keccak256('supertrue.storage.nft');
 
-    // Artist Data
-    Artist private _artist;
-    uint256 private _artistPendingFunds;
-    uint256 private _treasuryPendingFunds;
+    function layout() private pure returns (Layout storage l) {
+        bytes32 slot = STORAGE_SLOT;
+        assembly {
+            l.slot := slot
+        }
+    }
 
     // ============ Constants ============
 
@@ -60,7 +71,7 @@ contract SupertrueNFT is
      * @dev Throws if called by any account other than the hub.
      */
     modifier onlyHub() {
-        require(_msgSender() == _diamond, "Only hub");
+        require(_msgSender() == layout().diamond, "Only hub");
         _;
     }
 
@@ -107,17 +118,17 @@ contract SupertrueNFT is
         _setDefaultRoyalty(address(this), _defaultRoyaltyBPS);
 
         //Set Hub Address
-        _diamond = diamond_;
+        layout().diamond = diamond_;
 
-        _artist.id = artistId_;
-        _artist.username = artistUsername_;
-        _artist.name = artistName_;
-        _artist.instagram = artistInstagram_;
-        _artist.instagramId = artistInstagramId_;
+        layout().id = artistId_;
+        layout().username = artistUsername_;
+        layout().metadata["name"] = artistName_;
+        layout().metadata["instagram"] = artistInstagram_;
+        layout().metadata["instagramId"] = artistInstagramId_;
 
         //Defaults
-        _artistPendingFunds = 0;
-        _treasuryPendingFunds = 0;
+        layout().artistPendingFunds = 0;
+        layout().treasuryPendingFunds = 0;
 
         _claim(artistAccount_);
     }
@@ -128,7 +139,7 @@ contract SupertrueNFT is
      * @dev Get 18 decimal price in native token for current tokenId
      */
     function price() public view returns (uint256) {
-        return priceTokenId(_tokenIds.current() + 1);
+        return priceTokenId(layout().tokenCounter + 1);
     }
 
     /**
@@ -137,7 +148,7 @@ contract SupertrueNFT is
     function priceTokenId(uint256 tokenId) public view returns (uint256) {
         require(tokenId > 0, "TokenID has to be bigger than 0");
 
-        uint256 tokenPriceCents = ISupertrueHub(_diamond)
+        uint256 tokenPriceCents = ISupertrueHub(layout().diamond)
             .getTokenPrice()
             .fromUint();
 
@@ -171,7 +182,16 @@ contract SupertrueNFT is
      * @dev Get artist
      */
     function getArtist() external view override returns (Artist memory) {
-        return _artist;
+        Artist memory artist = Artist({
+            id: layout().id,
+            username: layout().username,
+            account: layout().account,
+            instagramId: layout().metadata["instagramId"],
+            name: layout().metadata["name"],
+            instagram: layout().metadata["instagram"]
+        });
+
+        return artist;
     }
 
     /**
@@ -182,11 +202,9 @@ contract SupertrueNFT is
         override
         onlyHub
     {
-        require(bytes(_name).length > 0, "Empty name");
-        require(bytes(_instagram).length > 0, "Empty instagram");
-
-        _artist.name = _name;
-        _artist.instagram = _instagram;
+        // we trust hub for value correctness
+        layout().metadata["name"] = _name;
+        layout().metadata["instagram"] = _instagram;
 
         emit ArtistUpdated(_name, _instagram);
     }
@@ -207,8 +225,8 @@ contract SupertrueNFT is
                     ),
                     signer,
                     _msgSender(),
-                    keccak256(bytes(_artist.instagram)),
-                    _artist.id
+                    keccak256(bytes(layout().metadata["instagram"])),
+                    layout().id
                 )
             )
         );
@@ -216,11 +234,11 @@ contract SupertrueNFT is
     }
 
     function _config() private view returns (ISupertrueConfig) {
-        return ISupertrueConfig(_diamond);
+        return ISupertrueConfig(layout().diamond);
     }
 
     function _claim(address artistAccount) private {
-        _artist.account = artistAccount;
+        layout().account = artistAccount;
         emit ArtistClaimed(artistAccount);
     }
 
@@ -253,7 +271,7 @@ contract SupertrueNFT is
      * @dev Fetch Treasury Data
      * Centralized Treasury Settings for all Artist Contracts
      */
-    function _getTreasuryData() internal view returns (address, uint256) {
+    function _getTreasuryData() private view returns (address, uint256) {
         (address treasury, uint256 treasuryFee) = _config().treasuryData();
         //Validate (Don't Burn Assets)
         require(
@@ -290,7 +308,7 @@ contract SupertrueNFT is
 
     /// Get Total Supply
     function totalSupply() public view returns (uint256) {
-        return _tokenIds.current();
+        return layout().tokenCounter;
     }
 
     /**
@@ -299,8 +317,8 @@ contract SupertrueNFT is
     function _splitFunds(uint256 value) private {
         (, uint256 treasuryFee) = _getTreasuryData();
         uint256 artistShare = (value * (BPS_MAX - treasuryFee)) / BPS_MAX;
-        _artistPendingFunds += artistShare;
-        _treasuryPendingFunds += value - artistShare;
+        layout().artistPendingFunds += artistShare;
+        layout().treasuryPendingFunds += value - artistShare;
     }
 
     /**
@@ -311,9 +329,9 @@ contract SupertrueNFT is
         //Validate Amount
         require(msg.value >= price(), "Insufficient Payment");
         //Increment Token ID
-        _tokenIds.increment(); //We just put this first so that we start with 1
+        layout().tokenCounter++; //We just put this first so that we start with 1
         //Mint
-        _safeMint(to, _tokenIds.current());
+        _safeMint(to, layout().tokenCounter);
         //Update pending funds
         _splitFunds(msg.value);
     }
@@ -329,29 +347,29 @@ contract SupertrueNFT is
      * @dev Get artist's not withdrawn funds
      */
     function artistPendingFunds() public view returns (uint256) {
-        return _artistPendingFunds;
+        return layout().artistPendingFunds;
     }
 
     /**
      * @dev Get treasury's not withdrawn funds
      */
     function treasuryPendingFunds() public view returns (uint256) {
-        return _treasuryPendingFunds;
+        return layout().treasuryPendingFunds;
     }
 
     /**
      * @dev Treasury Withdraw Pending Funds of Native Currency
      */
     function withdrawTreasury() external whenNotPaused onlyOwner {
-        require(_treasuryPendingFunds > 0, "No Pending Funds");
+        require(layout().treasuryPendingFunds > 0, "No Pending Funds");
 
         (address treasury, ) = _getTreasuryData();
 
         require(treasury != address(0), "Treasury Account Not Set");
 
-        uint256 treasuryFunds = _treasuryPendingFunds;
+        uint256 treasuryFunds = layout().treasuryPendingFunds;
 
-        _treasuryPendingFunds = 0;
+        layout().treasuryPendingFunds = 0;
 
         payable(treasury).transfer(treasuryFunds);
 
@@ -362,32 +380,32 @@ contract SupertrueNFT is
      * @dev Artist Withdraw Pending Funds of Native Currency
      */
     function withdrawArtist() external whenNotPaused {
-        require(_artistPendingFunds > 0, "No Pending Funds");
-        require(_artist.account != address(0), "Artist Account Not Set");
+        require(layout().artistPendingFunds > 0, "No Pending Funds");
+        require(layout().account != address(0), "Artist Account Not Set");
 
         require(
-            _msgSender() == _artist.account ||
+            _msgSender() == layout().account ||
             _msgSender() == owner() ||
             _config().isRelay(_msgSender()),
             "Only owner or artist or relay "
         );
 
-        uint256 artistFunds = _artistPendingFunds;
+        uint256 artistFunds = layout().artistPendingFunds;
 
-        _artistPendingFunds = 0;
+        layout().artistPendingFunds = 0;
 
-        payable(_artist.account).transfer(artistFunds);
+        payable(layout().account).transfer(artistFunds);
 
-        emit Withdrawal(_artist.account, address(0), artistFunds);
+        emit Withdrawal(layout().account, address(0), artistFunds);
     }
 
     function withdrawArtistRelay(address to) external whenNotPaused {
         require(_config().isRelay(_msgSender()), "Only relay");
-        require(_artistPendingFunds > 0, "No funds");
+        require(layout().artistPendingFunds > 0, "No funds");
 
-        uint256 artistFunds = _artistPendingFunds;
+        uint256 artistFunds = layout().artistPendingFunds;
 
-        _artistPendingFunds = 0;
+        layout().artistPendingFunds = 0;
 
         payable(to).transfer(artistFunds);
 
@@ -462,7 +480,7 @@ contract SupertrueNFT is
             string(
                 abi.encodePacked(
                     _config().baseURI(),
-                    _artist.id.toString(),
+                    layout().id.toString(),
                     "/"
                 )
             );

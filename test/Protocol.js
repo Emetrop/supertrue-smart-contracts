@@ -475,6 +475,11 @@ describe("EntireProtocol", () => {
       const NewImplementation = await ethers.getContractFactory("SupertrueNFTv2");
       const newImplementation = await NewImplementation.deploy();
 
+      const oldTotalSupply = await artistContract.totalSupply();
+      const oldArtistPendingFunds = await artistContract.artistPendingFunds();
+      const oldTreasuryPendingFunds = await artistContract.treasuryPendingFunds();
+      const oldArtist = await artistContract.getArtist();
+
       //-- Prep
       //Fetch Beacon
       const beaconAddress = await configContract.nftBeacon();
@@ -488,6 +493,19 @@ describe("EntireProtocol", () => {
       const hasChanged = await updatedArtistContract.hasChanged();
 
       expect(hasChanged).to.equal(true);
+
+      const newTotalSupply = await updatedArtistContract.totalSupply();
+      const newArtistPendingFunds = await updatedArtistContract.artistPendingFunds();
+      const newTreasuryPendingFunds = await updatedArtistContract.treasuryPendingFunds();
+      const newArtist = await updatedArtistContract.getArtist();
+
+      expect(oldTotalSupply).to.equal(newTotalSupply);
+      expect(oldArtistPendingFunds).to.equal(newArtistPendingFunds);
+      expect(oldTreasuryPendingFunds).to.equal(newTreasuryPendingFunds);
+
+      expect(oldArtist.username).to.equal(newArtist.username);
+      expect(oldArtist.instagramId).to.equal(newArtist.instagramId);
+      expect(oldArtist.account).to.equal(newArtist.account);
     });
 
     describe("Pricing", () => {

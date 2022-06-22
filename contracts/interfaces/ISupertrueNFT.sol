@@ -4,10 +4,10 @@ pragma solidity ^0.8.9;
 
 interface ISupertrueNFT {
     struct Artist {
-        uint256 id; // immutable
-        string username; // immutable
+        uint256 id;
+        string username;
         address account;
-        string instagramId; // immutable
+        string instagramId;
         string name;
         string instagram;
     }
