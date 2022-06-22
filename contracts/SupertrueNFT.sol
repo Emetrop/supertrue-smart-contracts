@@ -92,6 +92,7 @@ contract SupertrueNFT is
     function initialize(
         address diamond_,
         uint256 artistId_,
+        string memory artistUsername_,
         string memory artistName_,
         string memory artistInstagram_,
         string memory artistInstagramId_,
@@ -109,6 +110,7 @@ contract SupertrueNFT is
         _diamond = diamond_;
 
         _artist.id = artistId_;
+        _artist.username = artistUsername_;
         _artist.name = artistName_;
         _artist.instagram = artistInstagram_;
         _artist.instagramId = artistInstagramId_;

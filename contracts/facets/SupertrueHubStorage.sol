@@ -6,9 +6,11 @@ library SupertrueHubStorage {
     struct Layout {
         uint256 artistCounter; // starts from 1
         // registry of created contracts
-        // values can be only added but not changed
+        // values can be only added but not changed or deleted
         mapping(uint256 => address) artistIdToContractAddress;
-        // values can be only added but not changed
+        // values can be only added but not changed or deleted
+        mapping(string => uint256) usernameToArtistId;
+        // values can be only added but not changed or deleted
         mapping(string => uint256) instagramIdToArtistId;
     }
 

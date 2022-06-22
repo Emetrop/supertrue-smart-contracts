@@ -23,11 +23,12 @@ contract SupertrueHubFacet {
     /// Emitted when an artist is created
     event ArtistCreated(
         uint256 artistId,
+        string username,
         string symbol,
         string name,
         string instagram,
         string instagramId,
-        address indexed artistAddress
+        address indexed contractAddress
     );
 
     /// Emitted when an artist is created
@@ -62,6 +63,18 @@ contract SupertrueHubFacet {
      */
     function getCreationPrice() public view returns (uint256) {
         return _configStorage().creationFee;
+    }
+
+    /**
+     * Get artist contract address by username
+     */
+    function getArtistContractByUsername(string memory username)
+    public
+    view
+    returns (address)
+    {
+        SupertrueHubStorage.Layout storage hs = _hubStorage();
+        return hs.artistIdToContractAddress[hs.usernameToArtistId[username]];
     }
 
     /**
@@ -122,17 +135,18 @@ contract SupertrueHubFacet {
 
     /**
      * Creates a new artist contract - extracted from createArtist to avoid stack too deep error
+     * @param username Supertrue username
      * @param name Name of the artist
      * @param instagram Instagram of the artist
      * @param instagramId Unique Instagram ID
      */
     function _createArtist(
+        string memory username,
         string memory name,
         string memory instagram,
         string memory instagramId,
         address artistAccount
     ) private returns (address artistContractAddress, uint256 artistId) {
-        SupertrueConfigStorage.Layout storage cs = _configStorage();
         SupertrueHubStorage.Layout storage hs = _hubStorage();
 
         uint256 id = ++hs.artistCounter;
@@ -144,12 +158,13 @@ contract SupertrueHubFacet {
 
         // Deploy
         BeaconProxy proxy = new BeaconProxy(
-            cs.nftBeacon,
+            _configStorage().nftBeacon,
             abi.encodeWithSelector(
                 ISupertrueNFT.initialize.selector,
                 address(this), // admin,
                 // 12, "Supertrue 12", ST12, https://supertrue.fans/
                 id,
+                username,
                 name,
                 instagram,
                 instagramId,
@@ -161,10 +176,12 @@ contract SupertrueHubFacet {
 
         // Add to registry
         hs.artistIdToContractAddress[id] = address(proxy);
+        hs.usernameToArtistId[username] = id;
         hs.instagramIdToArtistId[instagramId] = id;
 
         emit ArtistCreated(
             id,
+            username,
             symbol,
             name,
             instagram,
@@ -173,6 +190,25 @@ contract SupertrueHubFacet {
         );
 
         return (address(proxy), id);
+    }
+
+    function _validateArtist(
+        string memory username,
+        address account,
+        string memory instagramId,
+        string memory instagram,
+        bytes calldata signature1,
+        bytes calldata signature2
+    ) private view {
+        // we trust signers that they validated params for correctness
+        require(_hubStorage().instagramIdToArtistId[instagramId] == 0, "Instagram ID exists");
+        require(_hubStorage().usernameToArtistId[username] == 0, "Username exists");
+
+        address signer1 = getSigner(signature1, 1, account, instagramId, instagram);
+        require(signer1 == _configStorage().signer1, "Invalid signature1");
+
+        address signer2 = getSigner(signature2, 2, account, instagramId, instagram);
+        require(signer2 == _configStorage().signer2, "Invalid signature2");
     }
 
     /**
@@ -184,26 +220,18 @@ contract SupertrueHubFacet {
      * @param signature2 signed {instagram, id} message by signer2
      */
     function createArtist(
+        string memory username,
         string memory name,
         string memory instagramId,
         string memory instagram,
         bytes calldata signature1,
         bytes calldata signature2
     ) public payable returns (address artistContractAddress, uint256 artistId) {
-        SupertrueConfigStorage.Layout storage cs = _configStorage();
+        require(msg.value >= _configStorage().creationFee, "Insufficient payment");
 
-        require(msg.value >= cs.creationFee, "Insufficient payment");
+        _validateArtist(username, msg.sender, instagramId, instagram, signature1, signature2);
 
-        // we trust signers that they validated params for correctness
-        require(_hubStorage().instagramIdToArtistId[instagramId] == 0, "Instagram ID exists");
-
-        address signer1 = getSigner(signature1, 1, msg.sender, instagramId, instagram);
-        require(signer1 == cs.signer1, "Invalid signature1");
-
-        address signer2 = getSigner(signature2, 2, msg.sender, instagramId, instagram);
-        require(signer2 == cs.signer2, "Invalid signature2");
-
-        return _createArtist(name, instagram, instagramId, msg.sender);
+        return _createArtist(username, name, instagram, instagramId, msg.sender);
     }
 
     /**
@@ -217,23 +245,17 @@ contract SupertrueHubFacet {
      */
     function createArtistRelay(
         address account,
+        string memory username,
         string memory name,
         string memory instagramId,
         string memory instagram,
         bytes calldata signature1,
         bytes calldata signature2
     ) public returns (address artistContractAddress, uint256 artistId) {
-        // we trust signers that they validated params for correctness
-        require(_hubStorage().instagramIdToArtistId[instagramId] == 0, "Instagram ID exists");
-
         require(_configStorage().relays[msg.sender], "Only relay");
 
-        address signer1 = getSigner(signature1, 1, account, instagramId, instagram);
-        require(signer1 == _configStorage().signer1, "Invalid signature1");
+        _validateArtist(username, account, instagramId, instagram, signature1, signature2);
 
-        address signer2 = getSigner(signature2, 2, account, instagramId, instagram);
-        require(signer2 == _configStorage().signer2, "Invalid signature2");
-
-        return _createArtist(name, instagram, instagramId, account);
+        return _createArtist(username, name, instagram, instagramId, account);
     }
 }

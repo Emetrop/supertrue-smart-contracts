@@ -3,9 +3,6 @@
 pragma solidity ^0.8.9;
 
 interface ISupertrueConfig {
-    /// Arbitrary contract designation signature
-    function isSupertrueConfig() external view returns (bool);
-
     /// Check if contract is paused
     function paused() external view returns (bool);
 

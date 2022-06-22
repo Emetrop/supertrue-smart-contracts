@@ -16,8 +16,8 @@ describe("EntireProtocol", () => {
   const BASE_URI =
     "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/"; //Default Base URI
   const ARTISTS = [
-    { name: "name1", ig: "ig_name1", igId: "1" },
-    { name: "name2", ig: "ig_name2", igId: "2" },
+    { name: "name1", username: "username1", ig: "ig_name1", igId: "1" },
+    { name: "name2", username: "username2", ig: "ig_name2", igId: "2" },
   ];
   const tokenPriceInCents = 100000; // $1k to avoid comparing BigNums
   let configContract;
@@ -30,7 +30,7 @@ describe("EntireProtocol", () => {
   let artist;
   let admin;
   let tester;
-  let treasury;
+  const treasury = { address: "0x1ea8009C698B353763Ecc2C2D12Ac5A3771Ae855" };
 
   // ************* signatures
   const signer1 = "0x8eC13C4982a5Fb8b914F0927C358E14f8d657133";
@@ -100,7 +100,7 @@ describe("EntireProtocol", () => {
   });
 
   beforeEach(async () => {
-    [owner, admin, tester, artist, treasury] = await ethers.getSigners();
+    [owner, admin, tester, artist] = await ethers.getSigners();
 
     // deploy SupertrueDiamond
     const Diamond = await ethers.getContractFactory('SupertrueDiamond')
@@ -110,7 +110,7 @@ describe("EntireProtocol", () => {
     // deploy DiamondInit
     // DiamondInit provides a function that is called when the diamond is upgraded to initialize state variables
     // See https://eips.ethereum.org/EIPS/eip-2535#addingreplacingremoving-functions
-    const DiamondInit = await ethers.getContractFactory('DiamondInit')
+    const DiamondInit = await ethers.getContractFactory('DiamondInitTest')
     const diamondInit = await DiamondInit.deploy()
     await diamondInit.deployed()
 
@@ -164,6 +164,7 @@ describe("EntireProtocol", () => {
 
     //Deploy New Artist
     tx = await factoryContract.createArtist(
+      ARTISTS[0].username,
       ARTISTS[0].name,
       ARTISTS[0].igId,
       ARTISTS[0].ig,
@@ -182,10 +183,6 @@ describe("EntireProtocol", () => {
   });
 
   describe("Config Contract", () => {
-    it("Should be a SupertrueConfig", async () => {
-      expect(await configContract.isSupertrueConfig()).to.equal(true);
-    });
-
     describe("Permissions", () => {
       it("Should be owned by deployer", async () => {
         expect(await configContract.owner()).to.equal(owner.address);
@@ -288,7 +285,8 @@ describe("EntireProtocol", () => {
 
       await expect(
         factoryContract.createArtist(
-          "artistName",
+          ARTISTS[0].username,
+          ARTISTS[0].name,
           ARTISTS[0].igId,
           ARTISTS[0].ig,
           signature1,
@@ -298,6 +296,7 @@ describe("EntireProtocol", () => {
     });
 
     it("Should deploy child: SupertrueNFT Contract", async () => {
+      const artistUsername = ARTISTS[1].username;
       const artistName = ARTISTS[1].name;
       const artistIG = ARTISTS[1].ig;
       const artistGUID = ARTISTS[1].igId;
@@ -319,6 +318,7 @@ describe("EntireProtocol", () => {
       //Deploy New Artist
       //TODO: How to get the id & address from that??
       let tx = await factoryContract.createArtist(
+        artistUsername,
         artistName,
         artistGUID,
         artistIG,
@@ -364,6 +364,7 @@ describe("EntireProtocol", () => {
 
       await expect(
         factoryContract.createArtist(
+          ARTISTS[1].username,
           ARTISTS[1].name,
           ARTISTS[0].igId,
           ARTISTS[1].ig,
@@ -372,6 +373,35 @@ describe("EntireProtocol", () => {
           { value: price }
         )
       ).to.be.revertedWith("Instagram ID exists");
+    });
+
+    it("Should not allow same username to be deployed twice", async () => {
+      const price = await factoryContract.getCreationPrice();
+
+      const signature1 = getArtistUpdateSignedMessage({
+        signer: 1,
+        account: owner.address,
+        instagramId: ARTISTS[1].igId,
+        instagram: ARTISTS[1].ig,
+      });
+      const signature2 = getArtistUpdateSignedMessage({
+        signer: 2,
+        account: owner.address,
+        instagramId: ARTISTS[1].igId,
+        instagram: ARTISTS[1].ig,
+      });
+
+      await expect(
+        factoryContract.createArtist(
+          ARTISTS[0].username,
+          ARTISTS[1].name,
+          ARTISTS[1].igId,
+          ARTISTS[1].ig,
+          signature1,
+          signature2,
+          { value: price }
+        )
+      ).to.be.revertedWith("Username exists");
     });
   });
 

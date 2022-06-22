@@ -46,10 +46,6 @@ contract SupertrueConfigFacet is ISupertrueConfig, IERC173 {
 
     //-- Methods --//
 
-    function isSupertrueConfig() public pure returns (bool) {
-        return true;
-    }
-
     /**
      * @dev Returns the address of the current owner.
      */

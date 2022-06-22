@@ -12,7 +12,7 @@ import "../libraries/EIP712.sol";
 
 import "../facets/SupertrueConfigStorage.sol";
 
-contract DiamondInit {
+contract DiamondInitTest {
     function init(address nftBeacon) external {
         // adding ERC165 data
         LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
@@ -38,9 +38,8 @@ contract DiamondInit {
         cs.baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
         cs.treasury = 0x1ea8009C698B353763Ecc2C2D12Ac5A3771Ae855;
 
-        // TODO update
-        cs.creationFee = 13 ether; // ~ 5 USD in MATIC
-        cs.tokenPrice = 42; // 42 cents per 1 MATIC
+        cs.creationFee = 0.002 ether;
+        cs.tokenPrice = 100000;
         cs.relays[0x75E1E9b6d287ddf76043C24251ed79B87040bc79] = true;
         cs.signer1 = 0x8eC13C4982a5Fb8b914F0927C358E14f8d657133;
         cs.signer2 = 0xb9fAfb1De9083eAa09Fd7D058784a0316a2960B1;
