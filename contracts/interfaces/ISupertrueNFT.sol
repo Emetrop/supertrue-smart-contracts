@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.9;
 
 interface ISupertrueNFT {
     struct Artist {
@@ -9,7 +9,6 @@ interface ISupertrueNFT {
         string name;
         string instagram;
         address account;
-        bool blocked;
     }
 
     function getArtist() external view returns (Artist memory);

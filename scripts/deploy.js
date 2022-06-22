@@ -1,213 +1,137 @@
-/* eslint no-use-before-define: "warn" */
-const fs = require("fs");
-const chalk = require("chalk");
-const { config, ethers, tenderly, run } = require("hardhat");
-const { utils } = require("ethers");
-const R = require("ramda");
+const { ethers, upgrades } = require("hardhat");
 
-/*
+const { getSelectors, FacetCutAction } = require('./libraries/diamond.js')
 
- _______ _________ _______  _______
-(  ____ \\__   __/(  ___  )(  ____ )
-| (    \/   ) (   | (   ) || (    )|
-| (_____    | |   | |   | || (____)|
-(_____  )   | |   | |   | ||  _____)
-      ) |   | |   | |   | || (
-/\____) |   | |   | (___) || )
-\_______)   )_(   (_______)|/
+async function deployDiamond () {
+  const accounts = await ethers.getSigners()
+  const contractOwner = accounts[0]
 
-This deploy script is no longer in use, but is left for reference purposes!
+  // deploy SupertrueNFT beacon
+  const SupertrueNFTContract = await ethers.getContractFactory("SupertrueNFT");
+  const supertrueNFTbeacon = await upgrades.deployBeacon(SupertrueNFTContract);
+  await supertrueNFTbeacon.deployed();
+  console.log("SupertrueNFT beacon deployed to:", supertrueNFTbeacon.address);
 
-scaffold-eth now uses hardhat-deploy to manage deployments, see the /deploy folder
-And learn more here: https://www.npmjs.com/package/hardhat-deploy
+  // deploy DiamondCutFacet
+  const DiamondCutFacet = await ethers.getContractFactory('DiamondCutFacet')
+  const diamondCutFacet = await DiamondCutFacet.deploy()
+  await diamondCutFacet.deployed()
+  console.log('DiamondCutFacet deployed:', diamondCutFacet.address)
 
-*/
+  // deploy SupertrueDiamond
+  const Diamond = await ethers.getContractFactory('SupertrueDiamond')
+  const diamond = await Diamond.deploy(contractOwner.address, diamondCutFacet.address)
+  await diamond.deployed()
+  console.log('SupertrueDiamond deployed:', diamond.address)
 
-const main = async () => {
-  console.log("\n\n 📡 Deploying...\n");
+  // deploy DiamondInit
+  // DiamondInit provides a function that is called when the diamond is upgraded to initialize state variables
+  // See https://eips.ethereum.org/EIPS/eip-2535#addingreplacingremoving-functions
+  const DiamondInit = await ethers.getContractFactory('DiamondInit')
+  const diamondInit = await DiamondInit.deploy()
+  await diamondInit.deployed()
+  console.log('DiamondInit deployed:', diamondInit.address)
 
-  const yourContract = await deploy("YourContract"); // <-- add in constructor args like line 19 vvvv
-  // use for local token bridging
-  // const mockToken = await deploy("MockERC20") // <-- add in constructor args like line 19 vvvv
+  // deploy facets
+  console.log('')
+  console.log('Deploying facets')
 
-  //const yourContract = await ethers.getContractAt('YourContract', "0xaAC799eC2d00C013f1F11c37E654e59B0429DF6A") //<-- if you want to instantiate a version of a contract at a specific address!
-  //const secondContract = await deploy("SecondContract")
+  // too many functions per 1 transaction so we split it into 2 transactions
+  const facetNames1 = [
+    'DiamondLoupeFacet',
+    'SupertrueConfigFacet',
+    // 'SupertrueHubFacet'
+  ]
 
-  // const exampleToken = await deploy("ExampleToken")
-  // const examplePriceOracle = await deploy("ExamplePriceOracle")
-  // const smartContractWallet = await deploy("SmartContractWallet",[exampleToken.address,examplePriceOracle.address])
-
-  /*
-  //If you want to send value to an address from the deployer
-  const deployerWallet = ethers.provider.getSigner()
-  await deployerWallet.sendTransaction({
-    to: "0x34aA3F359A9D614239015126635CE7732c18fDF3",
-    value: ethers.utils.parseEther("0.001")
-  })
-  */
-
-  /*
-  //If you want to send some ETH to a contract on deploy (make your constructor payable!)
-  const yourContract = await deploy("YourContract", [], {
-  value: ethers.utils.parseEther("0.05")
-  });
-  */
-
-  /*
-  //If you want to link a library into your contract:
-  // reference: https://github.com/austintgriffith/scaffold-eth/blob/using-libraries-example/packages/hardhat/scripts/deploy.js#L19
-  const yourContract = await deploy("YourContract", [], {}, {
-   LibraryName: **LibraryAddress**
-  });
-  */
-
-  //If you want to verify your contract on tenderly.co (see setup details in the scaffold-eth README!)
-  /*
-  await tenderlyVerify(
-    {contractName: "YourContract",
-     contractAddress: yourContract.address
-  })
-  */
-
-  console.log(
-    " 💾  Artifacts (address, abi, and args) saved to: ",
-    chalk.blue("packages/hardhat/artifacts/"),
-    "\n\n"
-  );
-};
-
-const deploy = async (
-  contractName,
-  _args = [],
-  overrides = {},
-  libraries = {}
-) => {
-  console.log(` 🛰  Deploying: ${contractName}`);
-
-  const contractArgs = _args || [];
-  const contractArtifacts = await ethers.getContractFactory(contractName, {
-    libraries: libraries,
-  });
-  const deployed = await contractArtifacts.deploy(...contractArgs, overrides);
-  const encoded = abiEncodeArgs(deployed, contractArgs);
-  fs.writeFileSync(`artifacts/${contractName}.address`, deployed.address);
-
-  let extraGasInfo = "";
-  if (deployed && deployed.deployTransaction) {
-    const gasUsed = deployed.deployTransaction.gasLimit.mul(
-      deployed.deployTransaction.gasPrice
-    );
-    extraGasInfo = `${utils.formatEther(gasUsed)} ETH, tx hash ${
-      deployed.deployTransaction.hash
-    }`;
+  let cut = []
+  for (const facetName of facetNames1) {
+    const Facet = await ethers.getContractFactory(facetName)
+    const facet = await Facet.deploy()
+    await facet.deployed()
+    console.log(`${facetName} deployed: ${facet.address}`)
+    cut.push({
+      facetAddress: facet.address,
+      action: FacetCutAction.Add,
+      functionSelectors: getSelectors(facet)
+    })
   }
 
-  console.log(
-    " 📄",
-    chalk.cyan(contractName),
-    "deployed to:",
-    chalk.magenta(deployed.address)
-  );
-  console.log(" ⛽", chalk.grey(extraGasInfo));
+  // Removing mysterious contract, remove and get values
+  cut = cut.map(c => ({...c, functionSelectors: c.functionSelectors.filter(f => typeof f === "string")}));
 
-  await tenderly.persistArtifacts({
-    name: contractName,
-    address: deployed.address,
-  });
+  // upgrade diamond with facets
+  console.log('')
+  console.log('Diamond Cut:', cut)
+  const diamondCut = await ethers.getContractAt('IDiamondCut', diamond.address)
 
-  if (!encoded || encoded.length <= 2) return deployed;
-  fs.writeFileSync(`artifacts/${contractName}.args`, encoded.slice(2));
+  // call to init function
+  // const functionCall = diamondInit.interface.encodeFunctionData('init', [supertrueNFTbeacon.address])
+  let tx = await diamondCut.diamondCut(cut, ethers.constants.AddressZero, '0x') // empty init
+  // const tx = await diamondCut.diamondCut(cut, diamondInit.address, functionCall)
+  console.log('Diamond cut tx: ', tx.hash)
+  let receipt = await tx.wait()
 
-  return deployed;
-};
-
-// ------ utils -------
-
-// abi encodes contract arguments
-// useful when you want to manually verify the contracts
-// for example, on Etherscan
-const abiEncodeArgs = (deployed, contractArgs) => {
-  // not writing abi encoded args if this does not pass
-  if (
-    !contractArgs ||
-    !deployed ||
-    !R.hasPath(["interface", "deploy"], deployed)
-  ) {
-    return "";
+  if (!receipt.status) {
+    throw Error(`Diamond upgrade failed: ${tx.hash}`)
   }
-  const encoded = utils.defaultAbiCoder.encode(
-    deployed.interface.deploy.inputs,
-    contractArgs
-  );
-  return encoded;
-};
 
-// checks if it is a Solidity file
-const isSolidity = (fileName) =>
-  fileName.indexOf(".sol") >= 0 &&
-  fileName.indexOf(".swp") < 0 &&
-  fileName.indexOf(".swap") < 0;
+  console.log('First facet deployment round done')
 
-const readArgsFile = (contractName) => {
-  let args = [];
-  try {
-    const argsFile = `./contracts/${contractName}.args`;
-    if (!fs.existsSync(argsFile)) return args;
-    args = JSON.parse(fs.readFileSync(argsFile));
-  } catch (e) {
-    console.log(e);
+  const facetNames2 = [
+    // 'DiamondLoupeFacet',
+    // 'SupertrueConfigFacet',
+    'SupertrueHubFacet'
+  ]
+
+  cut = []
+  for (const facetName of facetNames2) {
+    const Facet = await ethers.getContractFactory(facetName)
+    const facet = await Facet.deploy()
+    await facet.deployed()
+    console.log(`${facetName} deployed: ${facet.address}`)
+    cut.push({
+      facetAddress: facet.address,
+      action: FacetCutAction.Add,
+      functionSelectors: getSelectors(facet)
+    })
   }
-  return args;
-};
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  // Removing mysterious contract, remove and get values
+  cut = cut.map(c => ({...c, functionSelectors: c.functionSelectors.filter(f => typeof f === "string")}));
+
+  // call to init function
+  const functionCall = diamondInit.interface.encodeFunctionData('init', [supertrueNFTbeacon.address])
+  tx = await diamondCut.diamondCut(cut, ethers.constants.AddressZero, '0x') // empty init
+  // tx = await diamondCut.diamondCut(cut, diamondInit.address, functionCall)
+  console.log('Diamond cut tx: ', tx.hash)
+  receipt = await tx.wait()
+
+  if (!receipt.status) {
+    throw Error(`Diamond upgrade failed: ${tx.hash}`)
+  }
+
+  console.log('Second facet deployment round done')
+
+  tx = await diamondCut.diamondCut([], diamondInit.address, functionCall)
+  console.log('Diamond cut tx: ', tx.hash)
+  receipt = await tx.wait()
+
+  if (!receipt.status) {
+    throw Error(`Diamond upgrade failed: ${tx.hash}`)
+  }
+
+  console.log('Completed!')
 }
 
-// If you want to verify on https://tenderly.co/
-const tenderlyVerify = async ({ contractName, contractAddress }) => {
-  let tenderlyNetworks = [
-    "kovan",
-    "goerli",
-    "mainnet",
-    "rinkeby",
-    "ropsten",
-    "matic",
-    "mumbai",
-    "xDai",
-    "POA",
-  ];
-  let targetNetwork = process.env.HARDHAT_NETWORK || config.defaultNetwork;
+// We recommend this pattern to be able to use async/await everywhere
+// and properly handle errors.
+if (require.main === module) {
+  deployDiamond()
+    .then(() => process.exit(0))
+    .catch(error => {
+      console.error(error)
+      process.exit(1)
+    })
+}
 
-  if (tenderlyNetworks.includes(targetNetwork)) {
-    console.log(
-      chalk.blue(
-        ` 📁 Attempting tenderly verification of ${contractName} on ${targetNetwork}`
-      )
-    );
-
-    await tenderly.persistArtifacts({
-      name: contractName,
-      address: contractAddress,
-    });
-
-    let verification = await tenderly.verify({
-      name: contractName,
-      address: contractAddress,
-      network: targetNetwork,
-    });
-
-    return verification;
-  } else {
-    console.log(
-      chalk.grey(` 🧐 Contract verification not supported on ${targetNetwork}`)
-    );
-  }
-};
-
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+exports.deployDiamond = deployDiamond

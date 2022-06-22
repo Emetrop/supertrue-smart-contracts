@@ -110,7 +110,7 @@ module.exports = {
       gasPrice: 8000000000
       // gasPrice: 10000000000,
 
-      
+
     },
     ropsten: {
       url: `https://ropsten.infura.io/v3/${process.env.INFURA_KEY}`,
@@ -254,7 +254,7 @@ module.exports = {
   solidity: {
     compilers: [
       {
-        version: "0.8.13",
+        version: "0.8.9",
         settings: {
           optimizer: {
             enabled: true,
@@ -265,7 +265,7 @@ module.exports = {
     ],
   },
   ovm: {
-    solcVersion: "0.8.13",
+    solcVersion: "0.8.9",
   },
   namedAccounts: {
     deployer: {

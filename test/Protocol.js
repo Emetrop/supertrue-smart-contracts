@@ -1,16 +1,14 @@
-const { ethers, waffle } = require("hardhat");
+const { ethers, waffle, upgrades } = require("hardhat");
 const { expect } = require("chai");
 const {
   signTypedData,
   SignTypedDataVersion,
 } = require("@metamask/eth-sig-util");
 
+const { getSelectors, FacetCutAction } = require('../scripts/libraries/diamond.js')
+
 const utils = ethers.utils;
 
-/**
- * TODO: Test fund transfer / minting payments
- * TODO: Test Tips (with mint)
- */
 describe("EntireProtocol", () => {
   const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
   const PRICE_BASE = "5000000000000000";
@@ -18,13 +16,14 @@ describe("EntireProtocol", () => {
   const BASE_URI =
     "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/"; //Default Base URI
   const ARTISTS = [
-    { name: "name1", ig: "ig_name1", igId: "123" },
-    { name: "name2", ig: "ig_name2", igId: "234" },
+    { name: "name1", ig: "ig_name1", igId: "1" },
+    { name: "name2", ig: "ig_name2", igId: "2" },
   ];
   const tokenPriceInCents = 100000; // $1k to avoid comparing BigNums
   let configContract;
   let factoryContract;
   let artistContract;
+  let diamondContract;
 
   // accounts
   let owner;
@@ -85,29 +84,68 @@ describe("EntireProtocol", () => {
     });
   };
 
+  let supertrueNFTbeacon;
+  let diamondCutFacet;
+
+  before(async () => {
+    // deploy SupertrueNFT beacon
+    const SupertrueNFTContract = await ethers.getContractFactory("SupertrueNFT");
+    supertrueNFTbeacon = await upgrades.deployBeacon(SupertrueNFTContract);
+    await supertrueNFTbeacon.deployed();
+
+    // deploy DiamondCutFacet
+    const DiamondCutFacet = await ethers.getContractFactory('DiamondCutFacet')
+    diamondCutFacet = await DiamondCutFacet.deploy()
+    await diamondCutFacet.deployed()
+  });
+
   beforeEach(async () => {
     [owner, admin, tester, artist, treasury] = await ethers.getSigners();
 
-    //Config
-    const ConfigContract = await ethers.getContractFactory("SupertrueConfig");
-    configContract = await ConfigContract.deploy(treasury.address);
+    // deploy SupertrueDiamond
+    const Diamond = await ethers.getContractFactory('SupertrueDiamond')
+    diamondContract = await Diamond.deploy(owner.address, diamondCutFacet.address)
+    await diamondContract.deployed()
 
-    //Deploy Factory
-    const SupertrueHub = await ethers.getContractFactory(
-      "SupertrueHub"
-    );
-    const SupertrueNFTImplementation = await ethers.getContractFactory(
-      "SupertrueNFT"
-    );
-    const supertrueNFTImplementation =
-      await SupertrueNFTImplementation.deploy();
+    // deploy DiamondInit
+    // DiamondInit provides a function that is called when the diamond is upgraded to initialize state variables
+    // See https://eips.ethereum.org/EIPS/eip-2535#addingreplacingremoving-functions
+    const DiamondInit = await ethers.getContractFactory('DiamondInit')
+    const diamondInit = await DiamondInit.deploy()
+    await diamondInit.deployed()
 
-    //Deploying new proxy
-    factoryContract = await upgrades.deployProxy(
-      SupertrueHub,
-      [configContract.address, supertrueNFTImplementation.address, tokenPriceInCents],
-      { kind: "uups" }
-    );
+    const FacetNames = [
+      'DiamondLoupeFacet',
+      'SupertrueConfigFacet',
+      'SupertrueHubFacet'
+    ]
+
+    let cut = []
+    for (const FacetName of FacetNames) {
+      const Facet = await ethers.getContractFactory(FacetName)
+      const facet = await Facet.deploy()
+      await facet.deployed()
+      cut.push({
+        facetAddress: facet.address,
+        action: FacetCutAction.Add,
+        functionSelectors: getSelectors(facet)
+      })
+    }
+
+    // Removing mysterious contract, remove and get values
+    cut = cut.map(c => ({...c, functionSelectors: c.functionSelectors.filter(f => typeof f === "string")}));
+
+    // upgrade diamond with facets
+    const diamondCut = await ethers.getContractAt('IDiamondCut', diamondContract.address)
+
+    // call to init function
+    const functionCall = diamondInit.interface.encodeFunctionData('init', [supertrueNFTbeacon.address])
+    // const tx = await diamondCut.diamondCut(cut, ethers.constants.AddressZero, '0x') // empty init
+    let tx = await diamondCut.diamondCut(cut, diamondInit.address, functionCall)
+    await tx.wait()
+
+    configContract = await ethers.getContractAt('SupertrueConfigFacet', diamondContract.address);
+    factoryContract = await ethers.getContractAt('SupertrueHubFacet', diamondContract.address);
 
     const price = await factoryContract.getCreationPrice();
 
@@ -125,7 +163,7 @@ describe("EntireProtocol", () => {
     });
 
     //Deploy New Artist
-    let tx = await factoryContract.createArtist(
+    tx = await factoryContract.createArtist(
       ARTISTS[0].name,
       ARTISTS[0].igId,
       ARTISTS[0].ig,
@@ -166,23 +204,15 @@ describe("EntireProtocol", () => {
       it("Should prevent unauthorized access", async () => {
         await expect(
           configContract.connect(admin).setTreasury(admin.address)
-        ).to.be.revertedWith("Ownable: caller is not the owner");
+        ).to.be.revertedWith("LibDiamond: Must be contract owner");
 
         await expect(
           configContract.connect(admin).setTreasuryFee(1000)
-        ).to.be.revertedWith("Ownable: caller is not the owner");
-
-        await expect(
-          configContract.connect(admin).addAdmin(admin.address)
-        ).to.be.revertedWith("Ownable: caller is not the owner");
-
-        await expect(
-          configContract.connect(admin).removeAdmin(owner.address)
-        ).to.be.revertedWith("Ownable: caller is not the owner");
+        ).to.be.revertedWith("LibDiamond: Must be contract owner");
       });
 
       it("Should change creation fee", async () => {
-        expect(await configContract.getCreationFee()).to.equal(CREATION_FEE);
+        expect(await configContract.creationFee()).to.equal(CREATION_FEE);
 
         const newCreationFee = 999;
 
@@ -193,25 +223,14 @@ describe("EntireProtocol", () => {
           .to.emit(configContract, "CreationFeeSet")
           .withArgs(newCreationFee);
 
-        expect(await configContract.getCreationFee()).to.equal(newCreationFee);
+        expect(await configContract.creationFee()).to.equal(newCreationFee);
       });
     });
 
     describe("Data", () => {
-      it("Should remeber admins", async () => {
-        //Not Admin
-        expect(await configContract.isAdmin(admin.address)).to.equal(false);
-        //Set Admin
-        await configContract.addAdmin(admin.address);
-        expect(await configContract.isAdmin(admin.address)).to.equal(true);
-        //Remove Admin
-        await configContract.removeAdmin(admin.address);
-        expect(await configContract.isAdmin(admin.address)).to.equal(false);
-      });
-
       it("Should hold treasury data", async () => {
         //Defaults
-        let treasuryData = await configContract.getTreasuryData();
+        let treasuryData = await configContract.treasuryData();
         expect(treasuryData[0]).to.equal(treasury.address);
         expect(treasuryData[1]).to.equal(2000);
         //New Values
@@ -229,7 +248,7 @@ describe("EntireProtocol", () => {
           .withArgs(newTreasuryAmount);
 
         //Check
-        treasuryData = await configContract.getTreasuryData();
+        treasuryData = await configContract.treasuryData();
         expect(treasuryData[0]).to.equal(newTreasury.address);
         expect(treasuryData[1]).to.equal(newTreasuryAmount);
       });
@@ -237,54 +256,8 @@ describe("EntireProtocol", () => {
   });
 
   describe("Factory", () => {
-    it("Should be upgradable", async () => {
-      //Fetch New Implementation Contract
-      let NewImplementation = await ethers.getContractFactory(
-        "contracts/contracts-test/SupertrueHubv2.sol:SupertrueHubv2"
-      );
-      await upgrades.upgradeProxy(factoryContract, NewImplementation);
-
-      //Update Interface
-      const newFactoryContract = await NewImplementation.attach(
-        factoryContract.address
-      );
-      // console.log("Upgraded Facroty (Hub) at: "+ factoryContract.address, newFactoryContract);
-
-      //Validate Upgrade
-      let hasChanged = await newFactoryContract.hasChanged();
-      //Verify Upgrade
-      expect(hasChanged).to.equal(true);
-    });
-
     it("Should have Config", async () => {
       expect(await factoryContract.getConfig()).not.to.equal(ZERO_ADDR); //Starts With Defaults
-    });
-
-    it("Should secure Config", async () => {
-      //Secure
-      await expect(
-        factoryContract.connect(tester).setConfig(configContract.address)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
-    });
-
-    it("Should change Config", async () => {
-      //Set Config
-      await factoryContract.setConfig(configContract.address);
-      //Check Config
-      expect(await factoryContract.getConfig()).to.equal(
-        configContract.address
-      );
-    });
-
-    it("Should inherit Owner", async () => {
-      expect(await factoryContract.owner()).to.equal(owner.address);
-    });
-
-    it("Should inherit Admin", async () => {
-      //Set Admin
-      await configContract.addAdmin(admin.address);
-      //Check Admin
-      expect(await factoryContract.isAdmin(admin.address)).to.equal(true);
     });
 
     it("Should return 0 address for not existing artist id", async () => {
@@ -373,69 +346,6 @@ describe("EntireProtocol", () => {
       expect(artistContractAddr).not.to.equal(ZERO_ADDR);
     });
 
-    it("Should update artist", async () => {
-      const artistName = ARTISTS[1].name;
-      const artistIG = ARTISTS[1].ig;
-      const artistGUID = ARTISTS[1].igId;
-      const price = await factoryContract.getCreationPrice();
-
-      let signature1 = getArtistUpdateSignedMessage({
-        signer: 1,
-        account: owner.address,
-        instagramId: artistGUID,
-        instagram: artistIG,
-      });
-      let signature2 = getArtistUpdateSignedMessage({
-        signer: 2,
-        account: owner.address,
-        instagramId: artistGUID,
-        instagram: artistIG,
-      });
-
-      //Deploy New Artist
-      //TODO: How to get the id & address from that??
-      let tx = await factoryContract.createArtist(
-        artistName,
-        artistGUID,
-        artistIG,
-        signature1,
-        signature2,
-        { value: price }
-      );
-
-      await tx.wait();
-
-      const artistId = 2;
-
-      const newName = "Artist New Name";
-      const newInstagram = "Artist New Instagram";
-
-      signature1 = getArtistUpdateSignedMessage({
-        signer: 1,
-        account: ethers.constants.AddressZero,
-        instagramId: artistGUID,
-        instagram: newInstagram,
-      });
-      signature2 = getArtistUpdateSignedMessage({
-        signer: 2,
-        account: ethers.constants.AddressZero,
-        instagramId: artistGUID,
-        instagram: newInstagram,
-      });
-
-      tx = await factoryContract.updateArtist(
-        artistId,
-        newName,
-        newInstagram,
-        signature1,
-        signature2
-      );
-
-      await expect(tx)
-        .to.emit(factoryContract, "ArtistUpdated")
-        .withArgs(artistId, newName, newInstagram);
-    });
-
     it("Should not allow same instagram id to be deployed twice", async () => {
       const price = await factoryContract.getCreationPrice();
 
@@ -482,7 +392,7 @@ describe("EntireProtocol", () => {
     });
 
     it("Can Change Contract URI", async () => {
-      // let curBaseURI = await configContract.getBaseURI();
+      // let curBaseURI = await configContract.baseURI();
       let newBaseURI = "https://test-domain.com/api/";
       //Change
       await configContract.setBaseURI(newBaseURI);
@@ -492,7 +402,7 @@ describe("EntireProtocol", () => {
       // let curArtistBaseURI = await artistContract.baseURI();
       // console.log("curArtistBaseURI", curArtistBaseURI);   //V
       //Check
-      expect(await configContract.getBaseURI()).to.equal(newBaseURI);
+      expect(await configContract.baseURI()).to.equal(newBaseURI);
       expect(await artistContract.contractURI()).to.equal(
         newBaseURI + "1/storefront"
       );
@@ -500,21 +410,7 @@ describe("EntireProtocol", () => {
       //Change Back
       await configContract.setBaseURI(BASE_URI);
       //Check
-      expect(await configContract.getBaseURI()).to.equal(BASE_URI);
-    });
-
-    it("Can Override Contract URI", async () => {
-      let newContractURI = "https://test-domain.com/NEW-ARTIST-JSON-URI/";
-      //Change
-      await artistContract.setContractURI(newContractURI);
-      expect(await artistContract.contractURI()).to.equal(newContractURI);
-      //Fail
-      await expect(
-        artistContract.connect(tester).setContractURI("NO")
-      ).to.be.revertedWith("Only owner");
-      //Undo
-      await artistContract.setContractURI(BASE_URI);
-      expect(await artistContract.contractURI()).to.equal(BASE_URI);
+      expect(await configContract.baseURI()).to.equal(BASE_URI);
     });
 
     it("Could be pausable", async () => {
@@ -531,19 +427,6 @@ describe("EntireProtocol", () => {
       expect(await artistContract.paused()).to.equal(false);
     });
 
-    it("Could be blocked", async () => {
-      //Block
-      let tx = await artistContract.blockContract(true);
-      await expect(tx).to.emit(artistContract, "Blocked");
-      //Should fail to mint
-      await expect(artistContract.mint(tester.address)).to.be.revertedWith(
-        "Pausable: paused"
-      );
-      //Unblock
-      tx = await artistContract.blockContract(false);
-      await expect(tx).to.emit(artistContract, "Blocked");
-    });
-
     it("Should obey protocol pause", async () => {
       //Pause
       await configContract.pause();
@@ -558,36 +441,22 @@ describe("EntireProtocol", () => {
     });
 
     it("Beacon should be upgradable", async () => {
-      //Current Implementation
-      const OldImplementation = await ethers.getContractFactory("SupertrueNFT");
       //New Implementation
-      const NewImplementation = await ethers.getContractFactory(
-        "contracts/contracts-test/SupertrueNFTv2.sol:SupertrueNFTv2"
-      );
-      let newImplementation = await NewImplementation.deploy();
+      const NewImplementation = await ethers.getContractFactory("SupertrueNFTv2");
+      const newImplementation = await NewImplementation.deploy();
 
       //-- Prep
       //Fetch Beacon
-      let BeaconAddress = await factoryContract.getBeacon();
-      //Register Beacon
-      await upgrades.forceImport(BeaconAddress, OldImplementation);
-      //Validate Upgrade
-      await upgrades.prepareUpgrade(BeaconAddress, NewImplementation);
+      const beaconAddress = await configContract.nftBeacon();
+      await upgrades.upgradeBeacon(beaconAddress, NewImplementation);
 
       //Upgrade
-      factoryContract.upgradeBeacon(newImplementation.address);
+      await configContract.setNftBeacon(newImplementation.address);
 
-      //Update Interface
-      const newArtistContract = await NewImplementation.attach(
-        artistContract.address
-      );
-      // console.log("Upgraded Artist at: "+ artistContract.address, newArtistContract);
+      const updatedArtistContract = await ethers.getContractAt("SupertrueNFTv2", artistContract.address);
 
-      //Validate Upgrade
-      // let hasChanged = await artistContract.hasChanged();
-      let hasChanged = await newArtistContract.hasChanged();
+      const hasChanged = await updatedArtistContract.hasChanged();
 
-      //Verify Upgrade
       expect(hasChanged).to.equal(true);
     });
 
@@ -645,14 +514,14 @@ describe("EntireProtocol", () => {
         //Change
         await configContract.setBaseURI(newBaseURI);
         //Check
-        expect(await configContract.getBaseURI()).to.equal(newBaseURI);
+        expect(await configContract.baseURI()).to.equal(newBaseURI);
         expect(await artistContract.tokenURI(1)).to.equal(
           newBaseURI + "1/json/1"
         );
         //Change Back
         await configContract.setBaseURI(BASE_URI);
         //Check
-        expect(await configContract.getBaseURI()).to.equal(BASE_URI);
+        expect(await configContract.baseURI()).to.equal(BASE_URI);
       });
     });
 

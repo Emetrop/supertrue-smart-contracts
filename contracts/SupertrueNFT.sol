@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/common/ERC2981Upgradeable.sol";
@@ -15,11 +15,6 @@ import "./interfaces/ISupertrueHub.sol";
 import "./interfaces/ISupertrueNFT.sol";
 import "./interfaces/ISupertrueConfig.sol";
 
-/**
- * Supertrue NFT
- * Version 0.7.0
- *
- */
 contract SupertrueNFT is
     ERC721PausableUpgradeable,
     EIP712Upgradeable,
@@ -36,22 +31,21 @@ contract SupertrueNFT is
     // counter
     CountersUpgradeable.Counter private _tokenIds;
 
-    // json and contract base uri
-    // string private _base_uri;
-    string private _contract_uri;
-    address private _hub; //Hub Contract
-
-    // address => allowedToCallFunctions
-    mapping(address => bool) private _admins; //Admins of this contract
-
-    // 3rd party royalties
-    uint96 private constant _defaultRoyaltyBPS = 1_000; //10% royalties on secondary sales
-    uint16 internal constant BPS_MAX = 10_000;
+    address private _diamond; // Diamond contract
 
     // Artist Data
     Artist private _artist;
     uint256 private _artistPendingFunds;
     uint256 private _treasuryPendingFunds;
+
+    // ============ Constants ============
+
+    // Contract version
+    string public constant version = "1";
+
+    // 3rd party royalties
+    uint96 private constant _defaultRoyaltyBPS = 2_000; // 20% royalties on secondary sales
+    uint16 private constant BPS_MAX = 10_000;
 
     // Pricing
     uint256 private constant _startPriceCents = 500 ether;
@@ -60,21 +54,18 @@ contract SupertrueNFT is
     uint256 private constant _logEndY = 1 ether; // == log2(logEndX)
     uint256 private constant _reachEndPriceTokenId = 1000;
 
-    // Contract version
-    string public constant version = "1";
-
     // ============ Modifiers ============
 
     /**
      * @dev Throws if called by any account other than the hub.
      */
     modifier onlyHub() {
-        require(_msgSender() == _hub, "Only hub");
+        require(_msgSender() == _diamond, "Only hub");
         _;
     }
 
     /**
-     * @dev Throws if called by any account other than the owner or admins.
+     * @dev Throws if called by any account other than the owner.
      */
     modifier onlyOwner() {
         require(_msgSender() == owner(), "Only owner");
@@ -83,23 +74,23 @@ contract SupertrueNFT is
 
     // ============ Events ============
 
+    /// Claimed by Artist
+    event ArtistClaimed(address artist);
+
+    /// Artist Updated
+    event ArtistUpdated(string name, string instagram);
+
     /// Funds Withdrawal
     event Withdrawal(
         address indexed to,
         address indexed tokenAddress, // prepared for ERC20 tokens
         uint256 amount
     );
-    /// Claimed by Artist
-    event ArtistClaimed(address artist);
-    /// Artist Updated
-    event ArtistUpdated(string name, string instagram);
-    /// Contract Blocked / Unblocked
-    event Blocked(bool blocked);
 
     // ============ Methods ============
 
     function initialize(
-        address hub_,
+        address diamond_,
         uint256 artistId_,
         string memory artistName_,
         string memory artistInstagram_,
@@ -115,7 +106,7 @@ contract SupertrueNFT is
         _setDefaultRoyalty(address(this), _defaultRoyaltyBPS);
 
         //Set Hub Address
-        _hub = hub_;
+        _diamond = diamond_;
 
         _artist.id = artistId_;
         _artist.name = artistName_;
@@ -144,7 +135,7 @@ contract SupertrueNFT is
     function priceTokenId(uint256 tokenId) public view returns (uint256) {
         require(tokenId > 0, "TokenID has to be bigger than 0");
 
-        uint256 tokenPriceCents = ISupertrueHub(_hub)
+        uint256 tokenPriceCents = ISupertrueHub(_diamond)
             .getTokenPrice()
             .fromUint();
 
@@ -223,7 +214,7 @@ contract SupertrueNFT is
     }
 
     function _config() private view returns (ISupertrueConfig) {
-        return ISupertrueConfig(ISupertrueHub(_hub).getConfig());
+        return ISupertrueConfig(_diamond);
     }
 
     function _claim(address artistAccount) private {
@@ -261,20 +252,13 @@ contract SupertrueNFT is
      * Centralized Treasury Settings for all Artist Contracts
      */
     function _getTreasuryData() internal view returns (address, uint256) {
-        (address treasury, uint256 treasuryFee) = _config().getTreasuryData();
+        (address treasury, uint256 treasuryFee) = _config().treasuryData();
         //Validate (Don't Burn Assets)
         require(
             treasuryFee == 0 || treasury != address(0),
             "Treasury Misconfigured"
         );
         return (treasury, treasuryFee);
-    }
-
-    /**
-     * @dev Get Hub address
-     */
-    function hub() public view returns (address) {
-        return _hub;
     }
 
     /**
@@ -299,21 +283,12 @@ contract SupertrueNFT is
      * @dev Returns true if the contract is paused, and false otherwise.
      */
     function paused() public view override returns (bool) {
-        return (_config().paused() || super.paused() || _artist.blocked);
+        return _config().paused() || super.paused();
     }
 
     /// Get Total Supply
     function totalSupply() public view returns (uint256) {
         return _tokenIds.current();
-    }
-
-    /**
-     * Block or Unblock Artist Contract
-     * @dev Pause + Emit Event
-     */
-    function blockContract(bool blocked) public onlyOwner {
-        _artist.blocked = blocked;
-        emit Blocked(blocked);
     }
 
     /**
@@ -429,18 +404,10 @@ contract SupertrueNFT is
     //-- URI Handling
 
     /**
-     * @dev Override Default Contract URI
-     */
-    function setContractURI(string memory uri_) external onlyOwner {
-        _contract_uri = uri_;
-    }
-
-    /**
      * @dev Contract URI
      *  https://docs.opensea.io/docs/contract-level-metadata
      */
     function contractURI() public view returns (string memory) {
-        if (bytes(_contract_uri).length > 0) return _contract_uri;
         // .../storefront
         return string(abi.encodePacked(_baseURI(), "storefront"));
     }
@@ -492,7 +459,7 @@ contract SupertrueNFT is
         return
             string(
                 abi.encodePacked(
-                    _config().getBaseURI(),
+                    _config().baseURI(),
                     _artist.id.toString(),
                     "/"
                 )
