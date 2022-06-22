@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
-import "../SupertrueNFT.sol";
 import "../interfaces/ISupertrueConfig.sol";
 import "../interfaces/ISupertrueNFT.sol";
 
@@ -16,9 +15,6 @@ import "../libraries/LibDiamond.sol";
 import "./SupertrueHubStorage.sol";
 import "./SupertrueConfigStorage.sol";
 
-/**
- * Supertrue hub facet
- */
 contract SupertrueHubFacet {
     using Strings for uint256;
 
@@ -150,7 +146,7 @@ contract SupertrueHubFacet {
         BeaconProxy proxy = new BeaconProxy(
             cs.nftBeacon,
             abi.encodeWithSelector(
-                SupertrueNFT.initialize.selector,
+                ISupertrueNFT.initialize.selector,
                 address(this), // admin,
                 // 12, "Supertrue 12", ST12, https://supertrue.fans/
                 id,

@@ -11,6 +11,17 @@ interface ISupertrueNFT {
         address account;
     }
 
+    function initialize(
+        address diamond_,
+        uint256 artistId_,
+        string memory artistName_,
+        string memory artistInstagram_,
+        string memory artistInstagramId_,
+        address artistAccount_,
+        string memory name_,
+        string memory symbol_
+    ) external;
+
     function getArtist() external view returns (Artist memory);
 
     function updateArtist(string memory name, string memory instagram) external;
