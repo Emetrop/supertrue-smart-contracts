@@ -1,0 +1,28 @@
+# POLYGON contract addresses
+
+## Deployer
+0x576ecb1d75D8FAde4fE1cc7cBAD8Ce643d328E68
+
+## SupertrueNFT beacon
+0x7a2919Ca25ce935Bfd8AEc73F6Ca1fce0F8FDb19
+
+## SupertrueDiamond
+0x7135589c7b1DeE3FDAA4B905e4015f3CF691398B
+
+## Relay
+0x1067a505709a76c0e5b47244331755a419abd968
+
+---
+# RINKEBY contract addresses
+
+## Deployer
+0xcF8f578726cfcD92865bc301179537b778842848
+
+## SupertrueNFT
+0x1A237Ec9006AfBF7A4Fd0CC142fD186ef2917B8A
+
+## SupertrueDiamond
+0x386a0a2CF2925552867e7B0d915cFE27a5E8E80E
+
+## Relay
+0xf5f32a6a5b60324596e9dd29bb919def1c646ce8
