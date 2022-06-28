@@ -55,11 +55,11 @@ contract SupertrueNFT is
     string public constant version = "1";
 
     // 3rd party royalties
-    uint96 private constant _defaultRoyaltyBPS = 2_000; // 20% royalties on secondary sales
+    uint96 private constant _defaultRoyaltyBPS = 1_000; // 10% royalties on secondary sales
     uint16 private constant BPS_MAX = 10_000;
 
     // Pricing
-    uint256 private constant _startPriceCents = 500 ether;
+    uint256 private constant _startPriceCents = 1000 ether;
     uint256 private constant _endPriceCents = 5000 ether;
     uint256 private constant _logEndX = 2 ether; // has to be multiplier of 2!
     uint256 private constant _logEndY = 1 ether; // == log2(logEndX)
