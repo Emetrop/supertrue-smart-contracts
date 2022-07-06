@@ -15,15 +15,15 @@ import "./SupertrueConfigStorage.sol";
 contract SupertrueConfigFacet is ISupertrueConfig, IERC173 {
     //-- Events --//
 
-    event TreasurySet(address treasury);
-    event TreasuryFeeSet(uint256 treasuryFee);
-    event CreationFeeSet(uint256 creationFee);
+    event TreasuryUpdated(address treasury);
+    event TreasuryFeeUpdated(uint256 treasuryFee);
+    event CreationFeeUpdated(uint256 creationFee);
     event RelayAdded(address relay);
     event RelayRemoved(address relay);
-    event SignersSet(address signer1, address signer2);
-    event TokenPriceSet(uint256 tokenPrice);
-    event NftBeaconSet(address nftBeacon);
-    event BaseUriSet(string baseUri);
+    event SignersUpdated(address signer1, address signer2);
+    event TokenPriceUpdated(uint256 tokenPrice);
+    event NftBeaconUpdated(address nftBeacon);
+    event BaseUriUpdated(string baseUri);
     event Paused(address account);
     event Unpaused(address account);
 
@@ -49,7 +49,12 @@ contract SupertrueConfigFacet is ISupertrueConfig, IERC173 {
     /**
      * @dev Returns the address of the current owner.
      */
-    function owner() public view override(IERC173, ISupertrueConfig) returns (address) {
+    function owner()
+        public
+        view
+        override(IERC173, ISupertrueConfig)
+        returns (address)
+    {
         return LibDiamond.contractOwner();
     }
 
@@ -76,10 +81,11 @@ contract SupertrueConfigFacet is ISupertrueConfig, IERC173 {
      * @dev Set Signers Storage Contract Address
      */
     function setSigners(address signer1_, address signer2_) public onlyOwner {
-        SupertrueConfigStorage.Layout storage cs = SupertrueConfigStorage.layout();
+        SupertrueConfigStorage.Layout storage cs = SupertrueConfigStorage
+            .layout();
         cs.signer1 = signer1_;
         cs.signer2 = signer2_;
-        emit SignersSet(signer1_, signer2_);
+        emit SignersUpdated(signer1_, signer2_);
     }
 
     //-- Pausability
@@ -108,7 +114,8 @@ contract SupertrueConfigFacet is ISupertrueConfig, IERC173 {
      * @dev Get treasury data
      */
     function treasuryData() public view returns (address, uint256) {
-        SupertrueConfigStorage.Layout storage cs = SupertrueConfigStorage.layout();
+        SupertrueConfigStorage.Layout storage cs = SupertrueConfigStorage
+            .layout();
         return (cs.treasury, cs.treasuryFee);
     }
 
@@ -117,7 +124,7 @@ contract SupertrueConfigFacet is ISupertrueConfig, IERC173 {
      */
     function setTreasury(address newTreasury) public onlyOwner {
         SupertrueConfigStorage.layout().treasury = newTreasury;
-        emit TreasurySet(newTreasury);
+        emit TreasuryUpdated(newTreasury);
     }
 
     /**
@@ -125,7 +132,7 @@ contract SupertrueConfigFacet is ISupertrueConfig, IERC173 {
      */
     function setTreasuryFee(uint256 newTreasuryFee) public onlyOwner {
         SupertrueConfigStorage.layout().treasuryFee = newTreasuryFee;
-        emit TreasuryFeeSet(newTreasuryFee);
+        emit TreasuryFeeUpdated(newTreasuryFee);
     }
 
     /**
@@ -140,7 +147,7 @@ contract SupertrueConfigFacet is ISupertrueConfig, IERC173 {
      */
     function setCreationFee(uint256 newCreationFee) public onlyOwner {
         SupertrueConfigStorage.layout().creationFee = newCreationFee;
-        emit CreationFeeSet(newCreationFee);
+        emit CreationFeeUpdated(newCreationFee);
     }
 
     //-- Relay Management
@@ -175,7 +182,7 @@ contract SupertrueConfigFacet is ISupertrueConfig, IERC173 {
      */
     function setBaseURI(string memory baseURI_) public onlyOwner {
         SupertrueConfigStorage.layout().baseURI = baseURI_;
-        emit BaseUriSet(baseURI_);
+        emit BaseUriUpdated(baseURI_);
     }
 
     /**
@@ -190,7 +197,7 @@ contract SupertrueConfigFacet is ISupertrueConfig, IERC173 {
      */
     function setNftBeacon(address nftBeacon_) public onlyOwner {
         SupertrueConfigStorage.layout().nftBeacon = nftBeacon_;
-        emit NftBeaconSet(nftBeacon_);
+        emit NftBeaconUpdated(nftBeacon_);
     }
 
     /**
@@ -205,7 +212,7 @@ contract SupertrueConfigFacet is ISupertrueConfig, IERC173 {
      */
     function setTokenPrice(uint256 tokenPrice_) public onlyOwner {
         SupertrueConfigStorage.layout().tokenPrice = tokenPrice_;
-        emit TokenPriceSet(tokenPrice_);
+        emit TokenPriceUpdated(tokenPrice_);
     }
 
     /**

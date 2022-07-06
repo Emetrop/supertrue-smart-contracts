@@ -228,7 +228,7 @@ describe("EntireProtocol", () => {
           .connect(owner)
           .setCreationFee(newCreationFee);
         await expect(tx)
-          .to.emit(configContract, "CreationFeeSet")
+          .to.emit(configContract, "CreationFeeUpdated")
           .withArgs(newCreationFee);
 
         expect(await configContract.creationFee()).to.equal(newCreationFee);
@@ -247,12 +247,12 @@ describe("EntireProtocol", () => {
         //Set
         let tx = await configContract.setTreasury(newTreasury.address);
         await expect(tx)
-          .to.emit(configContract, "TreasurySet")
+          .to.emit(configContract, "TreasuryUpdated")
           .withArgs(newTreasury.address);
 
         tx = await configContract.setTreasuryFee(newTreasuryAmount);
         await expect(tx)
-          .to.emit(configContract, "TreasuryFeeSet")
+          .to.emit(configContract, "TreasuryFeeUpdated")
           .withArgs(newTreasuryAmount);
 
         //Check
