@@ -45,6 +45,13 @@ contract SupertrueHubFacet {
     }
 
     /**
+     * Get number of created artists
+     */
+    function getArtistsNumber() public view returns (uint256) {
+        return SupertrueHubStorage.layout().artistCounter;
+    }
+
+    /**
      * Get config contract address
      */
     function getConfig() public view returns (address) {
