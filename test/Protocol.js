@@ -11,26 +11,28 @@ const utils = ethers.utils;
 
 describe("EntireProtocol", () => {
   const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
-  const PRICE_BASE = "5000000000000000";
+  const PRICE_BASE = "10000000000000000";
   const CREATION_FEE = 2000000000000000;
-  const BASE_URI =
-    "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/"; //Default Base URI
+  const BASE_URI = "https://example.com/api/artist/"; //Default Base URI
   const ARTISTS = [
     { name: "name1", username: "username1", ig: "ig_name1", igId: "1" },
     { name: "name2", username: "username2", ig: "ig_name2", igId: "2" },
   ];
-  const tokenPriceInCents = 100000; // $1k to avoid comparing BigNums
+
+  // contracts
   let configContract;
   let factoryContract;
   let artistContract;
   let diamondContract;
+  let libPricingContract;
 
   // accounts
   let owner;
   let artist;
   let admin;
   let tester;
-  const treasury = { address: "0x1ea8009C698B353763Ecc2C2D12Ac5A3771Ae855" };
+  let relay;
+  let treasury;
 
   // ************* signatures
   const signer1 = "0x8eC13C4982a5Fb8b914F0927C358E14f8d657133";
@@ -88,9 +90,16 @@ describe("EntireProtocol", () => {
   let diamondCutFacet;
 
   before(async () => {
+    // deploy LibPricing
+    const LibPricingContract = await ethers.getContractFactory("LibPricing");
+    libPricingContract = await LibPricingContract.deploy();
+    await libPricingContract.deployed();
+
     // deploy SupertrueNFT beacon
-    const SupertrueNFTContract = await ethers.getContractFactory("SupertrueNFT");
-    supertrueNFTbeacon = await upgrades.deployBeacon(SupertrueNFTContract);
+    const SupertrueNFTContract = await ethers.getContractFactory("SupertrueNFT", {
+      libraries: { LibPricing: libPricingContract.address }
+    });
+    supertrueNFTbeacon = await upgrades.deployBeacon(SupertrueNFTContract, { unsafeAllowLinkedLibraries: true });
     await supertrueNFTbeacon.deployed();
 
     // deploy DiamondCutFacet
@@ -100,7 +109,7 @@ describe("EntireProtocol", () => {
   });
 
   beforeEach(async () => {
-    [owner, admin, tester, artist] = await ethers.getSigners();
+    [owner, admin, tester, artist, relay, treasury] = await ethers.getSigners();
 
     // deploy SupertrueDiamond
     const Diamond = await ethers.getContractFactory('SupertrueDiamond')
@@ -139,7 +148,7 @@ describe("EntireProtocol", () => {
     const diamondCut = await ethers.getContractAt('IDiamondCut', diamondContract.address)
 
     // call to init function
-    const functionCall = diamondInit.interface.encodeFunctionData('init', [supertrueNFTbeacon.address])
+    const functionCall = diamondInit.interface.encodeFunctionData('init', [supertrueNFTbeacon.address, relay.address, treasury.address])
     // const tx = await diamondCut.diamondCut(cut, ethers.constants.AddressZero, '0x') // empty init
     let tx = await diamondCut.diamondCut(cut, diamondInit.address, functionCall)
     await tx.wait()
@@ -178,7 +187,9 @@ describe("EntireProtocol", () => {
     const artistContractAddr = await factoryContract.getArtistContract(1);
 
     //Attach
-    const SupertrueNFT = await ethers.getContractFactory("SupertrueNFT");
+    const SupertrueNFT = await ethers.getContractFactory("SupertrueNFT", {
+      libraries: { LibPricing: libPricingContract.address }
+    });
     artistContract = await SupertrueNFT.attach(artistContractAddr);
   });
 
@@ -472,18 +483,22 @@ describe("EntireProtocol", () => {
 
     it("Beacon should be upgradable", async () => {
       //New Implementation
-      const NewImplementation = await ethers.getContractFactory("SupertrueNFTv2");
+      const NewImplementation = await ethers.getContractFactory("SupertrueNFTv2", {
+        libraries: { LibPricing: libPricingContract.address }
+      });
       const newImplementation = await NewImplementation.deploy();
 
       const oldTotalSupply = await artistContract.totalSupply();
       const oldArtistPendingFunds = await artistContract.artistPendingFunds();
       const oldTreasuryPendingFunds = await artistContract.treasuryPendingFunds();
+      const oldPrice = await artistContract.price();
+      const oldPrice500 = await artistContract.priceTokenId(500);
       const oldArtist = await artistContract.getArtist();
 
       //-- Prep
       //Fetch Beacon
       const beaconAddress = await configContract.nftBeacon();
-      await upgrades.upgradeBeacon(beaconAddress, NewImplementation);
+      await upgrades.upgradeBeacon(beaconAddress, NewImplementation, { unsafeAllowLinkedLibraries: true });
 
       //Upgrade
       await configContract.setNftBeacon(newImplementation.address);
@@ -497,11 +512,15 @@ describe("EntireProtocol", () => {
       const newTotalSupply = await updatedArtistContract.totalSupply();
       const newArtistPendingFunds = await updatedArtistContract.artistPendingFunds();
       const newTreasuryPendingFunds = await updatedArtistContract.treasuryPendingFunds();
+      const newPrice = await updatedArtistContract.price();
+      const newPrice500 = await updatedArtistContract.priceTokenId(500);
       const newArtist = await updatedArtistContract.getArtist();
 
       expect(oldTotalSupply).to.equal(newTotalSupply);
       expect(oldArtistPendingFunds).to.equal(newArtistPendingFunds);
       expect(oldTreasuryPendingFunds).to.equal(newTreasuryPendingFunds);
+      expect(oldPrice).to.equal(newPrice);
+      expect(oldPrice500).to.equal(newPrice500);
 
       expect(oldArtist.username).to.equal(newArtist.username);
       expect(oldArtist.instagramId).to.equal(newArtist.instagramId);
@@ -510,18 +529,41 @@ describe("EntireProtocol", () => {
 
     describe("Pricing", () => {
       it("Should return correct price per tokenId", async () => {
-        const startPrice = 5000000000000000; // == 0.05
-        const endPrice = 50000000000000000; // == 0.5
+        const startPrice = "10000000000000000"; // == 0.01 in native token with token price $1k (=$10)
+        const endPrice = "50000000000000000"; // == 5 * startPrice == 0.05
 
+        await expect(await artistContract.price()).to.be.equal(startPrice);
         await expect(await artistContract.priceTokenId(1)).to.be.equal(startPrice);
-        await expect((await artistContract.priceTokenId(1000)).eq(endPrice.toString())).to.be.true;
-        await expect((await artistContract.priceTokenId(10000)).eq(endPrice.toString())).to.be.true;
+        await expect(await artistContract.priceTokenId(1000)).to.be.equal(endPrice);
+        await expect(await artistContract.priceTokenId(10000)).to.be.equal(endPrice);
 
-        await expect((await artistContract.priceTokenId(2)).eq("5129712883990460")).to.be.true;
-        await expect((await artistContract.priceTokenId(100)).eq("11187658568747070")).to.be.true;
-        await expect((await artistContract.priceTokenId(500)).eq("31323312532452027")).to.be.true;
-        await expect((await artistContract.priceTokenId(900)).eq("46669973835030041")).to.be.true;
-        await expect((await artistContract.priceTokenId(999)).eq("49967531243714324")).to.be.true;
+        await expect((await artistContract.priceTokenId(2)).eq("10115300341324854")).to.be.true;
+        await expect((await artistContract.priceTokenId(100)).eq("15500140949997395")).to.be.true;
+        await expect((await artistContract.priceTokenId(500)).eq("33398500028846246")).to.be.true;
+        await expect((await artistContract.priceTokenId(900)).eq("47039976742248925")).to.be.true;
+        await expect((await artistContract.priceTokenId(999)).eq("49971138883301622")).to.be.true;
+      });
+
+      it("Should change price", async () => {
+        const newStartPrice = 10000; // == $100 (in cents)
+        const newStartNFTPrice = "100000000000000000"; // == 0.1 in native token with token price $1k (=$100)
+        const newEndNFTPrice = "500000000000000000"; // == 5 * startPrice == 0.5
+
+        const tx = await artistContract.connect(relay).setPricing(newStartPrice);
+        await expect(tx)
+          .to.emit(artistContract, "PricingUpdated")
+          .withArgs(0, newStartPrice, newStartPrice * 5, 1000);
+
+        await expect(await artistContract.price()).to.be.equal(newStartNFTPrice);
+        await expect(await artistContract.priceTokenId(1)).to.be.equal(newStartNFTPrice);
+        await expect(await artistContract.priceTokenId(1000)).to.be.equal(newEndNFTPrice);
+        await expect(await artistContract.priceTokenId(10000)).to.be.equal(newEndNFTPrice);
+
+        await expect((await artistContract.priceTokenId(2)).eq("101153003413248540")).to.be.true;
+        await expect((await artistContract.priceTokenId(100)).eq("155001409499973957")).to.be.true;
+        await expect((await artistContract.priceTokenId(500)).eq("333985000288462466")).to.be.true;
+        await expect((await artistContract.priceTokenId(900)).eq("470399767422489255")).to.be.true;
+        await expect((await artistContract.priceTokenId(999)).eq("499711388833016220")).to.be.true;
       });
     });
 

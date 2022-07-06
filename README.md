@@ -18,7 +18,7 @@
 ## Deployer
 0xcF8f578726cfcD92865bc301179537b778842848
 
-## SupertrueNFT
+## SupertrueNFT beacon
 0x1A237Ec9006AfBF7A4Fd0CC142fD186ef2917B8A
 
 ## SupertrueDiamond

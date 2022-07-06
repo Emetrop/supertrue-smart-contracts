@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/utils/cryptography/draft-EIP712Upgra
 import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/utils/StringsUpgradeable.sol";
 
-import "@prb/math/contracts/PRBMathUD60x18.sol";
+import "./libraries/LibPricing.sol";
 
 import "./interfaces/ISupertrueHub.sol";
 import "./interfaces/ISupertrueNFT.sol";
@@ -22,7 +22,6 @@ contract SupertrueNFT is
 {
     using AddressUpgradeable for address;
     using StringsUpgradeable for uint256;
-    using PRBMathUD60x18 for uint256;
 
     // ============ Storage ============
 
@@ -40,7 +39,7 @@ contract SupertrueNFT is
         uint256 treasuryPendingFunds;
     }
 
-    bytes32 private constant STORAGE_SLOT = keccak256('supertrue.storage.nft');
+    bytes32 private constant STORAGE_SLOT = keccak256("supertrue.storage.nft");
 
     function layout() private pure returns (Layout storage l) {
         bytes32 slot = STORAGE_SLOT;
@@ -58,11 +57,8 @@ contract SupertrueNFT is
     uint96 private constant _defaultRoyaltyBPS = 1_000; // 10% royalties on secondary sales
     uint16 private constant BPS_MAX = 10_000;
 
-    // Pricing
-    uint256 private constant _startPriceCents = 1000 ether;
-    uint256 private constant _endPriceCents = 5000 ether;
-    uint256 private constant _logEndX = 2 ether; // has to be multiplier of 2!
-    uint256 private constant _logEndY = 1 ether; // == log2(logEndX)
+    // Pricing defaults
+    uint256 private constant _endPriceMultiplier = 5;
     uint256 private constant _reachEndPriceTokenId = 1000;
 
     // ============ Modifiers ============
@@ -85,17 +81,21 @@ contract SupertrueNFT is
 
     // ============ Events ============
 
-    /// Claimed by Artist
     event ArtistClaimed(address artist);
 
-    /// Artist Updated
     event ArtistUpdated(string name, string instagram);
 
-    /// Funds Withdrawal
     event Withdrawal(
         address indexed to,
         address indexed tokenAddress, // prepared for ERC20 tokens
         uint256 amount
+    );
+
+    event PricingUpdated(
+        uint8 pricingType,
+        uint256 startPrice,
+        uint256 endPrice,
+        uint256 reachEndPriceTokenId
     );
 
     // ============ Methods ============
@@ -148,32 +148,32 @@ contract SupertrueNFT is
     function priceTokenId(uint256 tokenId) public view returns (uint256) {
         require(tokenId > 0, "TokenID has to be bigger than 0");
 
-        uint256 tokenPriceCents = ISupertrueHub(layout().diamond)
-            .getTokenPrice()
-            .fromUint();
+        uint256 tokenPrice = ISupertrueHub(layout().diamond).getTokenPrice();
 
-        if (tokenId >= _reachEndPriceTokenId) {
-            return _endPriceCents.div(tokenPriceCents);
-        }
-        if (tokenId == 1) {
-            return _startPriceCents.div(tokenPriceCents);
-        }
+        return LibPricing.price(tokenId, tokenPrice);
+    }
 
-        uint256 dec1 = uint256(1).fromUint();
+    /**
+     * Changes pricing
+     * @param startPrice Price of token ID 1 in USD cents
+     */
+    function setPricing(uint256 startPrice) public {
+        require(_config().isRelay(_msgSender()), "Only relay");
+        require(startPrice >= 1000, "Start price must be at least 10 USD");
 
-        uint256 multiplier = (_logEndX - dec1).div(
-            _reachEndPriceTokenId.fromUint()
+        LibPricing.setPricing(
+            LibPricing.TYPE_LOGARITHMIC,
+            startPrice,
+            startPrice * _endPriceMultiplier,
+            _reachEndPriceTokenId
         );
 
-        // returns number between 1 and logEndX
-        uint256 x = dec1 + tokenId.fromUint().mul(multiplier);
-        uint256 y = x.log2();
-
-        uint256 normalisedPriceCents = _endPriceCents - _startPriceCents;
-        uint256 priceCents = normalisedPriceCents.div(_logEndY).mul(y) +
-            _startPriceCents;
-
-        return priceCents.div(tokenPriceCents);
+        emit PricingUpdated(
+            LibPricing.TYPE_LOGARITHMIC,
+            startPrice,
+            startPrice * _endPriceMultiplier,
+            _reachEndPriceTokenId
+        );
     }
 
     //-- Artist Data

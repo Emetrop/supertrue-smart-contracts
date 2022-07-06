@@ -13,7 +13,7 @@ import "../libraries/EIP712.sol";
 import "../facets/SupertrueConfigStorage.sol";
 
 contract DiamondInitTest {
-    function init(address nftBeacon) external {
+    function init(address nftBeacon, address relay, address treasury) external {
         // adding ERC165 data
         LibDiamond.DiamondStorage storage ds = LibDiamond.diamondStorage();
         ds.supportedInterfaces[type(IERC165).interfaceId] = true;
@@ -35,12 +35,12 @@ contract DiamondInitTest {
         cs.paused = false;
         cs.treasuryFee = 2000; //20%
         cs.nftBeacon = nftBeacon;
-        cs.baseURI = "https://us-central1-supertrue-5bc93.cloudfunctions.net/api/artist/";
-        cs.treasury = 0x1ea8009C698B353763Ecc2C2D12Ac5A3771Ae855;
+        cs.baseURI = "https://example.com/api/artist/";
+        cs.treasury = treasury;
 
         cs.creationFee = 0.002 ether;
-        cs.tokenPrice = 100000;
-        cs.relays[0x75E1E9b6d287ddf76043C24251ed79B87040bc79] = true;
+        cs.tokenPrice = 100000; // = $1k in USD cents per 1 native token
+        cs.relays[relay] = true;
         cs.signer1 = 0x8eC13C4982a5Fb8b914F0927C358E14f8d657133;
         cs.signer2 = 0xb9fAfb1De9083eAa09Fd7D058784a0316a2960B1;
     }
