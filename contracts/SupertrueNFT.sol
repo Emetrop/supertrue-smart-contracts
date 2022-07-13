@@ -455,7 +455,7 @@ contract SupertrueNFT is
     //-- Paper.xyz integration
 
     function unclaimedSupply() public returns (uint256) {
-        return 1;
+        return 100_000_000;
     }
 
     function getClaimIneligibilityReason(address userWallet, uint256 quantity)
