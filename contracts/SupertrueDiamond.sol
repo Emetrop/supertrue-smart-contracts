@@ -19,9 +19,9 @@ contract SupertrueDiamond {
         bytes4[] memory functionSelectors = new bytes4[](1);
         functionSelectors[0] = IDiamondCut.diamondCut.selector;
         cut[0] = IDiamondCut.FacetCut({
-        facetAddress: _diamondCutFacet,
-        action: IDiamondCut.FacetCutAction.Add,
-        functionSelectors: functionSelectors
+            facetAddress: _diamondCutFacet,
+            action: IDiamondCut.FacetCutAction.Add,
+            functionSelectors: functionSelectors
         });
         LibDiamond.diamondCut(cut, address(0), "");
     }
@@ -40,13 +40,13 @@ contract SupertrueDiamond {
         require(facet != address(0), "Diamond: Function does not exist");
         // Execute external function from facet using delegatecall and return any value.
         assembly {
-        // copy function selector and any arguments
+            // copy function selector and any arguments
             calldatacopy(0, 0, calldatasize())
-        // execute function call using the facet
+            // execute function call using the facet
             let result := delegatecall(gas(), facet, 0, calldatasize(), 0, 0)
-        // get any return value
+            // get any return value
             returndatacopy(0, 0, returndatasize())
-        // return any return value or error back to the caller
+            // return any return value or error back to the caller
             switch result
             case 0 {
                 revert(0, returndatasize())
